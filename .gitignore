@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+cdk.out/
+cdk.context.json
+node_modules/
+.next/
+out/
+.env
+.env.*
+!.env.example
+agentcore/.cli/
+.DS_Store

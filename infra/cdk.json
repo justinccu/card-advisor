@@ -1,0 +1,13 @@
+{
+  "app": "uv run --project .. python app.py",
+  "watch": {
+    "include": ["**"],
+    "exclude": ["cdk.out", "tests", "**/__pycache__"]
+  },
+  "context": {
+    "project": "card-advisor",
+    "region": "us-east-2",
+    "github_repo": "justinccu/card-advisor",
+    "monthly_budget_usd": 50
+  }
+}
