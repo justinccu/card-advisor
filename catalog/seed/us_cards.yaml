@@ -1,0 +1,789 @@
+# Seed list of US Card Products for Scout v0 (S3). Offer/fee/earning data is NOT here:
+# Scout extracts it from `url`, and every result goes through human review (ADR 0002).
+# availability: closed_to_new_applicants = never recommended, but still pickable as a Held Card.
+# Discover stays its own Issuer despite the Capital One acquisition: data points still show
+# Discover-specific limits. Revisit if applications start following Capital One rules.
+# priority: P0 = MVP catalog, P1 = add after MVP. tax_id_hint = unverified lead for Scout.
+# Drafted 2026-09-24 from issuer listing pages; is_charge_card and URLs to be confirmed by Scout.
+- id: chase_freedom_flex
+  issuer_id: chase
+  name: Chase Freedom Flex
+  url: https://creditcards.chase.com/cash-back-credit-cards/freedom/flex
+  priority: P0
+  tags:
+  - cashback
+  - rotating
+- id: chase_freedom_unlimited
+  issuer_id: chase
+  name: Chase Freedom Unlimited
+  url: https://creditcards.chase.com/cash-back-credit-cards/freedom/unlimited
+  priority: P0
+  tags:
+  - cashback
+  tax_id_hint: ITIN
+- id: chase_freedom_rise
+  issuer_id: chase
+  name: Chase Freedom Rise
+  url: https://creditcards.chase.com/cash-back-credit-cards/freedom/rise
+  priority: P0
+  tags:
+  - starter
+  - cashback
+- id: chase_slate_edge
+  issuer_id: chase
+  name: Chase Slate Edge
+  url: https://creditcards.chase.com/credit-building-credit-cards/slate/edge
+  priority: P1
+  tags:
+  - starter
+  - balance-transfer
+- id: chase_sapphire_preferred
+  issuer_id: chase
+  name: Chase Sapphire Preferred
+  url: https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred
+  priority: P0
+  tags:
+  - travel
+  - points
+  family: sapphire
+- id: chase_sapphire_reserve
+  issuer_id: chase
+  name: Chase Sapphire Reserve
+  url: https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve
+  priority: P0
+  tags:
+  - travel
+  - points
+  - premium
+  family: sapphire
+- id: chase_united_explorer
+  issuer_id: chase
+  name: United Explorer Card
+  url: https://creditcards.chase.com/travel-credit-cards/united/united-explorer
+  priority: P0
+  tags:
+  - travel
+  - airline
+  family: united
+- id: chase_united_quest
+  issuer_id: chase
+  name: United Quest Card
+  url: https://creditcards.chase.com/travel-credit-cards/united/united-quest
+  priority: P1
+  tags:
+  - travel
+  - airline
+  family: united
+- id: chase_southwest_plus
+  issuer_id: chase
+  name: Southwest Rapid Rewards Plus
+  url: https://creditcards.chase.com/travel-credit-cards/southwest/plus
+  priority: P0
+  tags:
+  - travel
+  - airline
+  family: southwest
+- id: chase_southwest_priority
+  issuer_id: chase
+  name: Southwest Rapid Rewards Priority
+  url: https://creditcards.chase.com/travel-credit-cards/southwest/priority
+  priority: P1
+  tags:
+  - travel
+  - airline
+  family: southwest
+- id: chase_marriott_boundless
+  issuer_id: chase
+  name: Marriott Bonvoy Boundless
+  url: https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/boundless
+  priority: P0
+  tags:
+  - travel
+  - hotel
+  family: marriott
+- id: chase_ihg_premier
+  issuer_id: chase
+  name: IHG One Rewards Premier
+  url: https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier
+  priority: P0
+  tags:
+  - travel
+  - hotel
+  family: ihg
+- id: chase_world_of_hyatt
+  issuer_id: chase
+  name: World of Hyatt Credit Card
+  url: https://creditcards.chase.com/travel-credit-cards/world-of-hyatt-credit-card
+  priority: P0
+  tags:
+  - travel
+  - hotel
+- id: chase_aeroplan
+  issuer_id: chase
+  name: Air Canada Aeroplan Card
+  url: https://creditcards.chase.com/travel-credit-cards/aircanada/aeroplan
+  priority: P1
+  tags:
+  - travel
+  - airline
+- id: chase_prime_visa
+  issuer_id: chase
+  name: Prime Visa
+  url: https://creditcards.chase.com/cash-back-credit-cards/amazon-prime-rewards
+  priority: P0
+  tags:
+  - cashback
+  - shopping
+- id: chase_amazon_visa
+  issuer_id: chase
+  name: Amazon Visa
+  url: https://creditcards.chase.com/cash-back-credit-cards/amazon-rewards
+  priority: P1
+  tags:
+  - cashback
+  - shopping
+- id: chase_ink_unlimited
+  issuer_id: chase
+  name: Ink Business Unlimited
+  url: https://creditcards.chase.com/business-credit-cards/ink/unlimited
+  priority: P0
+  tags:
+  - business
+  - cashback
+  is_business: true
+- id: chase_ink_cash
+  issuer_id: chase
+  name: Ink Business Cash
+  url: https://creditcards.chase.com/business-credit-cards/ink/cash
+  priority: P0
+  tags:
+  - business
+  - cashback
+  is_business: true
+- id: chase_ink_preferred
+  issuer_id: chase
+  name: Ink Business Preferred
+  url: https://creditcards.chase.com/business-credit-cards/ink/business-preferred
+  priority: P0
+  tags:
+  - business
+  - points
+  is_business: true
+- id: chase_sapphire_reserve_business
+  issuer_id: chase
+  name: Sapphire Reserve for Business
+  url: https://creditcards.chase.com/business-credit-cards/sapphire/reserve
+  priority: P1
+  tags:
+  - business
+  - premium
+  is_business: true
+- id: amex_platinum
+  issuer_id: amex
+  name: The Platinum Card
+  url: https://www.americanexpress.com/us/credit-cards/card/platinum/
+  priority: P0
+  tags:
+  - travel
+  - points
+  - premium
+  is_charge_card: true
+- id: amex_gold
+  issuer_id: amex
+  name: American Express Gold Card
+  url: https://www.americanexpress.com/us/credit-cards/card/gold-card/
+  priority: P0
+  tags:
+  - points
+  - dining
+  is_charge_card: true
+  tax_id_hint: ITIN; Nova Credit
+- id: amex_green
+  issuer_id: amex
+  name: American Express Green Card
+  url: https://www.americanexpress.com/us/credit-cards/card/green/
+  priority: P1
+  tags:
+  - travel
+  - points
+  is_charge_card: true
+  availability: closed_to_new_applicants
+  closed_on: '2026-07-23'
+- id: amex_blue_cash_everyday
+  issuer_id: amex
+  name: Blue Cash Everyday
+  url: https://www.americanexpress.com/us/credit-cards/card/blue-cash-everyday/
+  priority: P0
+  tags:
+  - cashback
+- id: amex_blue_cash_preferred
+  issuer_id: amex
+  name: Blue Cash Preferred
+  url: https://www.americanexpress.com/us/credit-cards/card/blue-cash-preferred/
+  priority: P0
+  tags:
+  - cashback
+  - groceries
+- id: amex_delta_gold
+  issuer_id: amex
+  name: Delta SkyMiles Gold
+  url: https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-gold-american-express-card/
+  priority: P0
+  tags:
+  - travel
+  - airline
+  family: delta
+- id: amex_delta_platinum
+  issuer_id: amex
+  name: Delta SkyMiles Platinum
+  url: https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-platinum-american-express-card/
+  priority: P1
+  tags:
+  - travel
+  - airline
+  family: delta
+- id: amex_delta_reserve
+  issuer_id: amex
+  name: Delta SkyMiles Reserve
+  url: https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-reserve-american-express-card/
+  priority: P1
+  tags:
+  - travel
+  - airline
+  - premium
+  family: delta
+- id: amex_hilton_honors
+  issuer_id: amex
+  name: Hilton Honors American Express
+  url: https://www.americanexpress.com/us/credit-cards/card/hilton-honors/
+  priority: P0
+  tags:
+  - travel
+  - hotel
+  family: hilton
+- id: amex_hilton_surpass
+  issuer_id: amex
+  name: Hilton Honors Surpass
+  url: https://www.americanexpress.com/us/credit-cards/card/hilton-honors-surpass/
+  priority: P0
+  tags:
+  - travel
+  - hotel
+  family: hilton
+- id: amex_hilton_aspire
+  issuer_id: amex
+  name: Hilton Honors Aspire
+  url: https://www.americanexpress.com/us/credit-cards/card/hilton-honors-aspire/
+  priority: P1
+  tags:
+  - travel
+  - hotel
+  - premium
+  family: hilton
+- id: amex_marriott_bevy
+  issuer_id: amex
+  name: Marriott Bonvoy Bevy
+  url: https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-bevy/
+  priority: P1
+  tags:
+  - travel
+  - hotel
+  family: marriott
+- id: amex_marriott_brilliant
+  issuer_id: amex
+  name: Marriott Bonvoy Brilliant
+  url: https://www.americanexpress.com/us/credit-cards/card/marriott-bonvoy-brilliant/
+  priority: P1
+  tags:
+  - travel
+  - hotel
+  - premium
+  family: marriott
+- id: amex_blue_business_plus
+  issuer_id: amex
+  name: The Blue Business Plus Card
+  url: https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-blue-business-plus-credit-card-amex/
+  priority: P0
+  tags:
+  - business
+  - points
+  is_business: true
+  tax_id_hint: ITIN + EIN
+- id: amex_business_gold
+  issuer_id: amex
+  name: American Express Business Gold
+  url: https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/
+  priority: P0
+  tags:
+  - business
+  - points
+  is_business: true
+  is_charge_card: true
+- id: amex_business_platinum
+  issuer_id: amex
+  name: The Business Platinum Card
+  url: https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/
+  priority: P0
+  tags:
+  - business
+  - premium
+  is_business: true
+  is_charge_card: true
+- id: citi_double_cash
+  issuer_id: citi
+  name: Citi Double Cash
+  url: https://www.citi.com/credit-cards/citi-double-cash-credit-card
+  priority: P0
+  tags:
+  - cashback
+- id: citi_custom_cash
+  issuer_id: citi
+  name: Citi Custom Cash
+  url: https://www.citi.com/credit-cards/citi-custom-cash-credit-card
+  priority: P1
+  tags:
+  - cashback
+  availability: closed_to_new_applicants
+  closed_on: '2026-05-28'
+- id: citi_strata
+  issuer_id: citi
+  name: Citi Strata
+  url: https://www.citi.com/credit-cards/citi-strata-credit-card
+  priority: P1
+  tags:
+  - points
+  family: strata
+- id: citi_strata_premier
+  issuer_id: citi
+  name: Citi Strata Premier
+  url: https://www.citi.com/credit-cards/citi-strata-premier-credit-card
+  priority: P0
+  tags:
+  - travel
+  - points
+  family: strata
+- id: citi_strata_elite
+  issuer_id: citi
+  name: Citi Strata Elite
+  url: https://www.citi.com/credit-cards/citi-strata-elite-credit-card
+  priority: P0
+  tags:
+  - travel
+  - points
+  - premium
+  family: strata
+- id: citi_costco
+  issuer_id: citi
+  name: Costco Anywhere Visa by Citi
+  url: https://www.citi.com/credit-cards/costco-anywhere-visa-card
+  priority: P0
+  tags:
+  - cashback
+  - shopping
+- id: citi_aadvantage_platinum_select
+  issuer_id: citi
+  name: Citi / AAdvantage Platinum Select
+  url: https://www.citi.com/credit-cards/citi-aadvantage-platinum-select-world-elite-mastercard
+  priority: P0
+  tags:
+  - travel
+  - airline
+  family: aadvantage
+- id: citi_aadvantage_globe
+  issuer_id: citi
+  name: Citi / AAdvantage Globe
+  url: https://www.citi.com/credit-cards/citi-aadvantage-globe-mastercard
+  priority: P1
+  tags:
+  - travel
+  - airline
+  family: aadvantage
+- id: citi_aadvantage_executive
+  issuer_id: citi
+  name: Citi / AAdvantage Executive
+  url: https://www.citi.com/credit-cards/citi-aadvantage-executive-world-legend-mastercard
+  priority: P1
+  tags:
+  - travel
+  - airline
+  - premium
+  family: aadvantage
+- id: citi_simplicity
+  issuer_id: citi
+  name: Citi Simplicity
+  url: https://www.citi.com/credit-cards/citi-simplicity-credit-card
+  priority: P1
+  tags:
+  - balance-transfer
+- id: citi_secured
+  issuer_id: citi
+  name: Citi Secured Mastercard
+  url: https://www.citi.com/credit-cards/citi-secured-credit-card
+  priority: P0
+  tags:
+  - starter
+  - secured
+- id: c1_venture_x
+  issuer_id: capital_one
+  name: Capital One Venture X
+  url: https://www.capitalone.com/credit-cards/venture-x/
+  priority: P0
+  tags:
+  - travel
+  - points
+  - premium
+  family: venture
+- id: c1_venture
+  issuer_id: capital_one
+  name: Capital One Venture
+  url: https://www.capitalone.com/credit-cards/venture/
+  priority: P0
+  tags:
+  - travel
+  - points
+  family: venture
+- id: c1_ventureone
+  issuer_id: capital_one
+  name: Capital One VentureOne
+  url: https://www.capitalone.com/credit-cards/ventureone/
+  priority: P1
+  tags:
+  - travel
+  - points
+  family: venture
+- id: c1_quicksilver
+  issuer_id: capital_one
+  name: Capital One Quicksilver
+  url: https://www.capitalone.com/credit-cards/quicksilver/
+  priority: P0
+  tags:
+  - cashback
+- id: c1_quicksilverone
+  issuer_id: capital_one
+  name: Capital One QuicksilverOne
+  url: https://www.capitalone.com/credit-cards/quicksilverone/
+  priority: P0
+  tags:
+  - starter
+  - cashback
+  tax_id_hint: ITIN
+- id: c1_savor
+  issuer_id: capital_one
+  name: Capital One Savor
+  url: https://www.capitalone.com/credit-cards/savor/
+  priority: P0
+  tags:
+  - cashback
+  - dining
+- id: c1_savorone
+  issuer_id: capital_one
+  name: Capital One SavorOne
+  url: https://www.capitalone.com/credit-cards/savorone/
+  priority: P1
+  tags:
+  - cashback
+  - dining
+- id: c1_quicksilver_student
+  issuer_id: capital_one
+  name: Capital One Quicksilver for Students
+  url: https://www.capitalone.com/credit-cards/quicksilver-student/
+  priority: P0
+  tags:
+  - starter
+  - student
+  - cashback
+  tax_id_hint: ITIN
+- id: c1_savor_student
+  issuer_id: capital_one
+  name: Capital One Savor for Students
+  url: https://www.capitalone.com/credit-cards/savor-student/
+  priority: P0
+  tags:
+  - starter
+  - student
+  - cashback
+- id: c1_platinum
+  issuer_id: capital_one
+  name: Capital One Platinum
+  url: https://www.capitalone.com/credit-cards/platinum/
+  priority: P0
+  tags:
+  - starter
+- id: c1_platinum_secured
+  issuer_id: capital_one
+  name: Capital One Platinum Secured
+  url: https://www.capitalone.com/credit-cards/platinum-secured/
+  priority: P0
+  tags:
+  - starter
+  - secured
+- id: c1_quicksilver_secured
+  issuer_id: capital_one
+  name: Capital One Quicksilver Secured
+  url: https://www.capitalone.com/credit-cards/quicksilver-secured/
+  priority: P1
+  tags:
+  - starter
+  - secured
+  - cashback
+- id: c1_venture_x_business
+  issuer_id: capital_one
+  name: Capital One Venture X Business
+  url: https://www.capitalone.com/small-business/credit-cards/venture-x-business/
+  priority: P1
+  tags:
+  - business
+  - travel
+  - premium
+  is_business: true
+  is_charge_card: true
+- id: c1_spark_cash_plus
+  issuer_id: capital_one
+  name: Capital One Spark Cash Plus
+  url: https://www.capitalone.com/small-business/credit-cards/spark-cash-plus/
+  priority: P1
+  tags:
+  - business
+  - cashback
+  is_business: true
+  is_charge_card: true
+- id: discover_it_cash_back
+  issuer_id: discover
+  name: Discover it Cash Back
+  url: https://www.discover.com/credit-cards/cash-back/it-card/
+  priority: P0
+  tags:
+  - cashback
+  - rotating
+- id: discover_it_miles
+  issuer_id: discover
+  name: Discover it Miles
+  url: https://www.discover.com/credit-cards/travel/
+  priority: P1
+  tags:
+  - travel
+- id: discover_it_chrome
+  issuer_id: discover
+  name: Discover it Chrome
+  url: https://www.discover.com/credit-cards/cash-back/chrome/
+  priority: P1
+  tags:
+  - cashback
+- id: discover_it_student_cash_back
+  issuer_id: discover
+  name: Discover it Student Cash Back
+  url: https://www.discover.com/credit-cards/student-credit-card/it-card/
+  priority: P0
+  tags:
+  - starter
+  - student
+  - cashback
+- id: discover_it_student_chrome
+  issuer_id: discover
+  name: Discover it Student Chrome
+  url: https://www.discover.com/credit-cards/student-credit-card/chrome-card/
+  priority: P1
+  tags:
+  - starter
+  - student
+- id: bofa_customized_cash
+  issuer_id: bofa
+  name: BofA Customized Cash Rewards
+  url: https://www.bankofamerica.com/credit-cards/products/cash-back-credit-card/
+  priority: P0
+  tags:
+  - cashback
+- id: bofa_unlimited_cash
+  issuer_id: bofa
+  name: BofA Unlimited Cash Rewards
+  url: https://www.bankofamerica.com/credit-cards/products/unlimited-cash-back-credit-card/
+  priority: P0
+  tags:
+  - cashback
+- id: bofa_travel_rewards
+  issuer_id: bofa
+  name: BofA Travel Rewards
+  url: https://www.bankofamerica.com/credit-cards/products/travel-rewards-credit-card/
+  priority: P0
+  tags:
+  - travel
+- id: bofa_premium_rewards
+  issuer_id: bofa
+  name: BofA Premium Rewards
+  url: https://www.bankofamerica.com/credit-cards/products/premium-rewards-credit-card/
+  priority: P0
+  tags:
+  - travel
+  - points
+- id: bofa_premium_rewards_elite
+  issuer_id: bofa
+  name: BofA Premium Rewards Elite
+  url: https://www.bankofamerica.com/credit-cards/products/premium-rewards-elite-credit-card/
+  priority: P1
+  tags:
+  - travel
+  - premium
+- id: bofa_customized_cash_student
+  issuer_id: bofa
+  name: BofA Customized Cash Rewards for Students
+  url: https://www.bankofamerica.com/credit-cards/products/student-cash-back-credit-card/
+  priority: P0
+  tags:
+  - starter
+  - student
+  - cashback
+- id: bofa_travel_rewards_student
+  issuer_id: bofa
+  name: BofA Travel Rewards for Students
+  url: https://www.bankofamerica.com/credit-cards/products/student-rewards-credit-card/
+  priority: P1
+  tags:
+  - starter
+  - student
+  - travel
+- id: bofa_customized_cash_secured
+  issuer_id: bofa
+  name: BofA Customized Cash Rewards Secured
+  url: https://www.bankofamerica.com/credit-cards/products/cash-back-secured-credit-card/
+  priority: P0
+  tags:
+  - starter
+  - secured
+- id: bofa_atmos_ascent
+  issuer_id: bofa
+  name: Atmos Rewards Ascent Visa Signature
+  url: https://www.bankofamerica.com/credit-cards/products/alaska-airlines-credit-card/
+  priority: P1
+  tags:
+  - travel
+  - airline
+  family: atmos
+- id: bofa_atmos_summit
+  issuer_id: bofa
+  name: Atmos Rewards Summit Visa Infinite
+  url: https://www.bankofamerica.com/credit-cards/products/alaska-airlines-infinite-credit-card/
+  priority: P1
+  tags:
+  - travel
+  - airline
+  - premium
+  family: atmos
+- id: wf_active_cash
+  issuer_id: wells_fargo
+  name: Wells Fargo Active Cash
+  url: https://creditcards.wellsfargo.com/active-cash-credit-card/
+  priority: P0
+  tags:
+  - cashback
+- id: wf_autograph
+  issuer_id: wells_fargo
+  name: Wells Fargo Autograph
+  url: https://creditcards.wellsfargo.com/autograph-visa-credit-card/
+  priority: P0
+  tags:
+  - points
+  family: autograph
+- id: wf_autograph_journey
+  issuer_id: wells_fargo
+  name: Wells Fargo Autograph Journey
+  url: https://creditcards.wellsfargo.com/autograph-journey-visa-credit-card/
+  priority: P0
+  tags:
+  - travel
+  - points
+  family: autograph
+- id: wf_reflect
+  issuer_id: wells_fargo
+  name: Wells Fargo Reflect
+  url: https://creditcards.wellsfargo.com/reflect-visa-credit-card/
+  priority: P1
+  tags:
+  - balance-transfer
+- id: wf_one_key
+  issuer_id: wells_fargo
+  name: One Key Card
+  url: https://creditcards.wellsfargo.com/one-key-credit-card/
+  priority: P1
+  tags:
+  - travel
+- id: usb_cash_plus
+  issuer_id: us_bank
+  name: U.S. Bank Cash+
+  url: https://www.usbank.com/credit-cards/cash-plus-visa-signature-credit-card.html
+  priority: P0
+  tags:
+  - cashback
+- id: usb_altitude_go
+  issuer_id: us_bank
+  name: U.S. Bank Altitude Go
+  url: https://www.usbank.com/credit-cards/altitude-go-visa-signature-credit-card.html
+  priority: P0
+  tags:
+  - dining
+  - points
+- id: usb_altitude_connect
+  issuer_id: us_bank
+  name: U.S. Bank Altitude Connect
+  url: https://www.usbank.com/credit-cards/altitude-connect-visa-signature-credit-card.html
+  priority: P1
+  tags:
+  - travel
+- id: usb_smartly
+  issuer_id: us_bank
+  name: U.S. Bank Smartly Visa Signature
+  url: https://www.usbank.com/credit-cards/bank-smartly-visa-signature-credit-card.html
+  priority: P0
+  tags:
+  - cashback
+- id: usb_secured
+  issuer_id: us_bank
+  name: U.S. Bank Secured Visa
+  url: https://www.usbank.com/credit-cards/secured-visa-credit-card.html
+  priority: P1
+  tags:
+  - starter
+  - secured
+- id: bilt_blue
+  issuer_id: bilt
+  name: Bilt Blue Card
+  url: https://www.bilt.com/card
+  priority: P1
+  tags:
+  - rent
+  - points
+  family: bilt
+- id: bilt_obsidian
+  issuer_id: bilt
+  name: Bilt Obsidian Card
+  url: https://www.bilt.com/card
+  priority: P1
+  tags:
+  - rent
+  - points
+  family: bilt
+- id: bilt_palladium
+  issuer_id: bilt
+  name: Bilt Palladium Card
+  url: https://www.bilt.com/card
+  priority: P1
+  tags:
+  - rent
+  - points
+  - premium
+  family: bilt
+- id: apple_card
+  issuer_id: apple
+  name: Apple Card
+  url: https://www.apple.com/apple-card/
+  priority: P1
+  tags:
+  - cashback
+- id: petal_2
+  issuer_id: petal
+  name: Petal 2 Visa
+  url: https://www.petalcard.com/
+  priority: P1
+  tags:
+  - starter
+  - no-credit-history
+  tax_id_hint: ITIN

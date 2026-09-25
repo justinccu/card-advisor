@@ -1,0 +1,330 @@
+# US Eligibility Rules. Every rule needs a source_url and verified_on.
+# strength: strict = enforced consistently -> Ineligible; soft = inconsistently enforced -> warning only.
+# confidence: official = in issuer terms; community = inferred from applicant data points.
+# When unsure, prefer soft: a false "Ineligible" hides a card the user could have gotten.
+
+# --- Chase ---------------------------------------------------------------------
+- kind: velocity
+  id: chase_5_24
+  issuer_id: chase
+  description: "Chase 5/24: denied with 5+ new personal cards from any issuer in 24 months"
+  scope: all_issuers
+  limit: 5
+  window_months: 24
+  counts_authorized_user: true
+  counts_business: false
+  applies_to_products: all
+  strength: strict
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+- kind: velocity
+  id: chase_2_30
+  issuer_id: chase
+  description: "Chase: at most 2 new Chase cards per 30 days"
+  scope: same_issuer
+  limit: 2
+  window_days: 30
+  counts_business: true
+  applies_to_products: all
+  strength: soft
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+- kind: family_open
+  id: chase_sapphire_open
+  issuer_id: chase
+  family: sapphire
+  description: "Chase Sapphire: no bonus while another personal Sapphire card is open"
+  strength: strict
+  confidence: official
+  source_url: https://www.thepointsguy.com/news/chase-sapphire-bonus-eligibility-changes-2026/
+  verified_on: 2026-09-24
+
+- kind: offer_history
+  id: chase_sapphire_once_per_card
+  issuer_id: chase
+  family: sapphire
+  target: product
+  basis: held
+  lookback_months: null
+  description: "Chase Sapphire (since 2026-01-22): one bonus per Sapphire card per lifetime"
+  strength: strict
+  confidence: official
+  source_url: https://www.thepointsguy.com/news/chase-sapphire-bonus-eligibility-changes-2026/
+  verified_on: 2026-09-24
+
+- kind: offer_history
+  id: chase_24_month_bonus
+  issuer_id: chase
+  target: product
+  basis: bonus
+  lookback_months: 24
+  description: "Chase: no bonus on a card whose bonus was earned in the past 24 months"
+  strength: strict
+  confidence: official
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+# --- American Express ----------------------------------------------------------
+- kind: velocity
+  id: amex_1_5
+  issuer_id: amex
+  description: "Amex: at most 1 new credit card per 5 days"
+  scope: same_issuer
+  limit: 1
+  window_days: 5
+  counts_business: true
+  counts_charge_cards: false
+  applies_to_products: all
+  applies_to_charge_cards: false
+  strength: strict
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+- kind: velocity
+  id: amex_2_90
+  issuer_id: amex
+  description: "Amex: at most 2 new credit cards per 90 days"
+  scope: same_issuer
+  limit: 2
+  window_days: 90
+  counts_business: true
+  counts_charge_cards: false
+  applies_to_products: all
+  applies_to_charge_cards: false
+  strength: strict
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+- kind: max_open
+  id: amex_max_5_credit
+  issuer_id: amex
+  description: "Amex: at most 5 open credit cards (personal and business)"
+  limit: 5
+  counts_business: true
+  counts_charge_cards: false
+  applies_to_products: all
+  applies_to_charge_cards: false
+  strength: strict
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+- kind: offer_history
+  id: amex_once_per_lifetime
+  issuer_id: amex
+  target: product
+  basis: held
+  lookback_months: null
+  description: "Amex: welcome offer not available if you have or have had this card"
+  applies_to_products: all
+  strength: strict
+  confidence: official
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+# --- Citi ----------------------------------------------------------------------
+- kind: velocity
+  id: citi_1_8
+  issuer_id: citi
+  description: "Citi: at most 1 new Citi card per 8 days"
+  scope: same_issuer
+  limit: 1
+  window_days: 8
+  counts_business: true
+  applies_to_products: all
+  strength: strict
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+- kind: velocity
+  id: citi_2_65
+  issuer_id: citi
+  description: "Citi: at most 2 new Citi cards per 65 days"
+  scope: same_issuer
+  limit: 2
+  window_days: 65
+  counts_business: true
+  applies_to_products: all
+  strength: strict
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+- kind: offer_history
+  id: citi_48_month_bonus
+  issuer_id: citi
+  target: product
+  basis: bonus
+  lookback_months: 48
+  description: "Citi: one welcome offer per card every 48 months"
+  strength: strict
+  confidence: official
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+# --- Capital One ---------------------------------------------------------------
+- kind: velocity
+  id: capital_one_1_6
+  issuer_id: capital_one
+  description: "Capital One: historically 1 new card per 6 months (recently loosened)"
+  scope: same_issuer
+  limit: 1
+  window_months: 6
+  strength: soft
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+- kind: offer_history
+  id: capital_one_48_month_bonus
+  issuer_id: capital_one
+  target: product
+  basis: bonus
+  lookback_months: 48
+  description: "Capital One: no bonus within 48 months of a prior bonus on the same personal card"
+  strength: strict
+  confidence: official
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+# --- Discover ------------------------------------------------------------------
+- kind: max_open
+  id: discover_max_2
+  issuer_id: discover
+  description: "Discover: at most 2 Discover cards"
+  limit: 2
+  strength: soft
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+- kind: velocity
+  id: discover_1_12
+  issuer_id: discover
+  description: "Discover: wait 12 months after a Discover card before a second"
+  scope: same_issuer
+  limit: 1
+  window_months: 12
+  strength: soft
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+# --- Bank of America -----------------------------------------------------------
+- kind: velocity
+  id: bofa_2_in_2_months
+  issuer_id: bofa
+  description: "BofA 2/3/4: at most 2 new BofA cards per 2 months"
+  scope: same_issuer
+  limit: 2
+  window_months: 2
+  strength: strict
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+- kind: velocity
+  id: bofa_3_in_12_months
+  issuer_id: bofa
+  description: "BofA 2/3/4: at most 3 new BofA cards per 12 months"
+  scope: same_issuer
+  limit: 3
+  window_months: 12
+  strength: strict
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+- kind: velocity
+  id: bofa_4_in_24_months
+  issuer_id: bofa
+  description: "BofA 2/3/4: at most 4 new BofA cards per 24 months"
+  scope: same_issuer
+  limit: 4
+  window_months: 24
+  strength: strict
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+- kind: velocity
+  id: bofa_3_12_any_issuer
+  issuer_id: bofa
+  description: "BofA: may deny with 3+ new cards from any issuer in 12 months (7+ with a BofA deposit account)"
+  scope: all_issuers
+  limit: 3
+  window_months: 12
+  strength: soft
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+- kind: offer_history
+  id: bofa_24_month_bonus
+  issuer_id: bofa
+  target: product
+  basis: held
+  lookback_months: 24
+  description: "BofA: some cards exclude a bonus if you opened or closed that card in the past 24 months"
+  strength: soft
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+# --- Wells Fargo ---------------------------------------------------------------
+- kind: velocity
+  id: wells_fargo_1_6
+  issuer_id: wells_fargo
+  description: "Wells Fargo: may deny if a Wells Fargo card was opened in the past 6 months"
+  scope: same_issuer
+  limit: 1
+  window_months: 6
+  strength: soft
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+- kind: velocity
+  id: wells_fargo_5_24
+  issuer_id: wells_fargo
+  description: "Wells Fargo: may deny with 5+ new cards from any issuer in 24 months"
+  scope: all_issuers
+  limit: 5
+  window_months: 24
+  counts_authorized_user: true
+  strength: soft
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+# --- U.S. Bank -----------------------------------------------------------------
+- kind: velocity
+  id: us_bank_5_12
+  issuer_id: us_bank
+  description: "U.S. Bank: may deny with 5+ new cards from any issuer in 12 months"
+  scope: all_issuers
+  limit: 5
+  window_months: 12
+  strength: soft
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24
+
+- kind: offer_history
+  id: us_bank_not_currently_open
+  issuer_id: us_bank
+  target: product
+  basis: held
+  lookback_months: 0
+  description: "U.S. Bank: no bonus while the same card is currently open"
+  strength: strict
+  confidence: community
+  source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
+  verified_on: 2026-09-24

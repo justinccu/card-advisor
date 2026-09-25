@@ -2,9 +2,13 @@
 name = "card-advisor"
 version = "0.1.0"
 requires-python = ">=3.13"
+dependencies = ["card-rules"]
+
+[tool.uv.sources]
+card-rules = { workspace = true }
 
 [tool.uv.workspace]
-members = ["infra"]
+members = ["infra", "packages/rules", "packages/scout"]
 
 [dependency-groups]
 dev = [
@@ -21,5 +25,5 @@ target-version = "py313"
 select = ["E", "F", "I", "B", "UP"]
 
 [tool.pytest.ini_options]
-testpaths = ["infra/tests"]
+testpaths = ["infra/tests", "packages/rules/tests", "packages/scout/tests"]
 pythonpath = ["infra"]

@@ -1,0 +1,3 @@
+# Launch US-only, but make Market a dimension of the model from day one
+
+The US and Taiwan card markets differ in their core problem (US: approval and Offer eligibility rules; TW: per-merchant reward optimization with frequent, registration-gated promotions), data sources, and regulation, so building both inside the MVP would leave neither finished. We launch US-only, but Card Products, Issuers, and Eligibility Rules carry a `market`, Catalog Snapshots are stored per market (`catalog/us/...`), URLs reserve a market segment, and UI strings are externalized, so adding TW later is additive rather than a rewrite.

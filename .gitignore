@@ -13,3 +13,6 @@ out/
 !.env.example
 agentcore/.cli/
 .DS_Store
+
+# Scout local cache (fetched pages, extraction runs, spend ledger)
+catalog/.cache/

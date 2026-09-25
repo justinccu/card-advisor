@@ -12,6 +12,7 @@ def test_budget_alerts_before_limit_is_hit():
     props = next(iter(budget.values()))["Properties"]
 
     assert props["Budget"]["BudgetLimit"] == {"Amount": 50, "Unit": "USD"}
+    assert props["Budget"]["CostTypes"]["IncludeCredit"] is False  # alert on gross usage
     thresholds = {
         (n["Notification"]["NotificationType"], n["Notification"]["Threshold"])
         for n in props["NotificationsWithSubscribers"]

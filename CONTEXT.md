@@ -6,13 +6,20 @@ A US credit card and bank offer advisor: a public, non-LLM catalog for browsing 
 
 ### Catalog
 
+**Market**:
+A country whose cards, Issuers, and Eligibility Rules form a separate catalog (US first; TW later).
+
 **Issuer**:
 The bank or company that issues a Card Product (e.g. Chase, American Express).
 _Avoid_: Bank (reserved for deposit-account offers)
 
 **Card Product**:
-A specific card offering in the catalog, such as Chase Sapphire Preferred.
+A specific card offering in the catalog, such as Chase Sapphire Preferred. A Card Product closed to new applicants stays in the catalog (users can still hold it, and it still triggers Offer Rules) but is never recommended.
 _Avoid_: Card (ambiguous), credit card
+
+**Product Family**:
+A set of an Issuer's Card Products that share Offer restrictions (e.g. Sapphire: Preferred and Reserve).
+_Avoid_: Card line, series
 
 **Offer**:
 The sign-up bonus attached to a Card Product for a period of time, with its Minimum Spend and deadline. Classified as Public, Elevated, In-branch, or Targeted.
@@ -30,7 +37,7 @@ _Avoid_: Hidden offer
 The amount a cardholder must spend within a deadline after account opening to earn an Offer.
 
 **Eligibility Rule**:
-An Issuer's restriction on who may be approved or earn an Offer (e.g. Chase 5/24, Amex once-per-lifetime).
+An Issuer's restriction, either an **Application Rule** (whether the user can be approved, e.g. Chase 5/24) or an **Offer Rule** (whether the user would earn the Offer, e.g. Amex once-per-lifetime). Each is **strict** (consistently enforced) or **soft** (inconsistently enforced; only ever a warning).
 
 **Point Valuation**:
 The dollar value assigned to one reward point: Conservative (cash/statement-credit value, the default) or Travel (transfer-partner estimate, opt-in).
@@ -53,11 +60,12 @@ _Avoid_: My card, user card
 The set of a user's Held Cards.
 _Avoid_: Apple Wallet (unrelated)
 
-**Complete Wallet**:
-A Wallet the user has attested lists every card opened in the past 24 months, across all Issuers, including authorized-user cards.
+**Wallet Attestation**:
+What the user has confirmed about their Wallet's completeness: all cards opened since a date, all currently open cards, or full lifetime history with a given Issuer. Absence of a card only counts as evidence when an attestation covers it.
+_Avoid_: Complete Wallet
 
 **Eligibility Verdict**:
-The result of evaluating Eligibility Rules for a user and Card Product: Eligible, Ineligible, or Undetermined (when the Applicant Profile or Wallet is incomplete).
+The result of evaluating Eligibility Rules for a user and Card Product, given separately for the application and for the Offer: Eligible, Ineligible, or Undetermined (when the Applicant Profile or Wallet Attestation doesn't cover a rule).
 _Avoid_: Approved, qualified (we never predict approval)
 
 **Recommendation**:
