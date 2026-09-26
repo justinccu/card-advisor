@@ -278,3 +278,14 @@ def test_demo_invite_exists_only_in_the_local_in_memory_store(monkeypatch):
         assert isinstance(get_repo(), repository.DynamoRepository) and created == ["t"]
     finally:
         get_repo.cache_clear()
+
+
+def test_settings_import_outside_the_repo_like_on_lambda(tmp_path):
+    """On Lambda the package sits at /var/task/card_api/: importing settings must not assume a
+    repo checkout around it (this crashed every cold start of the first deploy)."""
+    from pathlib import Path
+
+    from card_api.settings import REPO_ROOT, repo_root
+
+    assert repo_root(Path("/var/task/card_api/settings.py")) == Path.cwd()
+    assert (REPO_ROOT / "catalog" / "us").is_dir()  # in the repo: still finds the checkout

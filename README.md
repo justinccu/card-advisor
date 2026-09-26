@@ -28,6 +28,9 @@ wallet that already holds five cards. The site and API read the newest published
 (`catalog/us/vMAJOR.MINOR.json`); with none published they fall back to the local `scout preview` and show a
 banner saying the data is unreviewed.
 
+`make deploy-infra` deploys the stacks (data, auth, api); `make aws-smoke` then signs up a
+throwaway user with a one-off invite, calls the API with its JWT, and deletes both.
+
 `uv run scout release` ships the newest snapshot to the catalog bucket (dry run unless `--live`):
 each version is uploaded once, never overwritten, and a `LATEST` pointer moves to it; the API
 picks it up within a minute, and every API response names the catalog version it used.

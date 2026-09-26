@@ -1,7 +1,7 @@
 -include .env
 export
 
-.PHONY: install test lint lambda-bundle synth deploy-infra preview api web demo e2e web-build
+.PHONY: install test lint lambda-bundle synth deploy-infra aws-smoke preview api web demo e2e web-build
 
 install:
 	uv sync --all-packages
@@ -23,6 +23,10 @@ lambda-bundle:
 
 deploy-infra: lambda-bundle
 	cd infra && cdk deploy --all --require-approval broadening
+
+# Live end-to-end check of the deployed stack with a throwaway user (~$0; cleans up after itself)
+aws-smoke:
+	uv run scripts/aws_smoke.py
 
 # --- Local demo ($0: no AWS calls) -----------------------------------------------------------
 

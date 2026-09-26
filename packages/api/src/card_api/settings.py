@@ -2,7 +2,16 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[4]
+
+def repo_root(module_file: Path) -> Path:
+    """The checkout root when running from the repo (packages/api/src/card_api/settings.py);
+    otherwise the working directory. On Lambda the module sits at /var/task/card_api/, which has
+    no repo above it, and only the S3 catalog is used there anyway."""
+    parents = module_file.resolve().parents
+    return parents[3] if len(parents) > 4 and (parents[3] / "catalog").is_dir() else Path.cwd()
+
+
+REPO_ROOT = repo_root(Path(__file__))
 
 
 @dataclass(frozen=True)
