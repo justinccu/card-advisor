@@ -1,7 +1,7 @@
 -include .env
 export
 
-.PHONY: install test lint lambda-bundle synth deploy-infra aws-smoke web-aws e2e-aws preview api web demo e2e web-build
+.PHONY: install test lint lambda-bundle synth deploy-infra aws-smoke web-aws e2e-aws invite invites preview api web demo e2e web-build
 
 install:
 	uv sync --all-packages
@@ -50,6 +50,15 @@ demo:
 	APP_ENV=local uv run uvicorn card_api.app:app --port 8000 & \
 	(cd web && NEXT_PUBLIC_CARD_ART=1 npm run dev -- --port 3000) & \
 	wait
+
+# Invite codes on the deployed stack: `make invite` (N=1 USES=1 by default) and `make invites`
+N ?= 1
+USES ?= 1
+invite:
+	uv run python scripts/invites.py create -n $(N) --uses $(USES)
+
+invites:
+	uv run python scripts/invites.py list
 
 # The site on :3000 against the deployed API and Cognito (real sign-up with an invite code)
 web-aws:
