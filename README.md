@@ -28,6 +28,10 @@ wallet that already holds five cards. The site and API read the newest published
 (`catalog/us/vMAJOR.MINOR.json`); with none published they fall back to the local `scout preview` and show a
 banner saying the data is unreviewed.
 
+`uv run scout release` ships the newest snapshot to the catalog bucket (dry run unless `--live`):
+each version is uploaded once, never overwritten, and a `LATEST` pointer moves to it; the API
+picks it up within a minute, and every API response names the catalog version it used.
+
 Cards are drawn as simulated faces: each card's own colors (sampled by
 `scripts/card_face_colors.py`) with its wordmarks as text, no logos or artwork. In `make demo` only,
 a footer toggle switches to the issuers' card art, kept locally in `web/public/card-art` (gitignored:

@@ -9,3 +9,9 @@ The catalog is small (tens to hundreds of Card Products) and changes a few times
 - **Neon / Supabase** — outside AWS; IAM and observability would need separate handling.
 
 Ad-hoc analytics are served by DynamoDB export to S3 + Athena, on demand.
+
+## Serving snapshots (2026-09-26)
+
+Snapshots are uploaded once and never overwritten (`scout release` uses an S3 conditional write); a one-line `catalog/us/LATEST` pointer names the current version. The API caches snapshots by version with no invalidation (they are immutable) and re-reads the pointer at most once a minute, so a release reaches warm Lambdas within a minute and without a redeploy. Callers may pin `catalog_version` (the static site pins the version it was built from), and every response names the version used, which is what makes a Recommendation reproducible. Rejected: reading the snapshot once per container (versions drift for hours and mix across containers) and redeploying on every publish (couples catalog updates to deployments).
+
+Invites live in one `INVITE` partition (`CODE#<code>`, plus `CODE#<code>#USE#<user>` per use) so an admin lists them with a query. Redemption is a transaction (decrement + use record), so remaining uses plus recorded uses always equals the uses issued; the post-confirmation trigger stamps `confirmed_at`, which exposes codes burned by abandoned sign-ups for later reconciliation.

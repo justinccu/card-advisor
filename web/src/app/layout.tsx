@@ -26,7 +26,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en">
       <body className="min-h-dvh">
-        <Providers>
+        <Providers catalogVersion={catalog.preview ? null : catalog.version}>
           <Nav />
           {catalog.preview && <PreviewBanner />}
           <main>{children}</main>

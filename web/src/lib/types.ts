@@ -105,6 +105,12 @@ export interface Evaluation {
   offer: Verdict;
 }
 
+/** /me/eligibility: verdicts plus the catalog version they were computed from */
+export interface EligibilityResult {
+  catalog_version: string;
+  evaluations: Evaluation[];
+}
+
 export interface HeldCardIn {
   card_product_id?: string | null;
   issuer_id?: string | null;

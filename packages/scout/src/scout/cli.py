@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 
 from card_rules.catalog import CatalogSnapshot
 
-from scout import boilerplate, compare, overrides, publish, report, review
+from scout import boilerplate, compare, overrides, publish, release, report, review
 from scout.bedrock import DEFAULT_MODEL, PRICES, BudgetExceeded, Ledger, cost_usd
 from scout.evidence import check_card
 from scout.extract import (
@@ -387,6 +387,33 @@ def cmd_publish(args: argparse.Namespace) -> None:
         )
 
 
+def cmd_release(args: argparse.Namespace) -> None:
+    bucket = args.bucket or os.environ.get("CATALOG_BUCKET")
+    if not bucket:
+        raise SystemExit("--bucket (or CATALOG_BUCKET) is required")
+    import boto3
+
+    s3 = boto3.client("s3")
+    try:
+        plan, body = release.plan(s3, bucket, args.prefix, args.version, rollback=args.rollback)
+    except release.ReleaseError as e:
+        raise SystemExit(f"release refused: {e}") from None
+    upload = (
+        f"upload {plan.snapshot_key} ({len(body):,} bytes)"
+        if plan.upload
+        else (f"{plan.snapshot_key} already on S3 (identical)")
+    )
+    print(f"  {upload}\n  LATEST: {plan.previous or '(none)'} -> {plan.version}")
+    if not args.live:
+        print("dry run: nothing written (add --live)")
+        return
+    try:
+        release.apply(s3, bucket, plan, body)
+    except release.ReleaseError as e:
+        raise SystemExit(f"release refused: {e}") from None
+    print(f"released v{plan.version} to s3://{bucket}/{args.prefix}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(prog="scout")
     sub = parser.add_subparsers(required=True)
@@ -441,6 +468,18 @@ def main() -> None:
     )
     pb.add_argument("--verification", help="field-verification folder under catalog/.cache")
     pb.set_defaults(func=cmd_publish)
+
+    rl = sub.add_parser(
+        "release", help="ship a snapshot to S3 and move LATEST (dry run unless --live)"
+    )
+    rl.add_argument("--version", help="MAJOR.MINOR (default: newest local snapshot)")
+    rl.add_argument("--bucket", help="catalog bucket (default: $CATALOG_BUCKET)")
+    rl.add_argument("--prefix", default="catalog/us/")
+    rl.add_argument(
+        "--rollback", action="store_true", help="allow pointing LATEST at an older version"
+    )
+    rl.add_argument("--live", action="store_true", help="actually write to S3")
+    rl.set_defaults(func=cmd_release)
 
     args = parser.parse_args()
     args.func(args)

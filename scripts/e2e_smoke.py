@@ -4,9 +4,13 @@ when the API fails, sheet drag-to-dismiss vs. spring-back, modal inertness, comp
 Needs the demo running (`make demo`), then: `make e2e`. Uses Playwright's Chromium ($0).
 """
 
+import re
 import sys
 
 from playwright.sync_api import sync_playwright
+
+# Matches with or without a query string (the site pins ?catalog_version=...).
+WALLET_CARDS = re.compile(r".*/me/wallet/cards(\?.*)?$")
 
 BASE = "http://localhost:3000"
 results = []
@@ -64,10 +68,12 @@ with sync_playwright() as p:
 
     # rollback on failure
     page.route(
-        "**/me/wallet/cards",
-        lambda route: route.fulfill(status=500, body='{"detail":"boom"}')
-        if route.request.method == "POST"
-        else route.continue_(),
+        WALLET_CARDS,
+        lambda route: (
+            route.fulfill(status=500, body='{"detail":"boom"}')
+            if route.request.method == "POST"
+            else route.continue_()
+        ),
     )
     page.get_by_role("button", name="Add card").click()
     page.wait_for_timeout(500)
@@ -87,7 +93,7 @@ with sync_playwright() as p:
         mid == 7 and after == 6,
     )
     check("rollback shows a toast", page.get_by_role("status").filter(has_text="boom").is_visible())
-    page.unroute("**/me/wallet/cards")
+    page.unroute(WALLET_CARDS)
 
     # remove
     page.get_by_role("button", name="Remove Chase Sapphire Preferred").click()

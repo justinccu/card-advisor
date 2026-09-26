@@ -7,7 +7,11 @@ DynamoDB single-table layout (every access is by key, no scans):
     USER#<uid>      ATTEST                      Wallet Attestation
     USER#<uid>      CARD#<opened_on>#<id>       Held Card (sorted by open date -> 5/24 range query)
     USER#<uid>      QUOTA#<yyyy-mm-dd>          daily chat counter, expires via TTL
-    INVITE#<code>   META                        remaining uses (conditional decrement)
+    INVITE          CODE#<code>                 remaining uses (conditional decrement)
+    INVITE          CODE#<code>#USE#<user>      who took a use, and when they confirmed
+
+All invites share one partition so an admin lists them with a query, not a scan; at invite-beta
+volume (hundreds of items) one partition is nowhere near its throughput limit.
 """
 
 import threading
@@ -16,9 +20,17 @@ import uuid
 from datetime import date
 from typing import Protocol
 
-from card_api.models import ApplicantProfile, HeldCard, HeldCardIn, WalletAttestation
+from card_api.models import (
+    ApplicantProfile,
+    HeldCard,
+    HeldCardIn,
+    Invite,
+    InviteUse,
+    WalletAttestation,
+)
 
 QUOTA_TTL_SECONDS = 3 * 24 * 3600
+INVITE_PK = "INVITE"
 
 
 class Repository(Protocol):
@@ -30,7 +42,9 @@ class Repository(Protocol):
     def get_attestation(self, uid: str) -> WalletAttestation: ...
     def put_attestation(self, uid: str, attestation: WalletAttestation) -> None: ...
     def create_invite(self, code: str, uses: int) -> None: ...
-    def redeem_invite(self, code: str) -> bool: ...
+    def redeem_invite(self, code: str, user: str) -> bool: ...
+    def confirm_invite_use(self, user: str) -> bool: ...
+    def list_invites(self) -> list[Invite]: ...
     def take_quota(self, uid: str, day: date, limit: int) -> bool: ...
     def delete_user(self, uid: str) -> None: ...
 
@@ -49,6 +63,7 @@ class InMemoryRepository:
         self._cards: dict[str, dict[str, HeldCard]] = {}
         self._attest: dict[str, WalletAttestation] = {}
         self._invites: dict[str, int] = {}
+        self._uses: dict[str, dict[str, InviteUse]] = {}
         self._quota: dict[tuple[str, date], int] = {}
 
     def get_profile(self, uid):
@@ -80,12 +95,31 @@ class InMemoryRepository:
         with self._lock:
             self._invites[code] = uses
 
-    def redeem_invite(self, code):
+    def redeem_invite(self, code, user):
         with self._lock:
+            if user in self._uses.get(code, {}):
+                return True  # the same sign-up retried: it already holds a use
             if self._invites.get(code, 0) <= 0:
                 return False
             self._invites[code] -= 1
+            self._uses.setdefault(code, {})[user] = InviteUse(user=user, taken_at=int(time.time()))
             return True
+
+    def confirm_invite_use(self, user):
+        with self._lock:
+            for uses in self._uses.values():
+                use = uses.get(user)
+                if use and use.confirmed_at is None:
+                    use.confirmed_at = int(time.time())
+                    return True
+            return False
+
+    def list_invites(self):
+        with self._lock:
+            return [
+                Invite(code=code, remaining=left, uses=list(self._uses.get(code, {}).values()))
+                for code, left in sorted(self._invites.items())
+            ]
 
     def take_quota(self, uid, day, limit):
         with self._lock:
@@ -102,6 +136,8 @@ class InMemoryRepository:
             self._attest.pop(uid, None)
             for key in [k for k in self._quota if k[0] == uid]:
                 del self._quota[key]
+            for uses in self._uses.values():
+                uses.pop(uid, None)
 
 
 class DynamoRepository:
@@ -178,25 +214,115 @@ class DynamoRepository:
 
     def create_invite(self, code, uses):
         self._table.put_item(
-            Item={"PK": f"INVITE#{code}", "SK": "META", "remaining": uses},
+            Item={"PK": INVITE_PK, "SK": f"CODE#{code}", "remaining": uses},
             ConditionExpression="attribute_not_exists(PK)",
         )
 
-    def redeem_invite(self, code):
+    def redeem_invite(self, code, user):
+        """Take one use and record who took it, atomically: both writes happen or neither does,
+        so remaining + recorded uses always equals the uses the code was created with."""
         from botocore.exceptions import ClientError
 
+        name = self._table.name
         try:
-            self._table.update_item(
-                Key={"PK": f"INVITE#{code}", "SK": "META"},
-                UpdateExpression="SET remaining = remaining - :one",
-                ConditionExpression="attribute_exists(PK) AND remaining > :zero",
-                ExpressionAttributeValues={":one": 1, ":zero": 0},
+            # The resource's client serializes plain Python values, like the Table API does.
+            self._table.meta.client.transact_write_items(
+                TransactItems=[
+                    {
+                        "Update": {
+                            "TableName": name,
+                            "Key": {"PK": INVITE_PK, "SK": f"CODE#{code}"},
+                            "UpdateExpression": "SET remaining = remaining - :one",
+                            "ConditionExpression": "attribute_exists(PK) AND remaining > :zero",
+                            "ExpressionAttributeValues": {":one": 1, ":zero": 0},
+                        }
+                    },
+                    {
+                        "Put": {
+                            "TableName": name,
+                            "Item": {
+                                "PK": INVITE_PK,
+                                "SK": f"CODE#{code}#USE#{user}",
+                                "user": user,
+                                "taken_at": int(time.time()),
+                            },
+                            "ConditionExpression": "attribute_not_exists(PK)",
+                        }
+                    },
+                ]
             )
             return True
         except ClientError as e:
-            if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
-                return False
-            raise
+            if e.response["Error"]["Code"] != "TransactionCanceledException":
+                raise
+            reasons = [r.get("Code") for r in e.response.get("CancellationReasons", [])]
+            # The use record already exists: the same sign-up retried and already holds a use.
+            return (
+                len(reasons) == 2
+                and reasons[1] == "ConditionalCheckFailed"
+                and (reasons[0] in (None, "None"))
+            )
+
+    def _invite_items(self, **filters):
+        from boto3.dynamodb.conditions import Key
+
+        kwargs = {"KeyConditionExpression": Key("PK").eq(INVITE_PK), **filters}
+        while True:
+            page = self._table.query(**kwargs)
+            yield from page["Items"]
+            if "LastEvaluatedKey" not in page:
+                return
+            kwargs["ExclusiveStartKey"] = page["LastEvaluatedKey"]
+
+    def _uses_of(self, user: str, *, unconfirmed: bool = False):
+        from boto3.dynamodb.conditions import Attr
+
+        cond = Attr("user").eq(user)
+        if unconfirmed:
+            cond &= Attr("confirmed_at").not_exists()
+        return self._invite_items(FilterExpression=cond)
+
+    def confirm_invite_use(self, user):
+        from botocore.exceptions import ClientError
+
+        for item in self._uses_of(user, unconfirmed=True):
+            try:
+                self._table.update_item(
+                    Key={"PK": INVITE_PK, "SK": item["SK"]},
+                    UpdateExpression="SET confirmed_at = :now",
+                    ConditionExpression="attribute_exists(PK)",
+                    ExpressionAttributeValues={":now": int(time.time())},
+                )
+                return True
+            except ClientError as e:
+                if e.response["Error"]["Code"] != "ConditionalCheckFailedException":
+                    raise
+        return False
+
+    def list_invites(self):
+        invites: dict[str, Invite] = {}
+        uses: list[tuple[str, InviteUse]] = []
+        for item in self._invite_items():
+            code, _, rest = item["SK"].removeprefix("CODE#").partition("#USE#")
+            if rest:
+                uses.append(
+                    (
+                        code,
+                        InviteUse(
+                            user=item["user"],
+                            taken_at=int(item["taken_at"]),
+                            confirmed_at=int(item["confirmed_at"])
+                            if "confirmed_at" in item
+                            else None,
+                        ),
+                    )
+                )
+            else:
+                invites[code] = Invite(code=code, remaining=int(item["remaining"]))
+        for code, use in uses:
+            if code in invites:
+                invites[code].uses.append(use)
+        return sorted(invites.values(), key=lambda i: i.code)
 
     def take_quota(self, uid, day, limit):
         from botocore.exceptions import ClientError
@@ -230,3 +356,6 @@ class DynamoRepository:
                 if "LastEvaluatedKey" not in page:
                     break
                 kwargs["ExclusiveStartKey"] = page["LastEvaluatedKey"]
+            # ADR 0005: their invite-use records name them too. The use stays consumed.
+            for item in list(self._uses_of(uid)):
+                batch.delete_item(Key={"PK": INVITE_PK, "SK": item["SK"]})

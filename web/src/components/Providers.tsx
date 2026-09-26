@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MotionConfig } from "motion/react";
 import { createContext, useCallback, useContext, useMemo, useState, useSyncExternalStore } from "react";
 
+import { pinCatalogVersion } from "@/lib/api";
 import { SESSION_KEY, readSession, writeSession } from "@/lib/session";
 
 // --- Session (local demo sign-in; Cognito on AWS) ---------------------------------------
@@ -28,7 +29,15 @@ export const MAX_COMPARE = 3;
 type Compare = { ids: string[]; toggle: (id: string) => void; clear: () => void };
 const CompareCtx = createContext<Compare | null>(null);
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+  children,
+  catalogVersion,
+}: {
+  children: React.ReactNode;
+  /** the snapshot this build rendered; null for the unreviewed preview */
+  catalogVersion: string | null;
+}) {
+  pinCatalogVersion(catalogVersion);
   const [client] = useState(
     () => new QueryClient({ defaultOptions: { queries: { staleTime: 30_000, retry: 1 } } }),
   );

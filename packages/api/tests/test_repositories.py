@@ -6,7 +6,7 @@ from datetime import date
 
 import boto3
 import pytest
-from card_api.lambda_handler import presignup_handler
+from card_api.lambda_handler import postconfirm_handler, presignup_handler
 from card_api.models import ApplicantProfile, HeldCardIn, WalletAttestation
 from card_api.repository import DynamoRepository, InMemoryRepository
 from moto import mock_aws
@@ -65,9 +65,47 @@ def test_profile_and_attestation_default_then_roundtrip(repo):
 def test_invite_redemption_is_atomic(repo):
     repo.create_invite("CODE", 2)
     with ThreadPoolExecutor(8) as pool:
-        results = list(pool.map(lambda _: repo.redeem_invite("CODE"), range(20)))
+        results = list(pool.map(lambda i: repo.redeem_invite("CODE", f"user-{i}"), range(20)))
     assert results.count(True) == 2
-    assert repo.redeem_invite("MISSING") is False
+    assert repo.redeem_invite("MISSING", "someone") is False
+    # remaining + recorded uses always equals what the code was created with
+    [invite] = repo.list_invites()
+    assert invite.remaining == 0 and len(invite.uses) == 2
+
+
+def test_last_use_race_has_exactly_one_winner(repo):
+    repo.create_invite("LAST", 1)
+    with ThreadPoolExecutor(2) as pool:
+        results = list(pool.map(lambda u: repo.redeem_invite("LAST", u), ["ann", "bob"]))
+    assert sorted(results) == [False, True]
+    [invite] = repo.list_invites()
+    assert [u.user for u in invite.uses] == [["ann", "bob"][results.index(True)]]
+
+
+def test_failed_redemption_records_nothing(repo):
+    repo.create_invite("SPENT", 0)
+    assert repo.redeem_invite("SPENT", "ann") is False
+    assert repo.list_invites()[0].uses == []
+
+
+def test_a_retried_sign_up_does_not_take_a_second_use(repo):
+    repo.create_invite("TWO", 2)
+    assert repo.redeem_invite("TWO", "ann") and repo.redeem_invite("TWO", "ann")
+    assert repo.list_invites()[0].remaining == 1
+
+
+def test_uses_are_confirmed_once_and_listed_per_code(repo):
+    repo.create_invite("B-CODE", 1)
+    repo.create_invite("A-CODE", 3)
+    repo.redeem_invite("A-CODE", "ann")
+    repo.redeem_invite("A-CODE", "bob")
+    assert repo.confirm_invite_use("ann") is True
+    assert repo.confirm_invite_use("ann") is False  # already confirmed
+    assert repo.confirm_invite_use("nobody") is False
+    a, b = repo.list_invites()
+    assert (a.code, a.remaining, b.code, b.remaining) == ("A-CODE", 1, "B-CODE", 1)
+    status = {u.user: u.confirmed_at is not None for u in a.uses}
+    assert status == {"ann": True, "bob": False}  # bob abandoned sign-up: a burned use
 
 
 def test_quota_stops_at_the_limit_per_day(repo):
@@ -81,20 +119,34 @@ def test_delete_user_purges_everything(repo):
     repo.put_profile("u", ApplicantProfile(tax_id="SSN"))
     repo.take_quota("u", date(2026, 9, 25), 5)
     repo.add_card("v", card("a", date(2024, 1, 1)))
+    repo.create_invite("CODE", 2)
+    repo.redeem_invite("CODE", "u")
+    repo.redeem_invite("CODE", "v")
     repo.delete_user("u")
     assert repo.list_cards("u") == [] and repo.get_profile("u") == ApplicantProfile()
     assert len(repo.list_cards("v")) == 1  # other users untouched
+    [invite] = repo.list_invites()
+    assert [u.user for u in invite.uses] == ["v"] and invite.remaining == 0  # use stays spent
 
 
 def test_presignup_trigger_requires_a_live_invite(monkeypatch):
     from card_api import lambda_handler
 
     r = InMemoryRepository()
-    r.create_invite("GOOD", 1)
+    r.create_invite("CAGOOD", 1)
     monkeypatch.setattr(lambda_handler, "get_repo", lambda: r)
-    event = {"request": {"clientMetadata": {"invite_code": "good"}}}
+    event = {"userName": "sub-1", "request": {"clientMetadata": {"invite_code": "ca-good"}}}
     assert presignup_handler(event, None) is event
     with pytest.raises(Exception, match="invite code"):
-        presignup_handler(event, None)  # single use, now spent
+        presignup_handler({**event, "userName": "sub-2"}, None)  # single use, now spent
     with pytest.raises(Exception, match="invite code"):
-        presignup_handler({"request": {}}, None)
+        presignup_handler({"userName": "sub-3", "request": {}}, None)
+    with pytest.raises(Exception, match="invite code"):
+        presignup_handler({"request": {"clientMetadata": {"invite_code": "CAGOOD"}}}, None)
+
+    confirm = {"triggerSource": "PostConfirmation_ConfirmSignUp", "userName": "sub-1"}
+    assert postconfirm_handler(confirm, None) is confirm
+    assert r.list_invites()[0].uses[0].confirmed_at is not None
+    # a password reset also fires post-confirmation; it must not touch invites
+    reset = {"triggerSource": "PostConfirmation_ConfirmForgotPassword", "userName": "sub-9"}
+    assert postconfirm_handler(reset, None) is reset

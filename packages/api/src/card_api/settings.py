@@ -1,29 +1,8 @@
 import os
-import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from card_rules.catalog import VERSION_PATTERN, version_key
-
 REPO_ROOT = Path(__file__).resolve().parents[4]
-
-
-def default_catalog_path() -> Path:
-    """CATALOG_PATH if set; else the newest published catalog/us/vMAJOR.MINOR.json; else the
-    local preview."""
-    if os.environ.get("CATALOG_PATH"):
-        return Path(os.environ["CATALOG_PATH"])
-    published = sorted(
-        (
-            p
-            for p in (REPO_ROOT / "catalog" / "us").glob("v*.json")
-            if re.fullmatch(VERSION_PATTERN, p.stem[1:])
-        ),
-        key=lambda p: version_key(p.stem[1:]),
-    )
-    return (
-        published[-1] if published else REPO_ROOT / "catalog" / ".cache" / "preview_snapshot.json"
-    )
 
 
 @dataclass(frozen=True)
@@ -33,9 +12,15 @@ class Settings:
 
     env: str = os.environ.get("APP_ENV", "local")
     table_name: str | None = os.environ.get("TABLE_NAME")
-    catalog_path: Path = field(default_factory=lambda: default_catalog_path())
+    # Where Catalog Snapshots come from (card_api.catalog): S3 on AWS; locally the published
+    # files in catalog/us, one explicit file (CATALOG_PATH), or the preview if none is published.
     catalog_bucket: str | None = os.environ.get("CATALOG_BUCKET")
-    catalog_key: str = os.environ.get("CATALOG_KEY", "catalog/us/latest.json")
+    catalog_prefix: str = os.environ.get("CATALOG_PREFIX", "catalog/us/")
+    catalog_dir: Path = REPO_ROOT / "catalog" / "us"
+    catalog_file: Path | None = (
+        Path(os.environ["CATALOG_PATH"]) if os.environ.get("CATALOG_PATH") else None
+    )
+    preview_path: Path = REPO_ROOT / "catalog" / ".cache" / "preview_snapshot.json"
     cors_origins: list[str] = field(
         default_factory=lambda: os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
     )

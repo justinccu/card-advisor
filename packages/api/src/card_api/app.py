@@ -2,17 +2,19 @@ from datetime import date, timedelta
 from functools import lru_cache
 from typing import Annotated
 
+from card_rules.catalog import VERSION_PATTERN, CatalogSnapshot
 from card_rules.dates import add_months
 from fastapi import Depends, FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 
-from card_api import service
+from card_api import invites, service
 from card_api.auth import Caller, current_caller, require_admin
-from card_api.catalog import catalog_index, load_catalog
+from card_api.catalog import UnknownCatalogVersion, catalog_index, load_catalog
 from card_api.models import (
     ApplicantProfile,
     HeldCard,
     HeldCardIn,
+    Invite,
     InviteBatchIn,
     SignupIn,
     Velocity,
@@ -23,7 +25,7 @@ from card_api.repository import DynamoRepository, InMemoryRepository, Repository
 from card_api.settings import settings
 
 MAX_WALLET_CARDS = 100
-DEMO_INVITE = "DEMO-2026"
+DEMO_INVITE = "DEMO-2026"  # local demo only: seeded into the in-memory store, never into DynamoDB
 DEMO_USER = "demo-user"
 
 
@@ -39,7 +41,7 @@ def get_repo() -> Repository:
 
 def seed_demo(repo: Repository) -> None:
     """A demo invite plus a user with a realistic Wallet, so eligibility has something to show."""
-    repo.create_invite(DEMO_INVITE, 100)
+    repo.create_invite(invites.normalize(DEMO_INVITE), 100)
     today = date.today()
     for product, months_ago in [
         ("chase_freedom_unlimited", 30),
@@ -59,15 +61,34 @@ def seed_demo(repo: Repository) -> None:
 
 
 app = FastAPI(title="card-advisor API", version="0.1.0")
+
+CATALOG_VERSION_HEADER = "X-Catalog-Version"
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["Authorization", "Content-Type", "X-Dev-User"],
+    expose_headers=[CATALOG_VERSION_HEADER],
 )
+
+
+def resolve_catalog(
+    response: Response,
+    catalog_version: Annotated[str | None, Query(pattern=VERSION_PATTERN)] = None,
+) -> CatalogSnapshot:
+    """The snapshot this request uses: the pinned `catalog_version` (the site pins the one it was
+    built from) or the latest. Every response names it, so results can be reproduced."""
+    try:
+        snapshot = load_catalog(catalog_version)
+    except UnknownCatalogVersion:
+        raise HTTPException(404, f"no catalog version {catalog_version}") from None
+    response.headers[CATALOG_VERSION_HEADER] = snapshot.version
+    return snapshot
+
 
 CallerDep = Annotated[Caller, Depends(current_caller)]
 RepoDep = Annotated[Repository, Depends(get_repo)]
+CatalogDep = Annotated[CatalogSnapshot, Depends(resolve_catalog)]
 
 
 @app.get("/health")
@@ -77,9 +98,12 @@ def health() -> dict:
 
 
 @app.get("/catalog")
-def catalog(response: Response):
-    response.headers["Cache-Control"] = "public, max-age=300"
-    return load_catalog()
+def catalog(response: Response, snapshot: CatalogDep, catalog_version: str | None = None):
+    # A pinned version never changes; "latest" may move once the pointer does.
+    response.headers["Cache-Control"] = (
+        "public, max-age=31536000, immutable" if catalog_version else "public, max-age=60"
+    )
+    return snapshot
 
 
 # --- Profile ----------------------------------------------------------------------------
@@ -111,8 +135,8 @@ def get_wallet(caller: CallerDep, repo: RepoDep) -> Wallet:
 
 
 @app.post("/me/wallet/cards", status_code=201)
-def add_card(body: HeldCardIn, caller: CallerDep, repo: RepoDep) -> HeldCard:
-    if body.card_product_id and body.card_product_id not in catalog_index():
+def add_card(body: HeldCardIn, caller: CallerDep, repo: RepoDep, snapshot: CatalogDep) -> HeldCard:
+    if body.card_product_id and body.card_product_id not in catalog_index(snapshot):
         raise HTTPException(422, f"unknown card_product_id {body.card_product_id!r}")
     if len(repo.list_cards(caller.uid)) >= MAX_WALLET_CARDS:
         raise HTTPException(409, f"a Wallet holds at most {MAX_WALLET_CARDS} cards")
@@ -143,10 +167,13 @@ def _as_of(as_of: date | None) -> date:
 
 @app.get("/me/velocity")
 def get_velocity(
-    caller: CallerDep, repo: RepoDep, as_of: Annotated[date | None, Query()] = None
+    caller: CallerDep,
+    repo: RepoDep,
+    snapshot: CatalogDep,
+    as_of: Annotated[date | None, Query()] = None,
 ) -> Velocity:
     wallet = service.to_rules_wallet(
-        repo.list_cards(caller.uid), repo.get_attestation(caller.uid), catalog_index()
+        repo.list_cards(caller.uid), repo.get_attestation(caller.uid), catalog_index(snapshot)
     )
     return service.velocity(wallet, _as_of(as_of))
 
@@ -155,11 +182,13 @@ def get_velocity(
 def get_eligibility(
     caller: CallerDep,
     repo: RepoDep,
+    snapshot: CatalogDep,
     card_id: Annotated[list[str] | None, Query(max_length=60)] = None,
     as_of: Annotated[date | None, Query()] = None,
-) -> list[dict]:
-    """Eligibility Verdicts for the given cards (default: every card open to applicants)."""
-    index = catalog_index()
+) -> dict:
+    """Eligibility Verdicts for the given cards (default: every card open to applicants), with
+    the catalog version they were computed from."""
+    index = catalog_index(snapshot)
     if card_id:
         unknown = [c for c in card_id if c not in index]
         if unknown:
@@ -170,7 +199,10 @@ def get_eligibility(
     wallet = service.to_rules_wallet(
         repo.list_cards(caller.uid), repo.get_attestation(caller.uid), index
     )
-    return service.evaluate_cards(products, repo.get_profile(caller.uid), wallet, _as_of(as_of))
+    evaluations = service.evaluate_cards(
+        products, repo.get_profile(caller.uid), wallet, _as_of(as_of)
+    )
+    return {"catalog_version": snapshot.version, "evaluations": evaluations}
 
 
 # --- Invites ----------------------------------------------------------------------------
@@ -179,17 +211,27 @@ def get_eligibility(
 @app.post("/admin/invites", status_code=201)
 def create_invites(body: InviteBatchIn, caller: CallerDep, repo: RepoDep) -> dict:
     require_admin(caller)
-    codes = [f"CA-{new_id()[:8].upper()}" for _ in range(body.count)]
+    codes = [invites.new_code() for _ in range(body.count)]
     for code in codes:
         repo.create_invite(code, body.uses)
-    return {"codes": codes, "uses_each": body.uses}
+    return {"codes": [invites.display(c) for c in codes], "uses_each": body.uses}
+
+
+@app.get("/admin/invites")
+def list_invites(caller: CallerDep, repo: RepoDep) -> list[Invite]:
+    """Every code with its remaining uses and who took each use (unconfirmed = abandoned)."""
+    require_admin(caller)
+    return [i.model_copy(update={"code": invites.display(i.code)}) for i in repo.list_invites()]
 
 
 @app.post("/dev/signup", status_code=201)
 def dev_signup(body: SignupIn, repo: RepoDep) -> dict:
-    """Local stand-in for Cognito sign-up + the pre-sign-up trigger (see presignup.py)."""
+    """Local stand-in for Cognito sign-up and its triggers (lambda_handler.presignup_handler and
+    postconfirm_handler)."""
     if not settings.dev_auth:
         raise HTTPException(404)
-    if not repo.redeem_invite(body.invite_code.strip().upper()):
+    user = f"u-{new_id()}"
+    if not repo.redeem_invite(invites.normalize(body.invite_code), user):
         raise HTTPException(403, "invite code is invalid or used up")
-    return {"user_id": f"u-{new_id()}"}
+    repo.confirm_invite_use(user)  # no email step locally
+    return {"user_id": user}

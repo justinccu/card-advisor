@@ -73,3 +73,18 @@ class SignupIn(BaseModel):
 class InviteBatchIn(BaseModel):
     count: int = Field(1, ge=1, le=50)
     uses: int = Field(1, ge=1, le=100)
+
+
+class InviteUse(BaseModel):
+    """Who took one use of a code, and whether they finished sign-up (confirmed their email).
+    A use that never confirms is a code burned by an abandoned sign-up."""
+
+    user: str
+    taken_at: int  # epoch seconds
+    confirmed_at: int | None = None
+
+
+class Invite(BaseModel):
+    code: str
+    remaining: int
+    uses: list[InviteUse] = []

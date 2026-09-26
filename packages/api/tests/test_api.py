@@ -156,7 +156,9 @@ def test_eligibility_runs_the_rules_engine(client):
     res = client.get(
         "/me/eligibility", params={"card_id": "chase_sapphire_preferred"}, headers=as_user("ann")
     )
-    [verdict] = res.json()
+    body = res.json()
+    assert body["catalog_version"] == "1.1" and res.headers["X-Catalog-Version"] == "1.1"
+    [verdict] = body["evaluations"]
     assert verdict["name"] == "Sapphire Preferred"
     assert verdict["application"]["status"] == "Ineligible"
     reason = next(r for r in verdict["application"]["reasons"] if r["rule_id"] == "chase_5_24")
@@ -165,7 +167,8 @@ def test_eligibility_runs_the_rules_engine(client):
 
 def test_eligibility_defaults_to_open_cards_only(client):
     ids = {
-        v["card_product_id"] for v in client.get("/me/eligibility", headers=as_user("ann")).json()
+        v["card_product_id"]
+        for v in client.get("/me/eligibility", headers=as_user("ann")).json()["evaluations"]
     }
     assert "amex_green" not in ids and "chase_sapphire_preferred" in ids
 
@@ -177,6 +180,23 @@ def test_velocity_reports_count_drop_off_and_completeness(client):
     assert v["next_drop_off"] == add_months(add_months(TODAY, -20), 24).isoformat()
 
 
+def test_requests_can_pin_a_catalog_version(client):
+    ok = client.get("/me/velocity", params={"catalog_version": "1.1"}, headers=as_user("ann"))
+    assert ok.status_code == 200 and ok.headers["X-Catalog-Version"] == "1.1"
+    missing = client.get(
+        "/me/eligibility", params={"catalog_version": "9.9"}, headers=as_user("ann")
+    )
+    assert missing.status_code == 404
+    bad = client.get("/catalog", params={"catalog_version": "latest"})
+    assert bad.status_code == 422
+
+
+def test_pinned_catalog_is_cached_forever_and_latest_briefly(client):
+    pinned = client.get("/catalog", params={"catalog_version": "1.1"})
+    assert "immutable" in pinned.headers["Cache-Control"]
+    assert client.get("/catalog").headers["Cache-Control"] == "public, max-age=60"
+
+
 # --- invites ----------------------------------------------------------------------------
 
 
@@ -184,13 +204,33 @@ def test_only_admins_create_invites(client):
     assert client.post("/admin/invites", json={}, headers=as_user("ann")).status_code == 403
     res = client.post("/admin/invites", json={"count": 2, "uses": 3}, headers=as_user("admin-1"))
     assert res.status_code == 201 and len(res.json()["codes"]) == 2
+    assert client.get("/admin/invites", headers=as_user("ann")).status_code == 403
+    listed = client.get("/admin/invites", headers=as_user("admin-1")).json()
+    assert {i["code"] for i in listed} == set(res.json()["codes"])
+    assert all(i["remaining"] == 3 and i["uses"] == [] for i in listed)
+
+
+def test_invite_codes_are_unguessable_and_typo_tolerant():
+    from card_api import invites
+
+    codes = {invites.new_code() for _ in range(2000)}
+    assert len(codes) == 2000
+    for code in list(codes)[:50]:
+        assert code.startswith("CA") and len(code) == 14
+        assert set(code[2:]) <= set(invites.ALPHABET) and not set("ILOU") & set(code[2:])
+        shown = invites.display(code)  # CA-XXXX-XXXX-XXXX
+        assert len(shown) == 17 and invites.normalize(f" {shown.lower()} ") == code
+    assert len(invites.ALPHABET) ** invites.SYMBOLS >= 2**60
 
 
 def test_signup_consumes_invite_uses(client, repo):
-    repo.create_invite("ONE-USE", 1)
-    assert client.post("/dev/signup", json={"invite_code": "one-use"}).status_code == 201
+    repo.create_invite("ONEUSE", 1)
+    first = client.post("/dev/signup", json={"invite_code": "one-use"})
+    assert first.status_code == 201
     assert client.post("/dev/signup", json={"invite_code": "ONE-USE"}).status_code == 403
     assert client.post("/dev/signup", json={"invite_code": "NOPE"}).status_code == 403
+    [use] = repo.list_invites()[0].uses
+    assert use.user == first.json()["user_id"] and use.confirmed_at is not None
 
 
 def test_concurrent_signups_cannot_oversubscribe_an_invite(client, repo):
@@ -206,7 +246,35 @@ def test_concurrent_signups_cannot_oversubscribe_an_invite(client, repo):
 
 
 def test_demo_seed_has_invite_and_realistic_wallet():
+    from card_api import invites
+
     repo = InMemoryRepository()
     app_module.seed_demo(repo)
-    assert repo.redeem_invite(app_module.DEMO_INVITE)
+    assert repo.redeem_invite(invites.normalize(app_module.DEMO_INVITE), "someone")
     assert len(repo.list_cards(app_module.DEMO_USER)) == 5
+
+
+def test_demo_invite_exists_only_in_the_local_in_memory_store(monkeypatch):
+    """AWS (DynamoDB) must never get the public demo code."""
+    import dataclasses
+
+    from card_api import repository
+
+    created = []
+    monkeypatch.setattr(
+        app_module, "settings", dataclasses.replace(app_module.settings, table_name="t")
+    )
+    monkeypatch.setattr(
+        repository.DynamoRepository, "__init__", lambda self, name, **kw: created.append(name)
+    )
+    monkeypatch.setattr(
+        repository.DynamoRepository,
+        "create_invite",
+        lambda *a: pytest.fail("seeded an invite into DynamoDB"),
+        raising=False,
+    )
+    get_repo.cache_clear()
+    try:
+        assert isinstance(get_repo(), repository.DynamoRepository) and created == ["t"]
+    finally:
+        get_repo.cache_clear()
