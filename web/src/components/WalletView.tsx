@@ -248,7 +248,7 @@ function HeldRow({ card, product, onRemove }: { card: HeldCard; product?: Catalo
         onDragEnd={onDragEnd}
         className={`relative flex items-center gap-4 bg-surface px-4 py-3.5 touch-pan-y ${pending ? "opacity-60" : ""}`}
       >
-        <CardArt issuerId={issuer} name={name} bare className="w-16 shrink-0" />
+        <CardArt cardId={card.card_product_id} issuerId={issuer} name={name} bare className="w-16 shrink-0" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[15px] font-medium">{name}</p>
           <p className="text-[13px] text-ink-2">
@@ -350,7 +350,7 @@ function AddCardSheet({
                     onClick={() => setPicked(c)}
                     className="flex w-full items-center gap-3 py-2.5 text-left"
                   >
-                    <CardArt issuerId={c.issuer_id} name={c.name} bare className="w-12 shrink-0" />
+                    <CardArt cardId={c.id} issuerId={c.issuer_id} name={c.name} bare className="w-12 shrink-0" />
                     <span className="flex-1">
                       <span className="block text-[15px]">{c.name}</span>
                       <span className="text-[12px] text-ink-2">
@@ -378,7 +378,7 @@ function AddCardSheet({
             }}
           >
             <div className="flex items-center gap-4">
-              <CardArt issuerId={picked.issuer_id} name={picked.name} className="w-24" />
+              <CardArt cardId={picked.id} issuerId={picked.issuer_id} name={picked.name} className="w-24" />
               <div>
                 <p className="text-[17px] font-semibold">{picked.name}</p>
                 <button type="button" onClick={() => setPicked(null)} className="text-[13px] text-link">

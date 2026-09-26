@@ -35,7 +35,7 @@ export function CardDetail({ card, children }: { card: CatalogCard; children?: R
   return (
     <article className="space-y-8">
       <header className="grid items-center gap-6 sm:grid-cols-[220px_1fr]">
-        <CardArt issuerId={card.issuer_id} name={card.name} interactive className="mx-auto w-[220px]" />
+        <CardArt cardId={card.id} issuerId={card.issuer_id} name={card.name} interactive className="mx-auto w-[220px]" />
         <div className="text-center sm:text-left">
           <p className="text-[13px] font-medium text-ink-2">{issuerName(card.issuer_id)}</p>
           <h2 className="headline mt-1 text-[28px] font-semibold">{card.name}</h2>

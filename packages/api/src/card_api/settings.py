@@ -1,16 +1,25 @@
 import os
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from card_rules.catalog import VERSION_PATTERN, version_key
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 
 
 def default_catalog_path() -> Path:
-    """CATALOG_PATH if set; else the newest published catalog/us/vN.json; else the local preview."""
+    """CATALOG_PATH if set; else the newest published catalog/us/vMAJOR.MINOR.json; else the
+    local preview."""
     if os.environ.get("CATALOG_PATH"):
         return Path(os.environ["CATALOG_PATH"])
     published = sorted(
-        (REPO_ROOT / "catalog" / "us").glob("v*.json"), key=lambda p: int(p.stem[1:])
+        (
+            p
+            for p in (REPO_ROOT / "catalog" / "us").glob("v*.json")
+            if re.fullmatch(VERSION_PATTERN, p.stem[1:])
+        ),
+        key=lambda p: version_key(p.stem[1:]),
     )
     return (
         published[-1] if published else REPO_ROOT / "catalog" / ".cache" / "preview_snapshot.json"

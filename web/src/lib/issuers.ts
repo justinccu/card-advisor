@@ -1,4 +1,5 @@
-// Display names and card-art palettes. Deliberately no logos or trademarked artwork:
+// Display names and the abstract card-face palettes, used when a card has no usable issuer card
+// art (lib/cardImages.ts). The abstract faces deliberately carry no logos or trademarked artwork:
 // the art is an abstract gradient keyed to the issuer and tier.
 
 export const ISSUERS: Record<string, string> = {

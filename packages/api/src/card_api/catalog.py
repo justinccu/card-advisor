@@ -24,7 +24,7 @@ def load_catalog() -> CatalogSnapshot:
     if not settings.catalog_path.exists():
         raise RuntimeError(
             f"no catalog at {settings.catalog_path}; run `uv run scout preview` "
-            "(or `scout publish` and point CATALOG_PATH at catalog/us/vN.json)"
+            "(or `scout publish` and point CATALOG_PATH at catalog/us/vMAJOR.MINOR.json)"
         )
     return CatalogSnapshot.model_validate_json(settings.catalog_path.read_text())
 

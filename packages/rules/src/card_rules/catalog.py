@@ -6,7 +6,7 @@ The static site, the web API, and the agent's tools all load this one shape.
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 from card_rules.models import CardProduct, Market
 
@@ -83,14 +83,31 @@ class CatalogCard(CardProduct):
     manually_verified: dict[str, date] = {}
 
 
+VERSION_PATTERN = r"^\d+\.\d+$"
+
+
+def version_key(version: str) -> tuple[int, int]:
+    """Numeric sort key for "MAJOR.MINOR", so 1.10 sorts after 1.9."""
+    major, minor = version.split(".")
+    return int(major), int(minor)
+
+
 class CatalogSnapshot(BaseModel):
-    version: int
+    # "MAJOR.MINOR" (file catalog/us/vMAJOR.MINOR.json). Each publish bumps MINOR; MAJOR marks a
+    # change in how the catalog is produced. The local preview is "0.0".
+    version: str = Field(pattern=VERSION_PATTERN)
     market: Market
     generated_at: datetime
     cards: list[CatalogCard]
     # True for a local preview built from unreviewed extractions (ADR 0002): never published,
     # and every consumer must label it as unverified.
     preview: bool = False
+
+    @field_validator("version", mode="before")
+    @classmethod
+    def _legacy_int_version(cls, v: object) -> object:
+        # Snapshots written before MAJOR.MINOR (e.g. an old local preview) used a plain integer.
+        return f"{v}.0" if isinstance(v, int) else v
 
     def card(self, card_id: str) -> CatalogCard:
         return next(c for c in self.cards if c.id == card_id)

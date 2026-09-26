@@ -33,7 +33,7 @@ export function CardTile({ card, onOpen }: { card: CatalogCard; onOpen: () => vo
         className="text-left"
         aria-label={`Open ${card.name}`}
       >
-        <CardArt issuerId={card.issuer_id} name={card.name} className="mx-auto w-full max-w-[260px]" />
+        <CardArt cardId={card.id} issuerId={card.issuer_id} name={card.name} className="mx-auto w-full max-w-[260px]" />
         <h3 className="mt-5 text-[17px] font-semibold leading-snug">{card.name}</h3>
         <p className="mt-0.5 text-[13px] text-ink-2">{fee(card)}</p>
         <p className="mt-3 text-[15px] font-medium">{offerHeadline(card.offer)}</p>

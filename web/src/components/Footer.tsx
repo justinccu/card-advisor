@@ -1,4 +1,14 @@
-export function Footer({ generatedAt, version }: { generatedAt: string; version: number }) {
+import { CardStyleToggle } from "./CardStyleToggle";
+
+export function Footer({
+  generatedAt,
+  version,
+  preview,
+}: {
+  generatedAt: string;
+  version: string;
+  preview: boolean;
+}) {
   const date = new Date(generatedAt).toLocaleDateString("en-US", { dateStyle: "medium" });
   return (
     <footer className="mt-24 border-t border-hairline bg-tile/60">
@@ -13,8 +23,13 @@ export function Footer({ generatedAt, version }: { generatedAt: string; version:
           publishing. Eligibility rules marked &ldquo;community&rdquo; are inferred from applicant data
           points, not issuer policy.
         </p>
+        <p>
+          Card names and designs are trademarks of their respective issuers and card networks, shown
+          only to identify each card. Card Advisor is not affiliated with or endorsed by any issuer.
+        </p>
+        <CardStyleToggle />
         <p className="text-ink-3">
-          Catalog {version === 0 ? "preview" : `v${version}`} · updated {date}
+          Catalog {preview ? "preview" : `v${version}`} · updated {date}
         </p>
       </div>
     </footer>

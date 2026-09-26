@@ -125,7 +125,7 @@ function DeckCard({
       className="absolute w-[260px] sm:w-[300px]"
       style={{ left: i * SLOT, x: "-50%", y: "-50%", scale, rotate, opacity, zIndex, filter }}
     >
-      <CardArt issuerId={card.issuer_id} name={card.name} />
+      <CardArt cardId={card.id} issuerId={card.issuer_id} name={card.name} />
     </motion.button>
   );
 }

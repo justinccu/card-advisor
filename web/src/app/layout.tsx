@@ -30,7 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Nav />
           {catalog.preview && <PreviewBanner />}
           <main>{children}</main>
-          <Footer generatedAt={catalog.generated_at} version={catalog.version} />
+          <Footer generatedAt={catalog.generated_at} version={catalog.version} preview={catalog.preview} />
         </Providers>
       </body>
     </html>

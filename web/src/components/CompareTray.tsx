@@ -37,7 +37,7 @@ export function CompareTray({ cards }: { cards: CatalogCard[] }) {
                   transition={spring.micro}
                   className="relative w-16 shrink-0"
                 >
-                  <CardArt issuerId={c.issuer_id} name={c.name} bare />
+                  <CardArt cardId={c.id} issuerId={c.issuer_id} name={c.name} bare />
                   <button
                     onClick={() => toggle(c.id)}
                     aria-label={`Remove ${c.name}`}

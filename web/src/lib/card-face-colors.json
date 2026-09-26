@@ -1,0 +1,426 @@
+{
+  "amex_blue_business_plus": {
+    "stops": [
+      "#314971",
+      "#426d96",
+      "#31496f"
+    ],
+    "ink": "light"
+  },
+  "amex_blue_cash_everyday": {
+    "stops": [
+      "#2e75ba",
+      "#7ebbe8",
+      "#0d4f9f"
+    ],
+    "ink": "light"
+  },
+  "amex_blue_cash_preferred": {
+    "stops": [
+      "#2a3c5a",
+      "#2d4064",
+      "#131a2e"
+    ],
+    "ink": "light"
+  },
+  "amex_business_gold": {
+    "stops": [
+      "#c1af69",
+      "#c9b76d",
+      "#bcac66"
+    ],
+    "ink": "dark"
+  },
+  "amex_business_platinum": {
+    "stops": [
+      "#b5baba",
+      "#cfd3d3",
+      "#b3b2b5"
+    ],
+    "ink": "dark"
+  },
+  "amex_delta_gold": {
+    "stops": [
+      "#cbb178",
+      "#bea36a",
+      "#a68950"
+    ],
+    "ink": "dark"
+  },
+  "amex_gold": {
+    "stops": [
+      "#bdac69",
+      "#cab76d",
+      "#bcab68"
+    ],
+    "ink": "dark"
+  },
+  "amex_hilton_honors": {
+    "stops": [
+      "#ffffff",
+      "#ffffff",
+      "#fafafa"
+    ],
+    "ink": "dark"
+  },
+  "amex_hilton_surpass": {
+    "stops": [
+      "#1f3e66",
+      "#1f3e66",
+      "#1f4979"
+    ],
+    "ink": "light"
+  },
+  "amex_platinum": {
+    "stops": [
+      "#b6b7bb",
+      "#d2d3d6",
+      "#b2b3b7"
+    ],
+    "ink": "dark"
+  },
+  "bofa_customized_cash": {
+    "stops": [
+      "#a41927",
+      "#b11926",
+      "#a51622"
+    ],
+    "ink": "light"
+  },
+  "bofa_customized_cash_secured": {
+    "stops": [
+      "#a41926",
+      "#b11926",
+      "#a51622"
+    ],
+    "ink": "light"
+  },
+  "bofa_customized_cash_student": {
+    "stops": [
+      "#a41927",
+      "#b11926",
+      "#a51622"
+    ],
+    "ink": "light"
+  },
+  "bofa_premium_rewards": {
+    "stops": [
+      "#373839",
+      "#474749",
+      "#38383a"
+    ],
+    "ink": "light"
+  },
+  "bofa_travel_rewards": {
+    "stops": [
+      "#14377d",
+      "#144086",
+      "#14397e"
+    ],
+    "ink": "light"
+  },
+  "bofa_unlimited_cash": {
+    "stops": [
+      "#96979a",
+      "#96979a",
+      "#96979a"
+    ],
+    "ink": "dark"
+  },
+  "c1_platinum": {
+    "stops": [
+      "#1c243c",
+      "#1b243c",
+      "#1b253e"
+    ],
+    "ink": "light"
+  },
+  "c1_platinum_secured": {
+    "stops": [
+      "#1c243c",
+      "#1b243c",
+      "#1b253e"
+    ],
+    "ink": "light"
+  },
+  "c1_quicksilver": {
+    "stops": [
+      "#5a6773",
+      "#6c7a87",
+      "#919ea8"
+    ],
+    "ink": "light"
+  },
+  "c1_quicksilver_student": {
+    "stops": [
+      "#5a6773",
+      "#6d7a87",
+      "#919ea8"
+    ],
+    "ink": "light"
+  },
+  "c1_quicksilverone": {
+    "stops": [
+      "#5a6774",
+      "#6c7a87",
+      "#919ea8"
+    ],
+    "ink": "light"
+  },
+  "c1_savor": {
+    "stops": [
+      "#953726",
+      "#994131",
+      "#ab4f33"
+    ],
+    "ink": "light"
+  },
+  "c1_savor_student": {
+    "stops": [
+      "#953726",
+      "#994131",
+      "#ab4f33"
+    ],
+    "ink": "light"
+  },
+  "c1_venture": {
+    "stops": [
+      "#032146",
+      "#021e41",
+      "#021a3c"
+    ],
+    "ink": "light"
+  },
+  "c1_venture_x": {
+    "stops": [
+      "#092d4a",
+      "#0a2c48",
+      "#092d48"
+    ],
+    "ink": "light"
+  },
+  "chase_freedom_flex": {
+    "stops": [
+      "#00245b",
+      "#005695",
+      "#004b87"
+    ],
+    "ink": "light"
+  },
+  "chase_freedom_rise": {
+    "stops": [
+      "#04a1ce",
+      "#213968",
+      "#0f2443"
+    ],
+    "ink": "light"
+  },
+  "chase_freedom_unlimited": {
+    "stops": [
+      "#283778",
+      "#193058",
+      "#11122b"
+    ],
+    "ink": "light"
+  },
+  "chase_ihg_premier": {
+    "stops": [
+      "#6e8996",
+      "#6e8996",
+      "#6e8996"
+    ],
+    "ink": "light"
+  },
+  "chase_ink_cash": {
+    "stops": [
+      "#4d545b",
+      "#6d737a",
+      "#5e656c"
+    ],
+    "ink": "light"
+  },
+  "chase_ink_preferred": {
+    "stops": [
+      "#0a132d",
+      "#0b1a3b",
+      "#0a142f"
+    ],
+    "ink": "light"
+  },
+  "chase_ink_unlimited": {
+    "stops": [
+      "#232a32",
+      "#43494f",
+      "#4a4f55"
+    ],
+    "ink": "light"
+  },
+  "chase_marriott_boundless": {
+    "stops": [
+      "#2b4668",
+      "#2d496b",
+      "#274163"
+    ],
+    "ink": "light"
+  },
+  "chase_prime_visa": {
+    "stops": [
+      "#655438",
+      "#0f223c",
+      "#0a1c37"
+    ],
+    "ink": "light"
+  },
+  "chase_sapphire_preferred": {
+    "stops": [
+      "#020a28",
+      "#05659e",
+      "#041b3c"
+    ],
+    "ink": "light"
+  },
+  "chase_sapphire_reserve": {
+    "stops": [
+      "#010410",
+      "#030919",
+      "#07122a"
+    ],
+    "ink": "light"
+  },
+  "chase_southwest_plus": {
+    "stops": [
+      "#7f878e",
+      "#889097",
+      "#818991"
+    ],
+    "ink": "light"
+  },
+  "chase_united_explorer": {
+    "stops": [
+      "#02346f",
+      "#02346e",
+      "#022955"
+    ],
+    "ink": "light"
+  },
+  "chase_world_of_hyatt": {
+    "stops": [
+      "#9b9b9d",
+      "#b7b7b6",
+      "#b8b9ba"
+    ],
+    "ink": "dark"
+  },
+  "citi_aadvantage_platinum_select": {
+    "stops": [
+      "#797c81",
+      "#767a7d",
+      "#97999b"
+    ],
+    "ink": "light"
+  },
+  "citi_costco": {
+    "stops": [
+      "#030509",
+      "#212327",
+      "#4c4b4e"
+    ],
+    "ink": "light"
+  },
+  "citi_double_cash": {
+    "stops": [
+      "#0d3d7a",
+      "#189197",
+      "#1d8463"
+    ],
+    "ink": "light"
+  },
+  "citi_secured": {
+    "stops": [
+      "#4383b9",
+      "#2f7eb6",
+      "#2b7bb3"
+    ],
+    "ink": "light"
+  },
+  "citi_strata_elite": {
+    "stops": [
+      "#040706",
+      "#040706",
+      "#454746"
+    ],
+    "ink": "light"
+  },
+  "citi_strata_premier": {
+    "stops": [
+      "#79787d",
+      "#78777c",
+      "#6f6d74"
+    ],
+    "ink": "light"
+  },
+  "discover_it_cash_back": {
+    "stops": [
+      "#58a5c5",
+      "#76bbd6",
+      "#4595b7"
+    ],
+    "ink": "dark"
+  },
+  "discover_it_student_cash_back": {
+    "stops": [
+      "#007dc6",
+      "#0097de",
+      "#0068b0"
+    ],
+    "ink": "light"
+  },
+  "usb_altitude_go": {
+    "stops": [
+      "#f58798",
+      "#ec1d3d",
+      "#ec1d3d"
+    ],
+    "ink": "light"
+  },
+  "usb_cash_plus": {
+    "stops": [
+      "#ffffff",
+      "#c3c5c5",
+      "#ffffff"
+    ],
+    "ink": "dark"
+  },
+  "usb_smartly": {
+    "stops": [
+      "#000000",
+      "#000000",
+      "#000000"
+    ],
+    "ink": "light"
+  },
+  "wf_active_cash": {
+    "stops": [
+      "#757474",
+      "#71444d",
+      "#706f70"
+    ],
+    "ink": "light"
+  },
+  "wf_autograph": {
+    "stops": [
+      "#562160",
+      "#552166",
+      "#962141"
+    ],
+    "ink": "light"
+  },
+  "wf_autograph_journey": {
+    "stops": [
+      "#333333",
+      "#2e2928",
+      "#362927"
+    ],
+    "ink": "light"
+  }
+}

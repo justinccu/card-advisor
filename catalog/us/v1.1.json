@@ -1,7 +1,7 @@
 {
-  "version": 3,
+  "version": "1.1",
   "market": "US",
-  "generated_at": "2026-09-26T00:16:27.829783Z",
+  "generated_at": "2026-09-25T19:47:16.075638Z",
   "cards": [
     {
       "id": "chase_freedom_flex",
@@ -28,12 +28,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 250,
-        "amount_is_up_to": false,
         "unit": "usd",
         "min_spend_usd": 500,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -76,30 +73,17 @@
         {
           "description": "DashPass membership (DoorDash and Caviar)",
           "amount_usd": null,
-          "period": "one_time",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "period": "one_time"
         },
         {
           "description": "DoorDash $10 off quarterly on non-restaurant orders",
-          "amount_usd": 10.0,
-          "period": "quarter",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 10,
+          "period": "quarter"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T13:56:00-05:00",
-      "content_hash": "671355d322b005545e6f8e3f0eea6e8bcff8653713dc706f484a3b8838e9f960",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "671355d322b005545e6f8e3f0eea6e8bcff8653713dc706f484a3b8838e9f960"
     },
     {
       "id": "chase_freedom_unlimited",
@@ -125,12 +109,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 200,
-        "amount_is_up_to": false,
         "unit": "usd",
         "min_spend_usd": 500,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -165,12 +146,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T13:56:00-05:00",
-      "content_hash": "7b168560bc5f5c98211b146dc332b6ac79de3ec939ac629eee5e969238f5763a",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "7b168560bc5f5c98211b146dc332b6ac79de3ec939ac629eee5e969238f5763a"
     },
     {
       "id": "chase_freedom_rise",
@@ -207,22 +183,13 @@
       "credits": [
         {
           "description": "statement credit for enrolling in automatic payments",
-          "amount_usd": 25.0,
-          "period": "one_time",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 25,
+          "period": "one_time"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T13:56:00-05:00",
-      "content_hash": "9fdc05edad3e9629e0c9e7741d4053da160b59c67c5951e36577e106a0379abb",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "9fdc05edad3e9629e0c9e7741d4053da160b59c67c5951e36577e106a0379abb"
     },
     {
       "id": "chase_sapphire_preferred",
@@ -249,12 +216,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 75000,
-        "amount_is_up_to": false,
         "unit": "points",
         "min_spend_usd": 5000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -303,31 +267,18 @@
       "credits": [
         {
           "description": "Chase Travel Hotel Credit",
-          "amount_usd": 100.0,
-          "period": "year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 100,
+          "period": "year"
         },
         {
           "description": "Global Entry or TSA PreCheck or NEXUS Application Fee credit",
-          "amount_usd": 120.0,
-          "period": "four_years",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 120,
+          "period": "four_years"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T13:56:00-05:00",
-      "content_hash": "fe9e1766d4a0e389555abafee7957831433b4889683fe57adde0e22f4427ef75",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "fe9e1766d4a0e389555abafee7957831433b4889683fe57adde0e22f4427ef75"
     },
     {
       "id": "chase_sapphire_reserve",
@@ -355,12 +306,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 100000,
-        "amount_is_up_to": false,
         "unit": "points",
         "min_spend_usd": 6000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -402,76 +350,43 @@
       "credits": [
         {
           "description": "Annual travel credit",
-          "amount_usd": 300.0,
-          "period": "year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 300,
+          "period": "year"
         },
         {
           "description": "Dining credit at Sapphire Exclusive Tables restaurants",
-          "amount_usd": 300.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 300,
+          "period": "calendar_year"
         },
         {
           "description": "Global Entry/TSA PreCheck/NEXUS fee credit",
-          "amount_usd": 120.0,
-          "period": "four_years",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 120,
+          "period": "four_years"
         },
         {
           "description": "Lyft monthly credits",
-          "amount_usd": 120.0,
-          "period": "year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 120,
+          "period": "year"
         },
         {
           "description": "Peloton membership credits",
-          "amount_usd": 120.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 120,
+          "period": "calendar_year"
         },
         {
           "description": "StubHub credits",
-          "amount_usd": 300.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 300,
+          "period": "calendar_year"
         },
         {
           "description": "DoorDash promos",
-          "amount_usd": 300.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 300,
+          "period": "calendar_year"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T13:56:00-05:00",
-      "content_hash": "425ccfe571204ea0840d098d06cee0b1484831b9e6c7f2204e49438919e1641d",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "425ccfe571204ea0840d098d06cee0b1484831b9e6c7f2204e49438919e1641d"
     },
     {
       "id": "chase_united_explorer",
@@ -498,12 +413,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 60000,
-        "amount_is_up_to": true,
         "unit": "miles",
         "min_spend_usd": 3000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -521,14 +433,14 @@
           "cap_period": null
         },
         {
-          "category": "hotel stays",
+          "category": "hotel stays when booked with the hotel",
           "rate": 2.0,
           "unit": "x_miles",
           "cap_usd": null,
           "cap_period": null
         },
         {
-          "category": "dining",
+          "category": "dining including eligible delivery services",
           "rate": 2.0,
           "unit": "x_miles",
           "cap_usd": null,
@@ -545,103 +457,43 @@
       "credits": [
         {
           "description": "Global Entry, TSA PreCheck or NEXUS application fee",
-          "amount_usd": 120.0,
-          "period": "four_years",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "reimbursement for the application fee"
-        },
-        {
-          "description": "United inflight food, beverages and Wi-Fi",
-          "amount_usd": null,
-          "period": "per_use",
-          "percent": 25.0,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "back as a statement credit on United-operated flights"
-        },
-        {
-          "description": "United travel credit after $10,000 spend",
-          "amount_usd": 100.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "after spending $10,000 each calendar year"
+          "amount_usd": 120,
+          "period": "four_years"
         },
         {
           "description": "United Hotels statement credit",
-          "amount_usd": 100.0,
-          "period": "year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "on prepaid hotel stays purchased directly through United Hotels"
+          "amount_usd": 100,
+          "period": "year"
         },
         {
-          "description": "rideshare statement credit",
-          "amount_usd": 60.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "enrollment required, yearly opt-in"
+          "description": "Rideshare statement credit",
+          "amount_usd": 60,
+          "period": "calendar_year"
         },
         {
           "description": "Avis or Budget travel credit",
-          "amount_usd": 50.0,
-          "period": "year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "booked directly through cars.united.com"
+          "amount_usd": 50,
+          "period": "year"
         },
         {
           "description": "Instacart credits",
-          "amount_usd": 120.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": "2027-12-31",
-          "conditions": "Terms apply"
+          "amount_usd": 120,
+          "period": "calendar_year"
         },
         {
           "description": "JSX statement credit",
-          "amount_usd": 100.0,
-          "period": "year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "book flights directly with JSX"
+          "amount_usd": 100,
+          "period": "year"
+        },
+        {
+          "description": "United travel credit",
+          "amount_usd": 100,
+          "period": "calendar_year"
         }
       ],
       "notes": "",
-      "verified_at": "2026-09-25T22:45:37Z",
-      "content_hash": "9177d4270cf699cace62052ec47dd43429086161d2fa2db0d44372e75252ae10",
-      "offer_variants": [
-        {
-          "source_url": "https://creditcards.chase.com/travel-credit-cards/united/united-explorer",
-          "profile": "fresh",
-          "offer": {
-            "amount_disclosed": true,
-            "amount": 60000,
-            "amount_is_up_to": true,
-            "unit": "miles",
-            "min_spend_usd": 3000,
-            "spend_window_months": 3,
-            "statement_credit_usd": null,
-            "ends_on": null
-          },
-          "fetched_at": "2026-09-25T22:45:37Z"
-        }
-      ],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {
-        "credits:United inflight food, beverages and Wi-Fi": "2026-09-25"
-      }
+      "verified_at": "2026-09-25T13:56:00-05:00",
+      "content_hash": "754313812ef99ffaedce4642c7acf9133ff2cb006b711c6bb3b83a973b2b13d2"
     },
     {
       "id": "chase_southwest_plus",
@@ -668,12 +520,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 50000,
-        "amount_is_up_to": false,
         "unit": "points",
         "min_spend_usd": 1000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -702,21 +551,12 @@
         {
           "description": "3,000 anniversary points each year",
           "amount_usd": null,
-          "period": "year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "period": "year"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T13:56:00-05:00",
-      "content_hash": "32caf555a0f1e508ceee10be31cba86decdd897e7b79e5d730b80c5eb8e5956c",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "32caf555a0f1e508ceee10be31cba86decdd897e7b79e5d730b80c5eb8e5956c"
     },
     {
       "id": "chase_marriott_boundless",
@@ -743,12 +583,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 3,
-        "amount_is_up_to": false,
         "unit": "free_nights",
         "min_spend_usd": 3000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -773,37 +610,10 @@
           "cap_period": null
         }
       ],
-      "credits": [
-        {
-          "description": "Airline credit (2026 window)",
-          "amount_usd": 50.0,
-          "period": "one_time",
-          "percent": null,
-          "valid_from": "2026-06-04",
-          "valid_until": "2026-12-31",
-          "conditions": "after $250 spend in the window"
-        },
-        {
-          "description": "Airline credit (2027 window)",
-          "amount_usd": 50.0,
-          "period": "one_time",
-          "percent": null,
-          "valid_from": "2027-01-01",
-          "valid_until": "2027-06-30",
-          "conditions": "after $250 spend in the window"
-        }
-      ],
+      "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T13:56:00-05:00",
-      "content_hash": "afca3f216cc9618fbec53140da2a2535b3847e56d7ae682586b91424c9ade397",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {
-        "credits:Airline credit (2026 window)": "2026-09-25",
-        "credits:Airline credit (2027 window)": "2026-09-25"
-      }
+      "content_hash": "afca3f216cc9618fbec53140da2a2535b3847e56d7ae682586b91424c9ade397"
     },
     {
       "id": "chase_ihg_premier",
@@ -830,12 +640,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 140000,
-        "amount_is_up_to": false,
         "unit": "points",
         "min_spend_usd": 3000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -863,31 +670,18 @@
       "credits": [
         {
           "description": "Global Entry, TSA PreCheck or NEXUS application fee",
-          "amount_usd": 120.0,
-          "period": "four_years",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 120,
+          "period": "four_years"
         },
         {
           "description": "United Airlines TravelBank Cash",
-          "amount_usd": 50.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 50,
+          "period": "calendar_year"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T13:56:00-05:00",
-      "content_hash": "ca2c3b8f4d78851450d0cb33d1f977b50f50d3905a8748b4a84802e65e2f24db",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "ca2c3b8f4d78851450d0cb33d1f977b50f50d3905a8748b4a84802e65e2f24db"
     },
     {
       "id": "chase_world_of_hyatt",
@@ -914,23 +708,20 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 60000,
-        "amount_is_up_to": true,
         "unit": "points",
         "min_spend_usd": 3000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
-          "category": "Hyatt hotels and resorts",
+          "category": "Hyatt hotels",
           "rate": 4.0,
           "unit": "x_points",
           "cap_usd": null,
           "cap_period": null
         },
         {
-          "category": "restaurants, airline tickets purchased directly from airlines, local transit and commuting, fitness club & gym memberships",
+          "category": "restaurants, airline tickets, local transit, fitness memberships",
           "rate": 2.0,
           "unit": "x_points",
           "cap_usd": null,
@@ -946,48 +737,19 @@
       ],
       "credits": [
         {
-          "description": "Free Night Award at Category 1-4 Hyatt hotel",
+          "description": "Free night at Category 1-4 Hyatt hotel",
           "amount_usd": null,
-          "period": "year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "period": "year"
         },
         {
-          "description": "Additional Free Night Award at Category 1-4 Hyatt hotel",
+          "description": "Additional free night after $15,000 spend",
           "amount_usd": null,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "after spending $15,000 in purchases"
+          "period": "calendar_year"
         }
       ],
       "notes": "",
-      "verified_at": "2026-09-25T22:45:56Z",
-      "content_hash": "5ad66a576137be43c94d16a682474ed655049b533cc177182e257aaa63bad8d5",
-      "offer_variants": [
-        {
-          "source_url": "https://creditcards.chase.com/travel-credit-cards/world-of-hyatt-credit-card",
-          "profile": "fresh",
-          "offer": {
-            "amount_disclosed": true,
-            "amount": 60000,
-            "amount_is_up_to": true,
-            "unit": "points",
-            "min_spend_usd": 3000,
-            "spend_window_months": 3,
-            "statement_credit_usd": null,
-            "ends_on": null
-          },
-          "fetched_at": "2026-09-25T22:45:56Z"
-        }
-      ],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "verified_at": "2026-09-25T13:56:00-05:00",
+      "content_hash": "aa975e2ae1e87e0976927d7cce02978bb002828600d730ca5b2ae419487ff6b0"
     },
     {
       "id": "chase_prime_visa",
@@ -1014,12 +776,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 150,
-        "amount_is_up_to": false,
         "unit": "gift_card_usd",
         "min_spend_usd": null,
-        "spend_window_months": null,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": null
       },
       "earning_rates": [
         {
@@ -1047,12 +806,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T13:56:00-05:00",
-      "content_hash": "179f0d334cd47b745c834f4e10ffefb8debfd58fb5ac350ca85d9303e4437580",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "179f0d334cd47b745c834f4e10ffefb8debfd58fb5ac350ca85d9303e4437580"
     },
     {
       "id": "chase_ink_unlimited",
@@ -1079,12 +833,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 750,
-        "amount_is_up_to": false,
         "unit": "usd",
         "min_spend_usd": 6000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -1105,33 +856,13 @@
       "credits": [
         {
           "description": "Instacart monthly credit",
-          "amount_usd": 20.0,
-          "period": "month",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
-        },
-        {
-          "description": "Instacart+ membership trial",
-          "amount_usd": null,
-          "period": "one_time",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": "2027-12-31",
-          "conditions": "complimentary 3 months, then $99/year auto-renew; enrollment required"
+          "amount_usd": 20,
+          "period": "month"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T13:56:00-05:00",
-      "content_hash": "8157804f7efd91259f429a50a058bb94a78daa23016a13fa373a2617ed5edddc",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {
-        "credits:Instacart+ membership trial": "2026-09-25"
-      }
+      "content_hash": "8157804f7efd91259f429a50a058bb94a78daa23016a13fa373a2617ed5edddc"
     },
     {
       "id": "chase_ink_cash",
@@ -1158,12 +889,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 750,
-        "amount_is_up_to": false,
         "unit": "usd",
         "min_spend_usd": 6000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -1198,22 +926,13 @@
       "credits": [
         {
           "description": "Instacart+ membership monthly credit",
-          "amount_usd": 20.0,
-          "period": "month",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 20,
+          "period": "month"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T13:56:00-05:00",
-      "content_hash": "987640ae5ade6f60f3da18a5d0bad8b9effa08065d47c0352a79f52d4fe43b6f",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "987640ae5ade6f60f3da18a5d0bad8b9effa08065d47c0352a79f52d4fe43b6f"
     },
     {
       "id": "chase_ink_preferred",
@@ -1240,12 +959,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 100000,
-        "amount_is_up_to": false,
         "unit": "points",
         "min_spend_usd": 8000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -1294,31 +1010,18 @@
       "credits": [
         {
           "description": "DashPass membership (DoorDash and Caviar)",
-          "amount_usd": 0.0,
-          "period": "year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 0,
+          "period": "year"
         },
         {
           "description": "$10 off monthly on DoorDash non-restaurant orders",
-          "amount_usd": 10.0,
-          "period": "month",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 10,
+          "period": "month"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T13:56:00-05:00",
-      "content_hash": "80d1478e271784d407c065e059919e57f5ee3bc8774d45fd17bad971fd160a43",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "80d1478e271784d407c065e059919e57f5ee3bc8774d45fd17bad971fd160a43"
     },
     {
       "id": "amex_platinum",
@@ -1345,13 +1048,10 @@
       "network": "American Express",
       "offer": {
         "amount_disclosed": false,
-        "amount": 175000,
-        "amount_is_up_to": true,
+        "amount": null,
         "unit": "points",
         "min_spend_usd": 12000,
-        "spend_window_months": 6,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 6
       },
       "earning_rates": [
         {
@@ -1362,7 +1062,7 @@
           "cap_period": "calendar_year"
         },
         {
-          "category": "Prepaid Hotels Booked on American Express Travel",
+          "category": "Prepaid Hotels booked on American Express Travel",
           "rate": 5.0,
           "unit": "x_points",
           "cap_usd": null,
@@ -1379,130 +1079,63 @@
       "credits": [
         {
           "description": "Hotel Credit for Fine Hotels + Resorts or The Hotel Collection",
-          "amount_usd": 300.0,
-          "period": "semi_annual",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "bookings through American Express Travel, The Hotel Collection requires minimum two-night stay"
+          "amount_usd": 600,
+          "period": "year"
+        },
+        {
+          "description": "Resy dining credit",
+          "amount_usd": 400,
+          "period": "year"
+        },
+        {
+          "description": "Digital Entertainment credit",
+          "amount_usd": 300,
+          "period": "year"
+        },
+        {
+          "description": "lululemon credit",
+          "amount_usd": 300,
+          "period": "year"
+        },
+        {
+          "description": "Walmart+ credit",
+          "amount_usd": 155,
+          "period": "year"
         },
         {
           "description": "Uber Cash",
-          "amount_usd": 15.0,
-          "period": "month",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "add Card to Uber account, use on rides and orders in U.S."
-        },
-        {
-          "description": "Uber One Credit",
-          "amount_usd": 120.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "enrollment required"
+          "amount_usd": 200,
+          "period": "year"
         },
         {
           "description": "Airline Fee Credit",
-          "amount_usd": 200.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "incidental fees charged by selected qualifying airline"
+          "amount_usd": 200,
+          "period": "calendar_year"
         },
         {
           "description": "CLEAR+ Credit",
-          "amount_usd": 219.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "enrollment required"
+          "amount_usd": 219,
+          "period": "calendar_year"
         },
         {
-          "description": "Resy Credit",
-          "amount_usd": 100.0,
-          "period": "quarter",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "enrollment required, dining purchases at qualifying U.S. Resy restaurants"
-        },
-        {
-          "description": "Digital Entertainment Credit",
-          "amount_usd": 25.0,
-          "period": "month",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "enrollment required"
-        },
-        {
-          "description": "lululemon Credit",
-          "amount_usd": 75.0,
-          "period": "quarter",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "enrollment required"
-        },
-        {
-          "description": "Walmart+ Credit",
-          "amount_usd": 12.95,
-          "period": "month",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "enrollment required"
-        },
-        {
-          "description": "Oura Ring Credit",
-          "amount_usd": 200.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "enrollment required"
+          "description": "Uber One Credit",
+          "amount_usd": 120,
+          "period": "calendar_year"
         },
         {
           "description": "Equinox Credit",
-          "amount_usd": 300.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "enrollment required"
+          "amount_usd": 300,
+          "period": "calendar_year"
+        },
+        {
+          "description": "Oura Ring Credit",
+          "amount_usd": 200,
+          "period": "calendar_year"
         }
       ],
       "notes": "",
-      "verified_at": null,
-      "content_hash": "be3ff2c80e41d43a6dca860e39dbbc18708a415f15486bb5eb1af6dd54e187ed",
-      "offer_variants": [
-        {
-          "source_url": "https://www.americanexpress.com/us/credit-cards/card/platinum/",
-          "profile": "fresh",
-          "offer": {
-            "amount_disclosed": false,
-            "amount": 175000,
-            "amount_is_up_to": true,
-            "unit": "points",
-            "min_spend_usd": 12000,
-            "spend_window_months": 6,
-            "statement_credit_usd": null,
-            "ends_on": null
-          },
-          "fetched_at": null
-        }
-      ],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": true,
-      "quarantine": [
-        "raw HTML only, not shown to visitors: $550"
-      ],
-      "manually_verified": {}
+      "verified_at": "2026-09-25T14:30:00-05:00",
+      "content_hash": "bce8f3fa542222165701306f33c5331a9801de78ae8d43315e28697768b7cd54"
     },
     {
       "id": "amex_gold",
@@ -1528,13 +1161,10 @@
       "network": "American Express",
       "offer": {
         "amount_disclosed": false,
-        "amount": 100000,
-        "amount_is_up_to": true,
+        "amount": null,
         "unit": "points",
         "min_spend_usd": 8000,
-        "spend_window_months": 6,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 6
       },
       "earning_rates": [
         {
@@ -1582,90 +1212,29 @@
       ],
       "credits": [
         {
-          "description": "Dining Credit",
-          "amount_usd": 10.0,
-          "period": "month",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "Enrollment required"
+          "description": "Dining Credit at Grubhub, Buffalo Wild Wings, Five Guys, The Cheesecake Factory, and Wonder",
+          "amount_usd": 120,
+          "period": "year"
         },
         {
           "description": "Uber Cash",
-          "amount_usd": 10.0,
-          "period": "month",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "Enrollment required"
+          "amount_usd": 120,
+          "period": "year"
         },
         {
           "description": "Resy Credit",
-          "amount_usd": 100.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "Enrollment required"
+          "amount_usd": 100,
+          "period": "calendar_year"
         },
         {
           "description": "Dunkin' Credit",
-          "amount_usd": 7.0,
-          "period": "month",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "Enrollment required"
-        },
-        {
-          "description": "Hotel Collection credit",
-          "amount_usd": 100.0,
-          "period": "per_use",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "Two-night minimum stay, eligible charges vary by property"
+          "amount_usd": 84,
+          "period": "year"
         }
       ],
       "notes": "",
-      "verified_at": "2026-09-25T22:46:47Z",
-      "content_hash": "e44b95364b01d78933c2a91e9826fa792bff1ad2cdd58704381fef83d640cdb2",
-      "offer_variants": [
-        {
-          "source_url": "https://www.americanexpress.com/us/credit-cards/card/gold-card/",
-          "profile": "fresh",
-          "offer": {
-            "amount_disclosed": false,
-            "amount": 100000,
-            "amount_is_up_to": true,
-            "unit": "points",
-            "min_spend_usd": 8000,
-            "spend_window_months": 6,
-            "statement_credit_usd": null,
-            "ends_on": null
-          },
-          "fetched_at": "2026-09-25T22:46:47Z"
-        },
-        {
-          "source_url": "https://www.americanexpress.com/us/credit-cards/card/gold-card/28810/",
-          "profile": "campaign",
-          "offer": {
-            "amount_disclosed": false,
-            "amount": 100000,
-            "amount_is_up_to": true,
-            "unit": "points",
-            "min_spend_usd": 8000,
-            "spend_window_months": 6,
-            "statement_credit_usd": null,
-            "ends_on": null
-          },
-          "fetched_at": "2026-09-25T22:46:53Z"
-        }
-      ],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "verified_at": "2026-09-25T14:30:00-05:00",
+      "content_hash": "10ffefa7a08c2a1a4269819b68331a7fce1a7d0c2f05e2e1aaf90a650c2ad503"
     },
     {
       "id": "amex_green",
@@ -1694,12 +1263,7 @@
       "credits": [],
       "notes": "",
       "verified_at": null,
-      "content_hash": null,
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": null
     },
     {
       "id": "amex_blue_cash_everyday",
@@ -1721,16 +1285,13 @@
       "annual_fee_usd": 0,
       "first_year_annual_fee_usd": null,
       "foreign_transaction_fee_pct": 2.7,
-      "network": null,
+      "network": "American Express",
       "offer": {
         "amount_disclosed": false,
-        "amount": 200,
-        "amount_is_up_to": true,
+        "amount": null,
         "unit": "usd",
         "min_spend_usd": 2000,
-        "spend_window_months": 6,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 6
       },
       "earning_rates": [
         {
@@ -1765,38 +1326,13 @@
       "credits": [
         {
           "description": "Disney Streaming Credit",
-          "amount_usd": 7.0,
-          "period": "month",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "enrollment required"
+          "amount_usd": 7,
+          "period": "month"
         }
       ],
       "notes": "",
-      "verified_at": "2026-09-25T22:46:58Z",
-      "content_hash": "0e59e67596a9573b8e95f71021fb7efd5169709f0303f5b735d48d6a63074eaa",
-      "offer_variants": [
-        {
-          "source_url": "https://www.americanexpress.com/us/credit-cards/card/blue-cash-everyday/",
-          "profile": "fresh",
-          "offer": {
-            "amount_disclosed": false,
-            "amount": 200,
-            "amount_is_up_to": true,
-            "unit": "usd",
-            "min_spend_usd": 2000,
-            "spend_window_months": 6,
-            "statement_credit_usd": null,
-            "ends_on": null
-          },
-          "fetched_at": "2026-09-25T22:46:58Z"
-        }
-      ],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "verified_at": "2026-09-25T14:30:00-05:00",
+      "content_hash": "30a466afadcca5c01e5b5205b2ba569bfdca22fe5c5e4c7e93730205f2d47e32"
     },
     {
       "id": "amex_blue_cash_preferred",
@@ -1822,13 +1358,10 @@
       "network": "American Express",
       "offer": {
         "amount_disclosed": false,
-        "amount": 300,
-        "amount_is_up_to": true,
+        "amount": null,
         "unit": "usd",
         "min_spend_usd": 3000,
-        "spend_window_months": 6,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 6
       },
       "earning_rates": [
         {
@@ -1870,38 +1403,13 @@
       "credits": [
         {
           "description": "Disney Streaming Credit",
-          "amount_usd": 10.0,
-          "period": "month",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "enrollment"
+          "amount_usd": 10,
+          "period": "month"
         }
       ],
       "notes": "",
-      "verified_at": "2026-09-25T22:47:04Z",
-      "content_hash": "b061d8611c208ad77f6786deb8f075c2aac854c4ffbd0b3c1ed16ec0e7c2bcb0",
-      "offer_variants": [
-        {
-          "source_url": "https://www.americanexpress.com/us/credit-cards/card/blue-cash-preferred/",
-          "profile": "fresh",
-          "offer": {
-            "amount_disclosed": false,
-            "amount": 300,
-            "amount_is_up_to": true,
-            "unit": "usd",
-            "min_spend_usd": 3000,
-            "spend_window_months": 6,
-            "statement_credit_usd": null,
-            "ends_on": null
-          },
-          "fetched_at": "2026-09-25T22:47:04Z"
-        }
-      ],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "verified_at": "2026-09-25T14:30:00-05:00",
+      "content_hash": "3b21859e3d8d0569520a96d2dacbde7b598c73a02b52b948f8d20e782629b0f8"
     },
     {
       "id": "amex_delta_gold",
@@ -1925,16 +1433,7 @@
       "first_year_annual_fee_usd": 0,
       "foreign_transaction_fee_pct": 0.0,
       "network": "American Express",
-      "offer": {
-        "amount_disclosed": true,
-        "amount": 80000,
-        "amount_is_up_to": true,
-        "unit": "miles",
-        "min_spend_usd": 3000,
-        "spend_window_months": 6,
-        "statement_credit_usd": 250,
-        "ends_on": "2026-11-04"
-      },
+      "offer": null,
       "earning_rates": [
         {
           "category": "Dining",
@@ -1968,65 +1467,23 @@
       "credits": [
         {
           "description": "Delta Flight Credit",
-          "amount_usd": 200.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "after $10,000 spend in calendar year"
+          "amount_usd": 200,
+          "period": "calendar_year"
         },
         {
           "description": "Rideshare Credit",
-          "amount_usd": 10.0,
-          "period": "month",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "enrollment required, after first Card renewal"
+          "amount_usd": 120,
+          "period": "year"
         },
         {
           "description": "Delta Stays Credit",
-          "amount_usd": 100.0,
-          "period": "year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "book through Delta Stays on delta.com"
-        },
-        {
-          "description": "In-flight Purchases",
-          "amount_usd": null,
-          "period": "per_use",
-          "percent": 20.0,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "Delta in-flight purchases of food and beverages"
+          "amount_usd": 100,
+          "period": "year"
         }
       ],
       "notes": "",
-      "verified_at": "2026-09-25T22:47:12Z",
-      "content_hash": "11070fcb0670a480885ab639476215ce8c0561f28667f493aa24a11eab39d950",
-      "offer_variants": [
-        {
-          "source_url": "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-gold-american-express-card/",
-          "profile": "fresh",
-          "offer": {
-            "amount_disclosed": true,
-            "amount": 80000,
-            "amount_is_up_to": true,
-            "unit": "miles",
-            "min_spend_usd": 3000,
-            "spend_window_months": 6,
-            "statement_credit_usd": 250,
-            "ends_on": "2026-11-04"
-          },
-          "fetched_at": "2026-09-25T22:47:12Z"
-        }
-      ],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "verified_at": "2026-09-25T14:30:00-05:00",
+      "content_hash": "9ffbcf1ae7b27f34c5bb05308b62f8ae8e75eb5fa091cdb27bd99ff904aa462a"
     },
     {
       "id": "amex_hilton_honors",
@@ -2053,12 +1510,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 70000,
-        "amount_is_up_to": false,
         "unit": "points",
         "min_spend_usd": 2000,
-        "spend_window_months": 6,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 6
       },
       "earning_rates": [
         {
@@ -2100,12 +1554,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:30:00-05:00",
-      "content_hash": "4da0e3f27330c5d7a428cdcfc62a82e4e0a3068f62a05fec27cf8f1d1f3e5ea4",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "4da0e3f27330c5d7a428cdcfc62a82e4e0a3068f62a05fec27cf8f1d1f3e5ea4"
     },
     {
       "id": "amex_hilton_surpass",
@@ -2126,18 +1575,15 @@
         "hotel"
       ],
       "annual_fee_usd": 150,
-      "first_year_annual_fee_usd": null,
+      "first_year_annual_fee_usd": 0,
       "foreign_transaction_fee_pct": 0.0,
       "network": "American Express",
       "offer": {
         "amount_disclosed": false,
         "amount": null,
-        "amount_is_up_to": false,
         "unit": "points",
         "min_spend_usd": null,
-        "spend_window_months": null,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": null
       },
       "earning_rates": [
         {
@@ -2186,35 +1632,18 @@
       "credits": [
         {
           "description": "Hilton statement credits",
-          "amount_usd": 50.0,
-          "period": "quarter",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 50,
+          "period": "quarter"
         },
         {
           "description": "Concessions credit",
-          "amount_usd": 250.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 250,
+          "period": "calendar_year"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T14:30:00-05:00",
-      "content_hash": "cc6c874b8349b447c9f65ca54ca95c40cfa99757d783bda6ca5d895655a77c05",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": true,
-      "quarantine": [
-        "raw HTML only, not shown to visitors: $0"
-      ],
-      "manually_verified": {
-        "first_year_annual_fee_usd": "2026-09-25"
-      }
+      "content_hash": "cc6c874b8349b447c9f65ca54ca95c40cfa99757d783bda6ca5d895655a77c05"
     },
     {
       "id": "amex_blue_business_plus",
@@ -2241,12 +1670,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 15000,
-        "amount_is_up_to": false,
         "unit": "points",
         "min_spend_usd": 3000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -2267,12 +1693,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:30:00-05:00",
-      "content_hash": "d463734b23998b88fe2654c059732292c374a5871ad156bab09dbeb03d40a7c3",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "d463734b23998b88fe2654c059732292c374a5871ad156bab09dbeb03d40a7c3"
     },
     {
       "id": "amex_business_gold",
@@ -2295,20 +1716,17 @@
       "annual_fee_usd": 375,
       "first_year_annual_fee_usd": null,
       "foreign_transaction_fee_pct": 0.0,
-      "network": null,
+      "network": "American Express",
       "offer": {
         "amount_disclosed": false,
-        "amount": 200000,
-        "amount_is_up_to": true,
+        "amount": null,
         "unit": "points",
         "min_spend_usd": 15000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
-          "category": "Top 2 eligible categories each month (from 6 categories)",
+          "category": "Top 2 eligible categories each month",
           "rate": 4.0,
           "unit": "x_points",
           "cap_usd": 150000,
@@ -2332,65 +1750,28 @@
       "credits": [
         {
           "description": "Flexible Business Credit for FedEx, Grubhub, and Office Supply Stores",
-          "amount_usd": 20.0,
-          "period": "month",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": "2026-10-01",
-          "conditions": "enrollment required"
+          "amount_usd": 240,
+          "period": "year"
         },
         {
           "description": "ChatGPT Business Credit",
-          "amount_usd": 300.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "enrollment required"
+          "amount_usd": 300,
+          "period": "calendar_year"
         },
         {
           "description": "Squarespace Credit",
-          "amount_usd": 150.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "enrollment required"
+          "amount_usd": 150,
+          "period": "calendar_year"
         },
         {
           "description": "Walmart+ Credit",
-          "amount_usd": 12.95,
-          "period": "month",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "subject to auto-renewal"
+          "amount_usd": 155,
+          "period": "year"
         }
       ],
       "notes": "",
-      "verified_at": null,
-      "content_hash": "f1e2daa555e185bf098e355471e81dc16bee3d100df0b9289abd3e70e4266e71",
-      "offer_variants": [
-        {
-          "source_url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/",
-          "profile": "fresh",
-          "offer": {
-            "amount_disclosed": false,
-            "amount": 200000,
-            "amount_is_up_to": true,
-            "unit": "points",
-            "min_spend_usd": 15000,
-            "spend_window_months": 3,
-            "statement_credit_usd": null,
-            "ends_on": null
-          },
-          "fetched_at": null
-        }
-      ],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "verified_at": "2026-09-25T14:30:00-05:00",
+      "content_hash": "6a13c2cdf155d50c46e69ddaae0c632fbb61adee60d5634422da634cd147badd"
     },
     {
       "id": "amex_business_platinum",
@@ -2417,12 +1798,9 @@
       "offer": {
         "amount_disclosed": false,
         "amount": null,
-        "amount_is_up_to": false,
         "unit": "points",
         "min_spend_usd": null,
-        "spend_window_months": null,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": null
       },
       "earning_rates": [
         {
@@ -2450,103 +1828,58 @@
       "credits": [
         {
           "description": "Hotel credit on prepaid bookings through Amex Travel",
-          "amount_usd": 600.0,
-          "period": "semi_annual",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 600,
+          "period": "semi_annual"
         },
         {
           "description": "Hilton statement credits",
-          "amount_usd": 200.0,
-          "period": "quarter",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 200,
+          "period": "quarter"
         },
         {
           "description": "Airline fee credit",
-          "amount_usd": 200.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 200,
+          "period": "calendar_year"
         },
         {
           "description": "CLEAR+ membership credit",
-          "amount_usd": 219.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 219,
+          "period": "calendar_year"
         },
         {
           "description": "Dell Technologies credit",
-          "amount_usd": 1150.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 1150,
+          "period": "calendar_year"
         },
         {
           "description": "ChatGPT Business credit",
-          "amount_usd": 300.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 300,
+          "period": "calendar_year"
         },
         {
           "description": "Adobe credit",
-          "amount_usd": 250.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 250,
+          "period": "calendar_year"
         },
         {
           "description": "Indeed credit",
-          "amount_usd": 360.0,
-          "period": "quarter",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 360,
+          "period": "quarter"
         },
         {
           "description": "Wireless credit",
-          "amount_usd": 120.0,
-          "period": "month",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 120,
+          "period": "month"
         },
         {
           "description": "Global Entry or TSA PreCheck fee credit",
-          "amount_usd": 120.0,
-          "period": "four_years",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 120,
+          "period": "four_years"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T14:30:00-05:00",
-      "content_hash": "145b4713ef698f1eaf54dc2b0e9aba73307809daeb7d2e5602e23537b4e4036b",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "145b4713ef698f1eaf54dc2b0e9aba73307809daeb7d2e5602e23537b4e4036b"
     },
     {
       "id": "citi_double_cash",
@@ -2572,12 +1905,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 200,
-        "amount_is_up_to": false,
         "unit": "usd",
         "min_spend_usd": 1500,
-        "spend_window_months": 6,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 6
       },
       "earning_rates": [
         {
@@ -2598,12 +1928,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:05:00-05:00",
-      "content_hash": "d79373be6d8bcad58c336ee3b3a1a664d5f222046e9fe50d860e5c1d542559db",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "d79373be6d8bcad58c336ee3b3a1a664d5f222046e9fe50d860e5c1d542559db"
     },
     {
       "id": "citi_custom_cash",
@@ -2631,12 +1956,7 @@
       "credits": [],
       "notes": "",
       "verified_at": null,
-      "content_hash": null,
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": null
     },
     {
       "id": "citi_strata_premier",
@@ -2663,12 +1983,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 60000,
-        "amount_is_up_to": false,
         "unit": "points",
         "min_spend_usd": 4000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -2717,22 +2034,13 @@
       "credits": [
         {
           "description": "$100 off hotel stay of $500+ booked through cititravel.com",
-          "amount_usd": 100.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 100,
+          "period": "calendar_year"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T14:05:00-05:00",
-      "content_hash": "87794ca5977fd982845c42368f1bedd95e5087b53e978df87a9aa5641851ed60",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "87794ca5977fd982845c42368f1bedd95e5087b53e978df87a9aa5641851ed60"
     },
     {
       "id": "citi_strata_elite",
@@ -2760,12 +2068,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 75000,
-        "amount_is_up_to": false,
         "unit": "points",
         "min_spend_usd": 6000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -2807,49 +2112,28 @@
       "credits": [
         {
           "description": "Hotel stay benefit",
-          "amount_usd": 300.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 300,
+          "period": "calendar_year"
         },
         {
           "description": "Splurge credit on choice of brands",
-          "amount_usd": 200.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 200,
+          "period": "calendar_year"
         },
         {
           "description": "Blacklane chauffeur service credit",
-          "amount_usd": 200.0,
-          "period": "calendar_year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 200,
+          "period": "calendar_year"
         },
         {
           "description": "Global Entry or TSA PreCheck application fee credit",
-          "amount_usd": 120.0,
-          "period": "four_years",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 120,
+          "period": "four_years"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T14:05:00-05:00",
-      "content_hash": "36b8ce682e6418e647632035d28f1569271a3002f89dd058dc77f935a324a3d5",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "36b8ce682e6418e647632035d28f1569271a3002f89dd058dc77f935a324a3d5"
     },
     {
       "id": "citi_costco",
@@ -2914,12 +2198,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:05:00-05:00",
-      "content_hash": "ec33dc23443f28e4ecb75ea4fa28521748dd90e475fc4f0f2047e63debde8730",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "ec33dc23443f28e4ecb75ea4fa28521748dd90e475fc4f0f2047e63debde8730"
     },
     {
       "id": "citi_aadvantage_platinum_select",
@@ -2946,12 +2225,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 50000,
-        "amount_is_up_to": false,
         "unit": "miles",
         "min_spend_usd": 2500,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -2986,12 +2262,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:05:00-05:00",
-      "content_hash": "2b2f1c9014fb61c327c46632c194e5f2871fd57ae7826db30a822abacb8bf112",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "2b2f1c9014fb61c327c46632c194e5f2871fd57ae7826db30a822abacb8bf112"
     },
     {
       "id": "citi_secured",
@@ -3028,12 +2299,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:05:00-05:00",
-      "content_hash": "ff06f87264f50c8792113b7d1771e1b762e636ffdbf9dc1141440ecfdd996ec8",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "ff06f87264f50c8792113b7d1771e1b762e636ffdbf9dc1141440ecfdd996ec8"
     },
     {
       "id": "c1_venture_x",
@@ -3061,12 +2327,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 75000,
-        "amount_is_up_to": false,
         "unit": "miles",
         "min_spend_usd": 4000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -3094,31 +2357,18 @@
       "credits": [
         {
           "description": "Annual Travel Credit",
-          "amount_usd": 300.0,
-          "period": "year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 300,
+          "period": "year"
         },
         {
           "description": "Global Entry or TSA PreCheck Credit",
-          "amount_usd": 120.0,
-          "period": "four_years",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 120,
+          "period": "four_years"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T14:05:00-05:00",
-      "content_hash": "7e67f05a0cbd10ae15b6d4f999f76b5a7d2cfe7926e29e1c12ae622cc0c56f17",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "7e67f05a0cbd10ae15b6d4f999f76b5a7d2cfe7926e29e1c12ae622cc0c56f17"
     },
     {
       "id": "c1_venture",
@@ -3145,12 +2395,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 75000,
-        "amount_is_up_to": false,
         "unit": "miles",
         "min_spend_usd": 4000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -3178,43 +2425,13 @@
       "credits": [
         {
           "description": "Global Entry or TSA PreCheck application fee",
-          "amount_usd": 120.0,
-          "period": "four_years",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
-        },
-        {
-          "description": "Lifestyle Collection hotel/vacation rental experience credit",
-          "amount_usd": 50.0,
-          "period": "per_use",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "per room, per stay (not one-time)"
-        },
-        {
-          "description": "Capital One Travel credit",
-          "amount_usd": 300.0,
-          "period": "one_time",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": "expires 1 year after account opening; Capital One Travel only"
+          "amount_usd": 120,
+          "period": "four_years"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T14:05:00-05:00",
-      "content_hash": "c346f6d9140cbd990be5cc63d30def248732cc9b4fe4518dab51a14638fc0b1d",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {
-        "credits:Lifestyle Collection hotel/vacation rental experience credit": "2026-09-25",
-        "credits:Capital One Travel credit": "2026-09-25"
-      }
+      "content_hash": "c346f6d9140cbd990be5cc63d30def248732cc9b4fe4518dab51a14638fc0b1d"
     },
     {
       "id": "c1_quicksilver",
@@ -3240,12 +2457,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 200,
-        "amount_is_up_to": false,
         "unit": "usd",
         "min_spend_usd": 500,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -3273,12 +2487,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:05:00-05:00",
-      "content_hash": "394ac56ec121b5552db54f15c1eb81fd6ae3cd013ef16b0ea5062657ebaabc42",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "394ac56ec121b5552db54f15c1eb81fd6ae3cd013ef16b0ea5062657ebaabc42"
     },
     {
       "id": "c1_quicksilverone",
@@ -3315,12 +2524,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:05:00-05:00",
-      "content_hash": "0ab38db83319e45309abe4db56ef96bd75769e20640e0d59d00b52b32e20dd71",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "0ab38db83319e45309abe4db56ef96bd75769e20640e0d59d00b52b32e20dd71"
     },
     {
       "id": "c1_savor",
@@ -3347,12 +2551,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 200,
-        "amount_is_up_to": false,
         "unit": "usd",
         "min_spend_usd": 500,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -3380,12 +2581,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:05:00-05:00",
-      "content_hash": "f8de260b29df0ff03570e9d906badc28ee3c7614a4022e337bdf913901b00d34",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "f8de260b29df0ff03570e9d906badc28ee3c7614a4022e337bdf913901b00d34"
     },
     {
       "id": "c1_quicksilver_student",
@@ -3413,12 +2609,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 50,
-        "amount_is_up_to": false,
         "unit": "usd",
         "min_spend_usd": 100,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -3432,12 +2625,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:05:00-05:00",
-      "content_hash": "63a07d571e731cd043ba96efbadd3e2038a2fffd477a7ea13ef882813f8e8de5",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "63a07d571e731cd043ba96efbadd3e2038a2fffd477a7ea13ef882813f8e8de5"
     },
     {
       "id": "c1_savor_student",
@@ -3465,12 +2653,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 50,
-        "amount_is_up_to": false,
         "unit": "usd",
         "min_spend_usd": 100,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -3512,16 +2697,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:05:00-05:00",
-      "content_hash": "abb554f997af8e4ee109c395e1a9d93e14ec7ee98c493d06809eb45b9e26eb6c",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [
-        "raw HTML only, not shown to visitors: $200"
-      ],
-      "manually_verified": {
-        "varies_by_visitor": "2026-09-25"
-      }
+      "content_hash": "abb554f997af8e4ee109c395e1a9d93e14ec7ee98c493d06809eb45b9e26eb6c"
     },
     {
       "id": "c1_platinum",
@@ -3549,12 +2725,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:05:00-05:00",
-      "content_hash": "259d3888db94fee61958d121568bfb1719dea65c0a89fe7481fd828c439bd576",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "259d3888db94fee61958d121568bfb1719dea65c0a89fe7481fd828c439bd576"
     },
     {
       "id": "c1_platinum_secured",
@@ -3583,12 +2754,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:05:00-05:00",
-      "content_hash": "5b1d35f54f09985db31decc0b161fcfc80b08a037024b992d0e67dfedd8f1eea",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "5b1d35f54f09985db31decc0b161fcfc80b08a037024b992d0e67dfedd8f1eea"
     },
     {
       "id": "discover_it_cash_back",
@@ -3615,12 +2781,9 @@
       "offer": {
         "amount_disclosed": false,
         "amount": null,
-        "amount_is_up_to": false,
         "unit": "cashback_match",
         "min_spend_usd": null,
-        "spend_window_months": null,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": null
       },
       "earning_rates": [
         {
@@ -3641,12 +2804,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T13:52:00-05:00",
-      "content_hash": "6dee8ed6a38b97e1e324f5e6b4080ed5455b019928db77e7c964f9df13f24bbd",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "6dee8ed6a38b97e1e324f5e6b4080ed5455b019928db77e7c964f9df13f24bbd"
     },
     {
       "id": "discover_it_student_cash_back",
@@ -3674,12 +2832,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 100,
-        "amount_is_up_to": false,
         "unit": "usd",
         "min_spend_usd": 300,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -3700,12 +2855,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T13:52:00-05:00",
-      "content_hash": "de2c3d5c0e8cd46cea038dbcdb3c6d085afbab2a5f1638e354477f90e04bbb7f",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "de2c3d5c0e8cd46cea038dbcdb3c6d085afbab2a5f1638e354477f90e04bbb7f"
     },
     {
       "id": "bofa_customized_cash",
@@ -3731,12 +2881,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 200,
-        "amount_is_up_to": false,
         "unit": "usd",
         "min_spend_usd": 1000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -3764,12 +2911,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:00:00-05:00",
-      "content_hash": "0a4d769d755ac185c064266498a9b1d067c649fae6d04b22c8d8d6e22ee6ba8b",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "0a4d769d755ac185c064266498a9b1d067c649fae6d04b22c8d8d6e22ee6ba8b"
     },
     {
       "id": "bofa_unlimited_cash",
@@ -3795,12 +2937,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 250,
-        "amount_is_up_to": false,
         "unit": "usd",
         "min_spend_usd": 1000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -3814,12 +2953,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:00:00-05:00",
-      "content_hash": "5b34254451ed93c6ad77330a48242c5a1a18639fa2198e654784f6965c330f6a",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "5b34254451ed93c6ad77330a48242c5a1a18639fa2198e654784f6965c330f6a"
     },
     {
       "id": "bofa_travel_rewards",
@@ -3845,12 +2979,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 25000,
-        "amount_is_up_to": false,
         "unit": "points",
         "min_spend_usd": 1000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -3864,12 +2995,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:00:00-05:00",
-      "content_hash": "bba4c561805ccdb4c1578cb59f42f408c70846c8d68e57e7c15648176fb651b0",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "bba4c561805ccdb4c1578cb59f42f408c70846c8d68e57e7c15648176fb651b0"
     },
     {
       "id": "bofa_premium_rewards",
@@ -3896,12 +3022,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 60000,
-        "amount_is_up_to": false,
         "unit": "points",
         "min_spend_usd": 4000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -3929,31 +3052,18 @@
       "credits": [
         {
           "description": "Airline Incidental Statement Credits",
-          "amount_usd": 100.0,
-          "period": "year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 100,
+          "period": "year"
         },
         {
           "description": "Airport Security Statement Credits for TSA PreCheck or Global Entry",
-          "amount_usd": 100.0,
-          "period": "four_years",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 100,
+          "period": "four_years"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T14:00:00-05:00",
-      "content_hash": "842781f1a597e0a661ff6332bd93327e6bcf7ad5aa739bec9441f5996fd5dd1b",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "842781f1a597e0a661ff6332bd93327e6bcf7ad5aa739bec9441f5996fd5dd1b"
     },
     {
       "id": "bofa_customized_cash_student",
@@ -3981,12 +3091,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 200,
-        "amount_is_up_to": false,
         "unit": "usd",
         "min_spend_usd": 1000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -4014,12 +3121,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:00:00-05:00",
-      "content_hash": "d57a824c665a99d2326d630ab3219ef7f84fda705f63364c0c9a5b6287dd0f42",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "d57a824c665a99d2326d630ab3219ef7f84fda705f63364c0c9a5b6287dd0f42"
     },
     {
       "id": "bofa_customized_cash_secured",
@@ -4046,12 +3148,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": null,
-        "amount_is_up_to": false,
         "unit": "cashback_match",
         "min_spend_usd": null,
-        "spend_window_months": null,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": null
       },
       "earning_rates": [
         {
@@ -4079,12 +3178,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:00:00-05:00",
-      "content_hash": "ccdddc5f0e0ed1b586bf4a8f4404f9c7f01e56f1a55f7313265f090d448edd2a",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "ccdddc5f0e0ed1b586bf4a8f4404f9c7f01e56f1a55f7313265f090d448edd2a"
     },
     {
       "id": "wf_active_cash",
@@ -4110,12 +3204,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 100,
-        "amount_is_up_to": false,
         "unit": "usd",
         "min_spend_usd": 500,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -4129,12 +3220,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T13:52:00-05:00",
-      "content_hash": "a48874394700023af075b4b9aa8d4e09b0f441a40b83cd01ca3a11bdd24a2d33",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "a48874394700023af075b4b9aa8d4e09b0f441a40b83cd01ca3a11bdd24a2d33"
     },
     {
       "id": "wf_autograph",
@@ -4160,12 +3246,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 20000,
-        "amount_is_up_to": false,
         "unit": "points",
         "min_spend_usd": 1000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -4221,12 +3304,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T13:52:00-05:00",
-      "content_hash": "4b78113faf021edf8bd981d3c24ccebd9425639fc4a18dbe2d7105f7ee4b52b2",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "4b78113faf021edf8bd981d3c24ccebd9425639fc4a18dbe2d7105f7ee4b52b2"
     },
     {
       "id": "wf_autograph_journey",
@@ -4253,12 +3331,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 60000,
-        "amount_is_up_to": false,
         "unit": "points",
         "min_spend_usd": 4000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -4293,22 +3368,13 @@
       "credits": [
         {
           "description": "annual statement credit with $50 minimum airline purchase",
-          "amount_usd": 50.0,
-          "period": "year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 50,
+          "period": "year"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T13:52:00-05:00",
-      "content_hash": "78dd660a7358c3c64e8cef2ce383d363ace5fa5251aa745ec39f6fec492757a4",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "78dd660a7358c3c64e8cef2ce383d363ace5fa5251aa745ec39f6fec492757a4"
     },
     {
       "id": "usb_cash_plus",
@@ -4334,12 +3400,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 200,
-        "amount_is_up_to": false,
         "unit": "usd",
         "min_spend_usd": 1000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -4374,12 +3437,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:06:00-05:00",
-      "content_hash": "baa0addad9913d1075beec4d755000159d1fb52a79dd830e9c8643c83435dbd9",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "baa0addad9913d1075beec4d755000159d1fb52a79dd830e9c8643c83435dbd9"
     },
     {
       "id": "usb_altitude_go",
@@ -4406,12 +3464,9 @@
       "offer": {
         "amount_disclosed": true,
         "amount": 20000,
-        "amount_is_up_to": false,
         "unit": "points",
         "min_spend_usd": 1000,
-        "spend_window_months": 3,
-        "statement_credit_usd": null,
-        "ends_on": null
+        "spend_window_months": 3
       },
       "earning_rates": [
         {
@@ -4453,22 +3508,13 @@
       "credits": [
         {
           "description": "streaming service credit",
-          "amount_usd": 15.0,
-          "period": "year",
-          "percent": null,
-          "valid_from": null,
-          "valid_until": null,
-          "conditions": null
+          "amount_usd": 15,
+          "period": "year"
         }
       ],
       "notes": "",
       "verified_at": "2026-09-25T14:06:00-05:00",
-      "content_hash": "6632eb3d9050c32a098cf99b2d660cb8b129fb30c0317d8298e922fed0b83d74",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "6632eb3d9050c32a098cf99b2d660cb8b129fb30c0317d8298e922fed0b83d74"
     },
     {
       "id": "usb_smartly",
@@ -4504,12 +3550,7 @@
       "credits": [],
       "notes": "",
       "verified_at": "2026-09-25T14:06:00-05:00",
-      "content_hash": "7093bb00fc42529ca4f2fa154280c819d3e4ff80a3665920a6f605837a039d60",
-      "offer_variants": [],
-      "offer_basis": "max_public_number",
-      "varies_by_visitor": false,
-      "quarantine": [],
-      "manually_verified": {}
+      "content_hash": "7093bb00fc42529ca4f2fa154280c819d3e4ff80a3665920a6f605837a039d60"
     }
   ],
   "preview": false

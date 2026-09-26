@@ -72,7 +72,8 @@ export interface OfferVariant {
 }
 
 export interface CatalogSnapshot {
-  version: number;
+  /** "MAJOR.MINOR"; the local preview is "0.0" */
+  version: string;
   market: string;
   generated_at: string;
   preview: boolean;

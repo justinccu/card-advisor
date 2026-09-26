@@ -10,12 +10,14 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 
 from card_rules.catalog import (
+    VERSION_PATTERN,
     CatalogCard,
     CatalogSnapshot,
     Credit,
     EarningRate,
     Offer,
     OfferVariant,
+    version_key,
 )
 from card_rules.models import Market, TaxId
 
@@ -217,7 +219,7 @@ def build_preview(
         elif seed.availability == "closed_to_new_applicants":
             cards.append(_card(seed, None))
     return CatalogSnapshot(
-        version=0, market=Market.US, generated_at=datetime.now(UTC), cards=cards, preview=True
+        version="0.0", market=Market.US, generated_at=datetime.now(UTC), cards=cards, preview=True
     )
 
 
@@ -356,21 +358,40 @@ def _digest(cards: list[CatalogCard]) -> str:
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
-def latest(catalog_dir: Path = CATALOG_DIR) -> tuple[int, CatalogSnapshot | None]:
-    versions = sorted(int(p.stem[1:]) for p in catalog_dir.glob("v*.json"))
-    if not versions:
-        return 0, None
-    v = versions[-1]
+FIRST_VERSION = "1.1"
+
+
+def versions(catalog_dir: Path = CATALOG_DIR) -> list[str]:
+    """Published versions, oldest first ("1.1", "1.2", ..., "1.10")."""
+    found = [p.stem[1:] for p in catalog_dir.glob("v*.json")]
+    return sorted((v for v in found if re.fullmatch(VERSION_PATTERN, v)), key=version_key)
+
+
+def latest(catalog_dir: Path = CATALOG_DIR) -> tuple[str | None, CatalogSnapshot | None]:
+    published = versions(catalog_dir)
+    if not published:
+        return None, None
+    v = published[-1]
     return v, CatalogSnapshot.model_validate_json((catalog_dir / f"v{v}.json").read_text())
 
 
+def next_version(current: str | None) -> str:
+    if current is None:
+        return FIRST_VERSION
+    major, minor = version_key(current)
+    return f"{major}.{minor + 1}"
+
+
 def publish(cards: list[CatalogCard], catalog_dir: Path = CATALOG_DIR) -> Path | None:
-    """Write v{N+1}.json if the catalog changed; return its path, or None if unchanged."""
+    """Write the next vMAJOR.MINOR.json if the catalog changed; return its path, or None."""
     version, previous = latest(catalog_dir)
     if previous is not None and _digest(previous.cards) == _digest(cards):
         return None
     snapshot = CatalogSnapshot(
-        version=version + 1, market=Market.US, generated_at=datetime.now(UTC), cards=cards
+        version=next_version(version),
+        market=Market.US,
+        generated_at=datetime.now(UTC),
+        cards=cards,
     )
     catalog_dir.mkdir(parents=True, exist_ok=True)
     path = catalog_dir / f"v{snapshot.version}.json"

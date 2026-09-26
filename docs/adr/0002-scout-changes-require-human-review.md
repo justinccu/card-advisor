@@ -2,9 +2,9 @@
 
 Every Scout finding becomes a Proposed Change (source URL, extracted content, confidence) that a human approves before publication. Auto-publishing was rejected because sources include forums and blogs, and a wrong Offer can cause a user to apply for the wrong card. Auto-approval may later be allowed for structured diffs of official Issuer pages above a measured-accuracy threshold.
 
-## Catalog v1 (2026-09-25)
+## Catalog v1.1 (2026-09-25)
 
-v1 was not reviewed card-by-card in `scout review`. Instead, the DeepSeek V3.1 extraction was checked field-by-field against issuer pages (506 fields: 493 confirmed, 8 not quoted on the page, 5 mismatched) and promoted with `scout publish --from-preview --verification`. The 5 mismatched credits were dropped rather than corrected; the 8 unquoted fields (all card network) were kept. Later versions return to human review, using cross-model agreement (DeepSeek vs Kimi) to decide which fields need a person's attention.
+v1.1 was not reviewed card-by-card in `scout review`. Instead, the DeepSeek V3.1 extraction was checked field-by-field against issuer pages (506 fields: 493 confirmed, 8 not quoted on the page, 5 mismatched) and promoted with `scout publish --from-preview --verification`. The 5 mismatched credits were dropped rather than corrected; the 8 unquoted fields (all card network) were kept. Later versions return to human review, using cross-model agreement (DeepSeek vs Kimi) to decide which fields need a person's attention.
 
 ## Overrides and offer variants (2026-09-25)
 
@@ -15,13 +15,17 @@ v1 was not reviewed card-by-card in `scout review`. Instead, the DeepSeek V3.1 e
 - The crawler identity stays honest (own User-Agent, fresh context, no cookie seeding or simulated browsing), and blocks are recorded rather than worked around.
 - **The headline offer is the largest publicly shown number, not the highest expected value.** Across a card's main page and public campaign pages, only disclosed amounts in the same unit compete. A ceiling ("as high as 100,000", `amount_is_up_to`) can beat a fixed 90,000 even though typical applicants may get less, so the flag travels with the chosen offer and the site renders it as "Up to". Every variant is kept in `offer_variants` with its source and fetch time.
 
-## Catalog v3: gated updates from a re-extraction run (2026-09-26)
+## Catalog v1.3: gated updates from a re-extraction run (2026-09-26)
 
 - **Quotes must hold the number.** A quote that is on the page but lacks the extracted number (value 80,000 quoting "Earn 75,000 points") is `value_not_in_quote` and flagged like an unverified quote. Applies to fees, offer amount, minimum spend and the offer's statement credit. `approximate` (the quote's words in order with a few elided) counts as grounded.
 - **`scout publish --from-latest --update-from-run <run>`** replaces a published card with its re-extraction only if every fee and offer field is grounded; otherwise the published card is kept and the reason printed. Flagged perks or earning rates don't block the update but are listed. The replaced card's `verified_at` is its fetch time (an automated quote check, not a person).
 - **Ceilings count as public.** Amex shows "as high as 100,000 ... find out your offer": the exact amount is personal, but the ceiling is public, so it competes for the headline and is shown as "Up to".
 - **Overrides can add list items** (`op: add` for credits/earning rates), matched by description rather than list position; `match:` (regex) supersedes an extracted item the model worded differently.
 
-## Catalog v4: every open card extracted from rendered text (2026-09-26)
+## Catalog v1.4: every open card extracted from rendered text (2026-09-26)
 
-v1 had been extracted before the rendered-only rule: 20 of 53 pages went to the model as raw-HTML text. All 45 remaining open cards were re-extracted from fresh renders and merged with the same gate (1 card kept its v3 values). Deterministic normalizations at publish time handle recurring model contradictions: a quoted fixed amount is disclosed; a cash amount counted both as `amount` and `statement_credit_usd` is counted once; an offer with no amount, credit or spend requirement is no offer. Rewards-calculator defaults ("Monthly card spend $2,200") are excluded from HTML/render divergence, since they are neither fee nor offer.
+v1.1 had been extracted before the rendered-only rule: 20 of 53 pages went to the model as raw-HTML text. All 45 remaining open cards were re-extracted from fresh renders and merged with the same gate (1 card kept its v1.3 values). Deterministic normalizations at publish time handle recurring model contradictions: a quoted fixed amount is disclosed; a cash amount counted both as `amount` and `statement_credit_usd` is counted once; an offer with no amount, credit or spend requirement is no offer. Rewards-calculator defaults ("Monthly card spend $2,200") are excluded from HTML/render divergence, since they are neither fee nor offer.
+
+## Version numbers (2026-09-26)
+
+Snapshots are numbered MAJOR.MINOR (`catalog/us/v1.4.json`, compared numerically). Each publish bumps MINOR; MAJOR is reserved for a change in how the catalog is produced. The first four snapshots, originally v1–v4, were renamed v1.1–v1.4.

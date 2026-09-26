@@ -125,13 +125,13 @@ def test_snapshots_are_versioned_and_not_rewritten_when_unchanged(tmp_path):
     cards = publish.build(SEEDS, approved(tmp_path))
     out = tmp_path / "catalog"
     first = publish.publish(cards, out)
-    assert first.name == "v1.json"
+    assert first.name == "v1.1.json"
     assert publish.publish(cards, out) is None  # identical content -> no new version
     snapshot = CatalogSnapshot.model_validate_json(first.read_text())
     assert snapshot.card("csp").offer.min_spend_usd == 5000
 
     changed = [cards[0].model_copy(update={"annual_fee_usd": 150}), *cards[1:]]
-    assert publish.publish(changed, out).name == "v2.json"
+    assert publish.publish(changed, out).name == "v1.2.json"
 
 
 def test_model_notes_are_never_published_unless_reviewer_rewrites_them(tmp_path):
@@ -604,3 +604,12 @@ def test_offer_normalizes_contradictory_model_output():
     assert (two.amount, two.statement_credit_usd) == (80000, 250)
     assert publish._offer(_raw_offer()) is None
     assert publish._offer(_raw_offer(unit="cashback_match", disclosed=True)) is not None
+
+
+def test_versions_sort_numerically_and_bump_minor(tmp_path):
+    for v in ("1.1", "1.2", "1.9", "1.10"):
+        (tmp_path / f"v{v}.json").write_text("{}")
+    (tmp_path / "vlatest.json").write_text("{}")  # not a version: ignored
+    assert publish.versions(tmp_path) == ["1.1", "1.2", "1.9", "1.10"]
+    assert publish.next_version("1.10") == "1.11"
+    assert publish.next_version(None) == "1.1"

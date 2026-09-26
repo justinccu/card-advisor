@@ -14,7 +14,7 @@ A US credit card advisor: a static, non-LLM catalog for browsing and comparing c
 | `packages/api` | FastAPI wallet/profile/eligibility API; runs locally or on Lambda via Mangum |
 | `web` | Next.js static site (catalog, compare, wallet), Apple-style motion |
 | `infra` | AWS CDK (Python) |
-| `catalog/seed` | Card list Scout reads; `catalog/us/vN.json` are published snapshots |
+| `catalog/seed` | Card list Scout reads; `catalog/us/vMAJOR.MINOR.json` (v1.1, v1.2, ...) are published snapshots |
 
 ## Local demo ($0, no AWS)
 
@@ -25,8 +25,13 @@ make demo      # API on :8000 + site on :3000; Ctrl-C stops both
 
 Open <http://localhost:3000>. Sign in with invite code `DEMO-2026`, or pick "Use demo account" for a
 wallet that already holds five cards. The site and API read the newest published snapshot
-(`catalog/us/vN.json`); with none published they fall back to the local `scout preview` and show a
+(`catalog/us/vMAJOR.MINOR.json`); with none published they fall back to the local `scout preview` and show a
 banner saying the data is unreviewed.
+
+Cards are drawn as simulated faces: each card's own colors (sampled by
+`scripts/card_face_colors.py`) with its wordmarks as text, no logos or artwork. In `make demo` only,
+a footer toggle switches to the issuers' card art, kept locally in `web/public/card-art` (gitignored:
+never pushed or deployed).
 
 `make e2e` (with the demo running) drives a real browser through sign-up, optimistic wallet edits,
 rollback on API failure, and the gesture physics.

@@ -44,5 +44,5 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - run: npm ci
       - run: npm run lint
-      # Builds every page from the newest committed Catalog Snapshot (catalog/us/vN.json)
+      # Builds every page from the newest committed Catalog Snapshot (catalog/us/vMAJOR.MINOR.json)
       - run: npm run build

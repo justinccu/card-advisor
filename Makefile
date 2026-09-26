@@ -33,12 +33,14 @@ web:
 	cd web && npm run dev
 
 # API + site together; Ctrl-C stops both. Open http://localhost:3000 (invite code DEMO-2026)
+# NEXT_PUBLIC_CARD_ART=1 enables the footer's Simulated/Real card-face toggle; the Real faces are the
+# local, gitignored images in web/public/card-art (never pushed or deployed).
 demo:
 	@test -d web/node_modules || (cd web && npm install)
 	@echo "API  http://localhost:8000/docs\nSite http://localhost:3000   (invite: DEMO-2026, or 'Use demo account')"
 	@trap 'kill 0' INT TERM EXIT; \
 	APP_ENV=local uv run uvicorn card_api.app:app --port 8000 & \
-	(cd web && npm run dev -- --port 3000) & \
+	(cd web && NEXT_PUBLIC_CARD_ART=1 npm run dev -- --port 3000) & \
 	wait
 
 e2e:

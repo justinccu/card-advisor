@@ -103,7 +103,7 @@ export function CompareView({ cards }: { cards: CatalogCard[] }) {
             transition={{ ...spring.nav, delay: i * 0.05 }}
             className="text-center"
           >
-            <CardArt issuerId={c.issuer_id} name={c.name} interactive className="mx-auto w-full max-w-[240px]" />
+            <CardArt cardId={c.id} issuerId={c.issuer_id} name={c.name} interactive className="mx-auto w-full max-w-[240px]" />
             <h2 className="mt-5 text-[21px] font-semibold tracking-tight">{c.name}</h2>
             <Link href={`/cards/${c.id}/`} className="text-[13px] text-link hover:underline">
               Details ›

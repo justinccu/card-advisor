@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node -e \"require('fs').rmSync('out/card-art', { recursive: true, force: true })\"",
     "start": "next start",
     "lint": "eslint"
   },

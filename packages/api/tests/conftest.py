@@ -50,6 +50,6 @@ CARDS = [
 ]
 _catalog.write_text(
     CatalogSnapshot(
-        version=1, market=Market.US, generated_at=datetime.now(UTC), cards=CARDS
+        version="1.1", market=Market.US, generated_at=datetime.now(UTC), cards=CARDS
     ).model_dump_json()
 )
