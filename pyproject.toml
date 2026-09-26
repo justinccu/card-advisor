@@ -29,6 +29,8 @@ select = ["E", "F", "I", "B", "UP"]
 [tool.pytest.ini_options]
 testpaths = ["infra/tests", "packages/rules/tests", "packages/scout/tests", "packages/api/tests"]
 pythonpath = ["infra"]
+# Build output holds third-party packages (some ship their own test files); never collect it.
+norecursedirs = ["cdk.out", "build", "node_modules", ".venv", ".*"]
 
 [tool.ruff.lint.per-file-ignores]
 "packages/scout/src/scout/report.py" = ["E501"]  # embedded CSS

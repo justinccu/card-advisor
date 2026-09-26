@@ -24,7 +24,7 @@ def test_budget_alerts_before_limit_is_hit():
 
 
 def test_deploy_role_is_restricted_to_main_branch():
-    stack = CiStack(cdk.App(), "ci", env=ENV, github_repo="owner/repo")
+    stack = CiStack(cdk.App(), "ci", env=ENV, github_subject_prefix="repo:owner@1/repo@2")
     Template.from_stack(stack).has_resource_properties(
         "AWS::IAM::Role",
         {
@@ -37,7 +37,7 @@ def test_deploy_role_is_restricted_to_main_branch():
                                     "StringEquals": Match.object_like(
                                         {
                                             "token.actions.githubusercontent.com:sub": (
-                                                "repo:owner/repo:ref:refs/heads/main"
+                                                "repo:owner@1/repo@2:ref:refs/heads/main"
                                             )
                                         }
                                     )

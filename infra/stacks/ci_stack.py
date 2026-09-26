@@ -8,7 +8,9 @@ GITHUB_OIDC_URL = "https://token.actions.githubusercontent.com"
 class CiStack(Stack):
     """Lets GitHub Actions deploy via short-lived OIDC credentials — no stored access keys."""
 
-    def __init__(self, scope: Construct, construct_id: str, *, github_repo: str, **kwargs) -> None:
+    def __init__(
+        self, scope: Construct, construct_id: str, *, github_subject_prefix: str, **kwargs
+    ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         provider = iam.OpenIdConnectProvider(
@@ -19,7 +21,9 @@ class CiStack(Stack):
         )
 
         # Only workflows running on main may assume the deploy role; PRs get no AWS access
-        # until we add a read-only role for eval runs in S8.
+        # until we add a read-only role for eval runs in S8. The repo uses GitHub's immutable
+        # subject format (owner and repo numeric ids), so a deleted-and-recreated repo of the
+        # same name can't inherit this trust.
         deploy_role = iam.Role(
             self,
             "GitHubDeployRole",
@@ -30,7 +34,7 @@ class CiStack(Stack):
                     "StringEquals": {
                         "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
                         "token.actions.githubusercontent.com:sub": (
-                            f"repo:{github_repo}:ref:refs/heads/main"
+                            f"{github_subject_prefix}:ref:refs/heads/main"
                         ),
                     }
                 },

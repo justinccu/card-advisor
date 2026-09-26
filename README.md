@@ -32,6 +32,11 @@ banner saying the data is unreviewed.
 sign-up (email code), SRP sign-in, and account deletion. `make e2e-aws` (with it running) drives
 that flow in a browser with a throwaway user and removes it afterwards.
 
+CI (GitHub Actions) runs on every push and pull request: pre-commit, pytest, `cdk synth`, the
+site build, and the browser e2e against the local demo. On `main`, once all of those pass, it
+deploys every stack with short-lived OIDC credentials (no stored AWS keys; the role only trusts
+`main`) and smoke-tests the live API. It needs one repository secret, `ALERT_EMAIL`.
+
 `make deploy-infra` deploys the stacks (data, auth, api); `make aws-smoke` then signs up a
 throwaway user with a one-off invite, calls the API with its JWT, and deletes both.
 

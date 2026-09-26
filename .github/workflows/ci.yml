@@ -48,3 +48,78 @@ jobs:
       - run: npm run lint
       # Builds every page from the newest committed Catalog Snapshot (catalog/us/vMAJOR.MINOR.json)
       - run: npm run build
+
+  # Browser e2e of the local demo (make demo + make e2e): UI interactions, optimistic updates,
+  # rollback on API failure, gestures. No AWS access.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: uv sync --all-packages
+      - run: npm ci
+        working-directory: web
+      - run: uv run playwright install --with-deps chromium
+      - name: Start the demo (API :8000, site :3000)
+        run: |
+          # Own session/process group: `make demo` ends with `trap 'kill 0' EXIT`, which would
+          # otherwise signal every process in the runner's group, including later steps.
+          setsid make demo > demo.log 2>&1 &
+          for i in $(seq 1 90); do
+            curl -sf localhost:8000/health >/dev/null && curl -sf localhost:3000/signin/ >/dev/null && exit 0
+            sleep 2
+          done
+          cat demo.log; exit 1
+      - run: make e2e
+      - if: failure()
+        run: tail -100 demo.log
+      # The background demo keeps a `uv run` alive, which holds uv's cache lock and makes
+      # setup-uv's post-job cache cleanup time out; stop it before the job ends.
+      - name: Stop the demo
+        if: always()
+        run: pkill -f "[u]vicorn card_api" || true; pkill -f "[n]ext dev" || true; sleep 2
+
+  # main only, after every check passes: deploy with short-lived OIDC credentials (no stored AWS
+  # keys; the role is limited to refs/heads/main), then check the live API.
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [check, web, e2e]
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false  # never interrupt a CloudFormation update midway
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install -g aws-cdk
+      - run: uv sync --all-packages
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::631690098596:role/card-advisor-github-deploy
+          aws-region: us-east-2
+      - name: Lambda bundle
+        run: ./scripts/bundle_lambda.sh
+      - name: cdk deploy
+        working-directory: infra
+        env:
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+        run: cdk deploy --all --require-approval never --outputs-file ../cdk-outputs.json
+      - name: Smoke test the live API
+        run: |
+          api=$(jq -r '."card-advisor-api".ApiUrl' cdk-outputs.json)
+          health=$(curl -sf "$api/health")
+          echo "$health"
+          echo "$health" | jq -e '.ok == true and (.catalog_version | test("^[0-9]+\\.[0-9]+$"))'
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$api/me/wallet")" = 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Dev-User: demo-user' "$api/me/wallet")" = 401

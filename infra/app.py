@@ -31,7 +31,13 @@ ops = OpsStack(
     alert_email=alert_email,
     monthly_budget_usd=float(app.node.get_context("monthly_budget_usd")),
 )
-CiStack(app, f"{project}-ci", env=env, github_repo=app.node.get_context("github_repo"))
+CiStack(
+    app,
+    f"{project}-ci",
+    env=env,
+    # `gh api repos/OWNER/REPO/actions/oidc/customization/sub` -> sub_claim_prefix
+    github_subject_prefix=app.node.get_context("github_oidc_subject_prefix"),
+)
 
 # S4: user data, sign-up, API. The Lambda package is built by scripts/bundle_lambda.sh.
 if not LAMBDA_BUNDLE.is_dir():
