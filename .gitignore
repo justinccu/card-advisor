@@ -10,7 +10,6 @@ node_modules/
 out/
 .env
 .env.*
-!.env.example
 agentcore/.cli/
 .DS_Store
 

@@ -1,0 +1,25 @@
+[project]
+name = "card-api"
+version = "0.1.0"
+description = "Wallet, profile, and eligibility API (FastAPI; runs locally or on Lambda via Mangum)"
+requires-python = ">=3.13"
+dependencies = [
+    "boto3>=1.35",
+    "card-rules",
+    "fastapi>=0.115",
+    "mangum>=0.19",
+    "uvicorn[standard]>=0.30",
+]
+
+[dependency-groups]
+dev = ["httpx>=0.27", "moto[dynamodb]>=5"]
+
+[tool.uv.sources]
+card-rules = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/card_api"]

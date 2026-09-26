@@ -15,8 +15,15 @@ from typing import Any
 
 from scout.evidence import normalize
 
-SYMBOL = {"verified": "✓", "unverified": "⚠", "missing_evidence": "✗", "empty": "·"}
-FLAGGED = ("unverified", "missing_evidence")
+SYMBOL = {
+    "verified": "✓",
+    "approximate": "≈",
+    "value_not_in_quote": "≠",
+    "unverified": "⚠",
+    "missing_evidence": "✗",
+    "empty": "·",
+}
+FLAGGED = ("unverified", "missing_evidence", "value_not_in_quote")
 
 
 @dataclass
@@ -32,6 +39,8 @@ class Review:
     edits: list[dict] = field(default_factory=list)
     final: dict | None = None
     reason: str = ""
+    fetched_at: str | None = None
+    page_variant: dict | None = None
 
     def save(self, reviews_dir: Path) -> Path:
         reviews_dir.mkdir(parents=True, exist_ok=True)
@@ -47,7 +56,11 @@ def load_reviews(reviews_dir: Path) -> dict[str, dict]:
 
 
 def latest_run(runs_dir: Path) -> Path:
-    runs = sorted(p for p in runs_dir.iterdir() if p.is_dir()) if runs_dir.exists() else []
+    runs = (
+        sorted(p for p in runs_dir.iterdir() if p.is_dir() and any(p.glob("*.json")))
+        if runs_dir.exists()
+        else []
+    )
     if not runs:
         raise SystemExit("no extraction runs yet (run `scout extract --live`)")
     return runs[-1]
@@ -89,8 +102,15 @@ def render(change: dict, page_text: str) -> str:
         out.append(f"  · not stated on page: {', '.join(empty)}")
     if x.get("offer") and not x["offer"]["amount_disclosed"]:
         out.append("  ! offer amount is not disclosed publicly")
+    if x.get("offer") and x["offer"].get("amount_is_up_to"):
+        out.append("  ! offer is a ceiling (as high as / up to)")
+    hidden = (change.get("page_variant") or {}).get("hidden_in_render")
+    if hidden:
+        out.append(f"  ⚠ page varies by visitor: HTML has {hidden} not shown on the rendered page")
     if x.get("reviewer_notes"):
-        out.append(f"  notes: {x['reviewer_notes']}")
+        # Written by the model from an untrusted page: shown to help review, never published
+        # unless the reviewer rewrites it via `e` -> reviewer_notes.
+        out.append(f"  model notes (not published): {x['reviewer_notes']}")
     return "\n".join(out)
 
 
@@ -152,6 +172,8 @@ def decide(
             source_url=change["source_url"],
             model_id=change["model_id"],
             fields_total=len(filled),
+            fetched_at=change.get("fetched_at"),
+            page_variant=change.get("page_variant"),
             edits=edits,
             **kw,
         )

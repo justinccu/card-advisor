@@ -22,6 +22,9 @@ class SeedCard(BaseModel):
     availability: str = "open"
     closed_on: str | None = None
     tax_id_hint: str | None = None
+    # Public campaign/landing pages for the same card (e.g. an ad-channel URL with a different
+    # offer). Fetched with the same honest profile; each becomes an offer variant.
+    variant_urls: list[str] = []
 
 
 def load_seed(path: Path = SEED_PATH) -> list[SeedCard]:

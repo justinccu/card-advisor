@@ -12,6 +12,7 @@ from pathlib import Path
 
 # USD per 1M tokens (input, output), us-east-2, verified via the AWS Pricing API on 2026-09-24.
 PRICES = {
+    "deepseek.v3-v1:0": (0.58, 1.68),  # DeepSeek V3.1
     "moonshotai.kimi-k2.5": (0.60, 3.00),
     "global.anthropic.claude-haiku-4-5-20251001-v1:0": (1.00, 5.00),
     "us.anthropic.claude-haiku-4-5-20251001-v1:0": (1.10, 5.50),

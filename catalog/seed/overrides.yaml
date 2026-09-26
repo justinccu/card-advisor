@@ -1,0 +1,138 @@
+# Human-verified corrections. Applied last when a catalog file is written, so they win over any
+# model extraction. Each entry needs a reason and how/when it was verified.
+# field: a CatalogCard field, or "offer.<field>".
+
+- card_id: amex_hilton_surpass
+  field: first_year_annual_fee_usd
+  value: null
+  reason: >-
+    The HTML contains a hidden "$0 introductory annual fee for the first year, then $150" block;
+    the rendered page visitors see shows only "$150" (no intro offer).
+  verified_by: user (browser) + scout render (variant hidden_in_render=["$0"])
+  verified_on: 2026-09-25
+
+- card_id: c1_savor_student
+  field: varies_by_visitor
+  value: false
+  reason: >-
+    False positive: the raw-HTML-only "$200" is the default "Monthly Spending $200" value of an
+    on-page rewards calculator, not a fee or offer. Fee and offer match between HTML and render.
+  verified_by: claude (HTML inspection)
+  verified_on: 2026-09-25
+
+# --- 2026-09-25 human re-verification of the 5 credits v1 dropped as MISMATCH
+# (source: scout_reverify_2026-09-25.json). "add" appends by description, so these don't depend
+# on list positions, which change whenever a card is re-extracted.
+
+- card_id: c1_venture
+  field: credits
+  op: add
+  value:
+    description: Lifestyle Collection hotel/vacation rental experience credit
+    amount_usd: 50
+    period: per_use
+    conditions: per room, per stay (not one-time)
+  reason: v1 extraction had it as one-time; the page says per room, per stay.
+  verified_by: user (scout_reverify_2026-09-25.json)
+  verified_on: 2026-09-25
+
+- card_id: c1_venture
+  field: credits
+  op: add
+  value:
+    description: Capital One Travel credit
+    amount_usd: 300
+    period: one_time
+    conditions: expires 1 year after account opening; Capital One Travel only
+  reason: v1 extraction had it as annual; it is a one-time credit.
+  verified_by: user (scout_reverify_2026-09-25.json)
+  verified_on: 2026-09-25
+
+- card_id: chase_united_explorer
+  field: credits
+  op: add
+  match: wi-?fi|inflight|in-flight
+  value:
+    description: United inflight food, beverages and Wi-Fi
+    percent: 25
+    period: per_use
+    conditions: back as a statement credit on United-operated flights
+  reason: v1 extraction had a fixed $25; the page says 25% back.
+  verified_by: user (scout_reverify_2026-09-25.json)
+  verified_on: 2026-09-25
+
+- card_id: chase_ink_unlimited
+  field: credits
+  op: add
+  value:
+    description: Instacart+ membership trial
+    period: one_time
+    valid_until: 2027-12-31
+    conditions: complimentary 3 months, then $99/year auto-renew; enrollment required
+  reason: v1 extraction had a one-time $99 membership; it is a 3-month free trial.
+  verified_by: user (scout_reverify_2026-09-25.json)
+  verified_on: 2026-09-25
+
+- card_id: chase_marriott_boundless
+  field: credits
+  op: add
+  value:
+    description: Airline credit (2026 window)
+    amount_usd: 50
+    period: one_time
+    valid_from: 2026-06-04
+    valid_until: 2026-12-31
+    conditions: after $250 spend in the window
+  reason: v1 extraction had a fixed $100/calendar year; it is two limited-time $50 credits.
+  verified_by: user (scout_reverify_2026-09-25.json)
+  verified_on: 2026-09-25
+
+- card_id: chase_marriott_boundless
+  field: credits
+  op: add
+  value:
+    description: Airline credit (2027 window)
+    amount_usd: 50
+    period: one_time
+    valid_from: 2027-01-01
+    valid_until: 2027-06-30
+    conditions: after $250 spend in the window
+  reason: second half of the limited-time airline credit offer (see 2026 window).
+  verified_by: user (scout_reverify_2026-09-25.json)
+  verified_on: 2026-09-25
+
+# --- 2026-09-26 v4 review of the full re-extraction (rendered page text)
+
+- card_id: bofa_travel_rewards
+  field: offer.statement_credit_usd
+  value: null
+  reason: >-
+    "25,000 online bonus points ... which can be redeemed for a $250 statement credit" states what
+    the bonus points are worth, not an extra $250; counting it would double the offer.
+  verified_by: claude (rendered page text)
+  verified_on: 2026-09-26
+
+- card_id: c1_venture
+  field: offer.statement_credit_usd
+  value: null
+  reason: >-
+    "$300 to use on hotel and vacation rental bookings through Capital One Travel in your first
+    cardholder year" is a portal-only credit, not a statement credit; it is already listed under
+    credits (Capital One Travel credit, user-verified).
+  verified_by: claude (rendered page text)
+  verified_on: 2026-09-26
+
+- card_id: amex_hilton_surpass
+  field: credits
+  op: add
+  match: concession
+  value:
+    description: Concessions purchases (enrolled)
+    percent: 10
+    period: calendar_year
+    conditions: 10% back on qualifying concessions purchases up to $250 per calendar year; enrollment required
+  reason: >-
+    On the rendered page ("get 10% back on qualifying concessions purchases up to $250 per calendar
+    year") but missed by the 2026-09-26 extraction; v3 had it.
+  verified_by: claude (rendered page text)
+  verified_on: 2026-09-26

@@ -5,7 +5,7 @@ description = "Scout: fetches Issuer pages and extracts Proposed Changes for hum
 requires-python = ">=3.13"
 dependencies = [
     "beautifulsoup4>=4.12",
-    "boto3>=1.35",
+    "boto3[crt]>=1.35",  # crt: needed to read `aws login` credentials
     "card-rules",
     "httpx>=0.27",
     "lxml>=5",

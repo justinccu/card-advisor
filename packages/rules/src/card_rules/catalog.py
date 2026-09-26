@@ -14,9 +14,16 @@ from card_rules.models import CardProduct, Market
 class Offer(BaseModel):
     amount_disclosed: bool
     amount: int | None
+    # "as high as" / "up to": `amount` is a ceiling, not what every applicant gets
+    amount_is_up_to: bool = False
     unit: Literal["points", "miles", "usd", "gift_card_usd", "cashback_match", "free_nights"]
     min_spend_usd: int | None
     spend_window_months: int | None
+    # Two-part offers: a dollar statement credit earned with the same spend as the bonus
+    # (Delta Gold: "Earn a $250 Statement Credit and the bonus miles").
+    statement_credit_usd: int | None = None
+    # "Offer ends 11/4/2026": an ended offer never headlines a card.
+    ends_on: date | None = None
 
 
 class EarningRate(BaseModel):
@@ -29,8 +36,21 @@ class EarningRate(BaseModel):
 
 class Credit(BaseModel):
     description: str
-    amount_usd: int
-    period: str
+    amount_usd: float | None = None  # None for non-dollar perks; cents allowed ($12.95/month)
+    period: str  # one_time | per_use | month | quarter | year | calendar_year | ...
+    percent: float | None = None  # "25% back as a statement credit": a rate, not an amount
+    valid_from: date | None = None  # limited-time perks
+    valid_until: date | None = None
+    conditions: str | None = None  # e.g. "after $250 spend", "enrollment required"
+
+
+class OfferVariant(BaseModel):
+    """One offer as seen from one source (the main page, or a public campaign landing page)."""
+
+    source_url: str
+    profile: Literal["fresh", "campaign", "http"]
+    offer: Offer | None
+    fetched_at: datetime | None = None
 
 
 class CatalogCard(CardProduct):
@@ -49,6 +69,18 @@ class CatalogCard(CardProduct):
     notes: str = ""
     verified_at: datetime | None = None
     content_hash: str | None = None
+    # Every offer version we saw; `offer` is the one chosen by `offer_basis`.
+    offer_variants: list[OfferVariant] = []
+    # "max_public_number": the largest publicly shown amount (same unit), NOT the highest expected
+    # value. An "up to 100,000" ceiling beats a fixed 90,000 even if typical approvals get less.
+    offer_basis: Literal["max_public_number"] = "max_public_number"
+    # The issuer shows different content to different visitors (HTML vs rendered, or variants).
+    varies_by_visitor: bool = False
+    # Numbers the issuer ships only in raw HTML (visitors never see them). Kept as notes for
+    # reviewers; they can never become the published offer or any field value.
+    quarantine: list[str] = []
+    # Fields corrected by a person (catalog/seed/overrides.yaml) -> date verified
+    manually_verified: dict[str, date] = {}
 
 
 class CatalogSnapshot(BaseModel):
@@ -56,6 +88,9 @@ class CatalogSnapshot(BaseModel):
     market: Market
     generated_at: datetime
     cards: list[CatalogCard]
+    # True for a local preview built from unreviewed extractions (ADR 0002): never published,
+    # and every consumer must label it as unverified.
+    preview: bool = False
 
     def card(self, card_id: str) -> CatalogCard:
         return next(c for c in self.cards if c.id == card_id)

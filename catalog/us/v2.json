@@ -1,0 +1,3887 @@
+{
+  "version": 2,
+  "market": "US",
+  "generated_at": "2026-09-25T22:54:40.505872Z",
+  "cards": [
+    {
+      "id": "chase_freedom_flex",
+      "issuer_id": "chase",
+      "name": "Chase Freedom Flex",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://creditcards.chase.com/cash-back-credit-cards/freedom/flex",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "cashback",
+        "rotating"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Mastercard",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 250,
+        "amount_is_up_to": false,
+        "unit": "usd",
+        "min_spend_usd": 500,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "rotating quarterly categories",
+          "rate": 5.0,
+          "unit": "percent_cash_back",
+          "cap_usd": 1500,
+          "cap_period": "quarter"
+        },
+        {
+          "category": "travel purchased through Chase Travel",
+          "rate": 5.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "dining including takeout",
+          "rate": 3.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "drugstores",
+          "rate": 3.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "DashPass membership (DoorDash and Caviar)",
+          "amount_usd": null,
+          "period": "one_time"
+        },
+        {
+          "description": "DoorDash $10 off quarterly on non-restaurant orders",
+          "amount_usd": 10,
+          "period": "quarter"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T13:56:00-05:00",
+      "content_hash": "671355d322b005545e6f8e3f0eea6e8bcff8653713dc706f484a3b8838e9f960",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "chase_freedom_unlimited",
+      "issuer_id": "chase",
+      "name": "Chase Freedom Unlimited",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://creditcards.chase.com/cash-back-credit-cards/freedom/unlimited",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "cashback"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": null,
+      "network": null,
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 200,
+        "amount_is_up_to": false,
+        "unit": "usd",
+        "min_spend_usd": 500,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "dining at restaurants, including takeout and eligible delivery services",
+          "rate": 3.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "drugstore purchases",
+          "rate": 3.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "travel purchased through Chase Travel",
+          "rate": 5.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.5,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T13:56:00-05:00",
+      "content_hash": "7b168560bc5f5c98211b146dc332b6ac79de3ec939ac629eee5e969238f5763a",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "chase_freedom_rise",
+      "issuer_id": "chase",
+      "name": "Chase Freedom Rise",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://creditcards.chase.com/cash-back-credit-cards/freedom/rise",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "starter",
+        "cashback"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": null,
+      "network": null,
+      "offer": null,
+      "earning_rates": [
+        {
+          "category": "all purchases",
+          "rate": 1.5,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "statement credit for enrolling in automatic payments",
+          "amount_usd": 25,
+          "period": "one_time"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T13:56:00-05:00",
+      "content_hash": "9fdc05edad3e9629e0c9e7741d4053da160b59c67c5951e36577e106a0379abb",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "chase_sapphire_preferred",
+      "issuer_id": "chase",
+      "name": "Chase Sapphire Preferred",
+      "market": "US",
+      "family": "sapphire",
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "points"
+      ],
+      "annual_fee_usd": 95,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Visa",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 75000,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 5000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "Chase Travel",
+          "rate": 5.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "dining",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "gas stations, EV charging, and vacation homes at top brands",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "top streaming services and online grocery",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other travel",
+          "rate": 2.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Chase Travel Hotel Credit",
+          "amount_usd": 100,
+          "period": "year"
+        },
+        {
+          "description": "Global Entry or TSA PreCheck or NEXUS Application Fee credit",
+          "amount_usd": 120,
+          "period": "four_years"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T13:56:00-05:00",
+      "content_hash": "fe9e1766d4a0e389555abafee7957831433b4889683fe57adde0e22f4427ef75",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "chase_sapphire_reserve",
+      "issuer_id": "chase",
+      "name": "Chase Sapphire Reserve",
+      "market": "US",
+      "family": "sapphire",
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "points",
+        "premium"
+      ],
+      "annual_fee_usd": 795,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Visa",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 100000,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 6000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "Chase Travel purchases",
+          "rate": 8.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "flights booked direct",
+          "rate": 4.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "hotels booked direct",
+          "rate": 4.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "dining worldwide",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Annual travel credit",
+          "amount_usd": 300,
+          "period": "year"
+        },
+        {
+          "description": "Dining credit at Sapphire Exclusive Tables restaurants",
+          "amount_usd": 300,
+          "period": "calendar_year"
+        },
+        {
+          "description": "Global Entry/TSA PreCheck/NEXUS fee credit",
+          "amount_usd": 120,
+          "period": "four_years"
+        },
+        {
+          "description": "Lyft monthly credits",
+          "amount_usd": 120,
+          "period": "year"
+        },
+        {
+          "description": "Peloton membership credits",
+          "amount_usd": 120,
+          "period": "calendar_year"
+        },
+        {
+          "description": "StubHub credits",
+          "amount_usd": 300,
+          "period": "calendar_year"
+        },
+        {
+          "description": "DoorDash promos",
+          "amount_usd": 300,
+          "period": "calendar_year"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T13:56:00-05:00",
+      "content_hash": "425ccfe571204ea0840d098d06cee0b1484831b9e6c7f2204e49438919e1641d",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "chase_united_explorer",
+      "issuer_id": "chase",
+      "name": "United Explorer Card",
+      "market": "US",
+      "family": "united",
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://creditcards.chase.com/travel-credit-cards/united/united-explorer",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "airline"
+      ],
+      "annual_fee_usd": 150,
+      "first_year_annual_fee_usd": 0,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Visa",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 60000,
+        "amount_is_up_to": false,
+        "unit": "miles",
+        "min_spend_usd": 3000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "eligible United flights",
+          "rate": 9.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other eligible United purchases",
+          "rate": 3.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "hotel stays when booked with the hotel",
+          "rate": 2.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "dining including eligible delivery services",
+          "rate": 2.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Global Entry, TSA PreCheck or NEXUS application fee",
+          "amount_usd": 120,
+          "period": "four_years"
+        },
+        {
+          "description": "United Hotels statement credit",
+          "amount_usd": 100,
+          "period": "year"
+        },
+        {
+          "description": "Rideshare statement credit",
+          "amount_usd": 60,
+          "period": "calendar_year"
+        },
+        {
+          "description": "Avis or Budget travel credit",
+          "amount_usd": 50,
+          "period": "year"
+        },
+        {
+          "description": "Instacart credits",
+          "amount_usd": 120,
+          "period": "calendar_year"
+        },
+        {
+          "description": "JSX statement credit",
+          "amount_usd": 100,
+          "period": "year"
+        },
+        {
+          "description": "United travel credit",
+          "amount_usd": 100,
+          "period": "calendar_year"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T13:56:00-05:00",
+      "content_hash": "754313812ef99ffaedce4642c7acf9133ff2cb006b711c6bb3b83a973b2b13d2",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "chase_southwest_plus",
+      "issuer_id": "chase",
+      "name": "Southwest Rapid Rewards Plus",
+      "market": "US",
+      "family": "southwest",
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://creditcards.chase.com/travel-credit-cards/southwest/plus",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "airline"
+      ],
+      "annual_fee_usd": 99,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Visa",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 50000,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 1000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "Southwest Airlines purchases",
+          "rate": 2.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "gas stations and grocery stores",
+          "rate": 2.0,
+          "unit": "x_points",
+          "cap_usd": 5000,
+          "cap_period": "year"
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "3,000 anniversary points each year",
+          "amount_usd": null,
+          "period": "year"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T13:56:00-05:00",
+      "content_hash": "32caf555a0f1e508ceee10be31cba86decdd897e7b79e5d730b80c5eb8e5956c",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "chase_marriott_boundless",
+      "issuer_id": "chase",
+      "name": "Marriott Bonvoy Boundless",
+      "market": "US",
+      "family": "marriott",
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://creditcards.chase.com/travel-credit-cards/marriott-bonvoy/boundless",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "hotel"
+      ],
+      "annual_fee_usd": 95,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Visa",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 3,
+        "amount_is_up_to": false,
+        "unit": "free_nights",
+        "min_spend_usd": 3000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "hotels participating in Marriott Bonvoy",
+          "rate": 6.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "grocery stores, gas stations, and dining",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": 6000,
+          "cap_period": "year"
+        },
+        {
+          "category": "all other purchases",
+          "rate": 2.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T13:56:00-05:00",
+      "content_hash": "afca3f216cc9618fbec53140da2a2535b3847e56d7ae682586b91424c9ade397",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "chase_ihg_premier",
+      "issuer_id": "chase",
+      "name": "IHG One Rewards Premier",
+      "market": "US",
+      "family": "ihg",
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://creditcards.chase.com/travel-credit-cards/ihg-rewards-club/premier",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "hotel"
+      ],
+      "annual_fee_usd": 99,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Mastercard",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 140000,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 3000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "IHG Hotels and Resorts",
+          "rate": 10.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "travel, gas stations, dining",
+          "rate": 5.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other purchases",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Global Entry, TSA PreCheck or NEXUS application fee",
+          "amount_usd": 120,
+          "period": "four_years"
+        },
+        {
+          "description": "United Airlines TravelBank Cash",
+          "amount_usd": 50,
+          "period": "calendar_year"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T13:56:00-05:00",
+      "content_hash": "ca2c3b8f4d78851450d0cb33d1f977b50f50d3905a8748b4a84802e65e2f24db",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "chase_world_of_hyatt",
+      "issuer_id": "chase",
+      "name": "World of Hyatt Credit Card",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://creditcards.chase.com/travel-credit-cards/world-of-hyatt-credit-card",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "hotel"
+      ],
+      "annual_fee_usd": 95,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Visa",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 60000,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 3000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "Hyatt hotels",
+          "rate": 4.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "restaurants, airline tickets, local transit, fitness memberships",
+          "rate": 2.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Free night at Category 1-4 Hyatt hotel",
+          "amount_usd": null,
+          "period": "year"
+        },
+        {
+          "description": "Additional free night after $15,000 spend",
+          "amount_usd": null,
+          "period": "calendar_year"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T13:56:00-05:00",
+      "content_hash": "aa975e2ae1e87e0976927d7cce02978bb002828600d730ca5b2ae419487ff6b0",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "chase_prime_visa",
+      "issuer_id": "chase",
+      "name": "Prime Visa",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://creditcards.chase.com/cash-back-credit-cards/amazon-prime-rewards",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "cashback",
+        "shopping"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Visa",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 150,
+        "amount_is_up_to": false,
+        "unit": "gift_card_usd",
+        "min_spend_usd": null,
+        "spend_window_months": null
+      },
+      "earning_rates": [
+        {
+          "category": "Amazon.com, Audible.com, Whole Foods Market, and Chase Travel purchases (with Prime membership)",
+          "rate": 5.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "gas stations, restaurants, and local transit/commuting",
+          "rate": 2.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T13:56:00-05:00",
+      "content_hash": "179f0d334cd47b745c834f4e10ffefb8debfd58fb5ac350ca85d9303e4437580",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "chase_ink_unlimited",
+      "issuer_id": "chase",
+      "name": "Ink Business Unlimited",
+      "market": "US",
+      "family": null,
+      "is_business": true,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://creditcards.chase.com/business-credit-cards/ink/unlimited",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "business",
+        "cashback"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": null,
+      "network": null,
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 750,
+        "amount_is_up_to": false,
+        "unit": "usd",
+        "min_spend_usd": 6000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "every purchase",
+          "rate": 1.5,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Lyft rides",
+          "rate": 5.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Instacart monthly credit",
+          "amount_usd": 20,
+          "period": "month"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T13:56:00-05:00",
+      "content_hash": "8157804f7efd91259f429a50a058bb94a78daa23016a13fa373a2617ed5edddc",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "chase_ink_cash",
+      "issuer_id": "chase",
+      "name": "Ink Business Cash",
+      "market": "US",
+      "family": null,
+      "is_business": true,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://creditcards.chase.com/business-credit-cards/ink/cash",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "business",
+        "cashback"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": null,
+      "network": null,
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 750,
+        "amount_is_up_to": false,
+        "unit": "usd",
+        "min_spend_usd": 6000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "office supply stores and internet, cable and phone services",
+          "rate": 5.0,
+          "unit": "percent_cash_back",
+          "cap_usd": 25000,
+          "cap_period": "year"
+        },
+        {
+          "category": "gas stations and restaurants",
+          "rate": 2.0,
+          "unit": "percent_cash_back",
+          "cap_usd": 25000,
+          "cap_period": "year"
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Lyft rides",
+          "rate": 5.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Instacart+ membership monthly credit",
+          "amount_usd": 20,
+          "period": "month"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T13:56:00-05:00",
+      "content_hash": "987640ae5ade6f60f3da18a5d0bad8b9effa08065d47c0352a79f52d4fe43b6f",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "chase_ink_preferred",
+      "issuer_id": "chase",
+      "name": "Ink Business Preferred",
+      "market": "US",
+      "family": null,
+      "is_business": true,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://creditcards.chase.com/business-credit-cards/ink/business-preferred",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "business",
+        "points"
+      ],
+      "annual_fee_usd": 95,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Visa",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 100000,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 8000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "shipping purchases",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": 150000,
+          "cap_period": "year"
+        },
+        {
+          "category": "advertising purchases made with social media sites and search engines",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": 150000,
+          "cap_period": "year"
+        },
+        {
+          "category": "internet, cable and phone services",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": 150000,
+          "cap_period": "year"
+        },
+        {
+          "category": "travel",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": 150000,
+          "cap_period": "year"
+        },
+        {
+          "category": "Lyft rides",
+          "rate": 5.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "DashPass membership (DoorDash and Caviar)",
+          "amount_usd": 0,
+          "period": "year"
+        },
+        {
+          "description": "$10 off monthly on DoorDash non-restaurant orders",
+          "amount_usd": 10,
+          "period": "month"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T13:56:00-05:00",
+      "content_hash": "80d1478e271784d407c065e059919e57f5ee3bc8774d45fd17bad971fd160a43",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "amex_platinum",
+      "issuer_id": "amex",
+      "name": "The Platinum Card",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": true,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.americanexpress.com/us/credit-cards/card/platinum/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "points",
+        "premium"
+      ],
+      "annual_fee_usd": 895,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "American Express",
+      "offer": {
+        "amount_disclosed": false,
+        "amount": null,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 12000,
+        "spend_window_months": 6
+      },
+      "earning_rates": [
+        {
+          "category": "Flights booked directly with airlines or through American Express Travel",
+          "rate": 5.0,
+          "unit": "x_points",
+          "cap_usd": 500000,
+          "cap_period": "calendar_year"
+        },
+        {
+          "category": "Prepaid Hotels booked on American Express Travel",
+          "rate": 5.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Other Purchases",
+          "rate": 1.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Hotel Credit for Fine Hotels + Resorts or The Hotel Collection",
+          "amount_usd": 600,
+          "period": "year"
+        },
+        {
+          "description": "Resy dining credit",
+          "amount_usd": 400,
+          "period": "year"
+        },
+        {
+          "description": "Digital Entertainment credit",
+          "amount_usd": 300,
+          "period": "year"
+        },
+        {
+          "description": "lululemon credit",
+          "amount_usd": 300,
+          "period": "year"
+        },
+        {
+          "description": "Walmart+ credit",
+          "amount_usd": 155,
+          "period": "year"
+        },
+        {
+          "description": "Uber Cash",
+          "amount_usd": 200,
+          "period": "year"
+        },
+        {
+          "description": "Airline Fee Credit",
+          "amount_usd": 200,
+          "period": "calendar_year"
+        },
+        {
+          "description": "CLEAR+ Credit",
+          "amount_usd": 219,
+          "period": "calendar_year"
+        },
+        {
+          "description": "Uber One Credit",
+          "amount_usd": 120,
+          "period": "calendar_year"
+        },
+        {
+          "description": "Equinox Credit",
+          "amount_usd": 300,
+          "period": "calendar_year"
+        },
+        {
+          "description": "Oura Ring Credit",
+          "amount_usd": 200,
+          "period": "calendar_year"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T14:30:00-05:00",
+      "content_hash": "bce8f3fa542222165701306f33c5331a9801de78ae8d43315e28697768b7cd54",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": true,
+      "quarantine": [
+        "raw HTML only, not shown to visitors: $550"
+      ],
+      "manually_verified": {}
+    },
+    {
+      "id": "amex_gold",
+      "issuer_id": "amex",
+      "name": "American Express Gold Card",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": true,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.americanexpress.com/us/credit-cards/card/gold-card/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "points",
+        "dining"
+      ],
+      "annual_fee_usd": 325,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "American Express",
+      "offer": {
+        "amount_disclosed": false,
+        "amount": null,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 8000,
+        "spend_window_months": 6
+      },
+      "earning_rates": [
+        {
+          "category": "Restaurants Worldwide",
+          "rate": 4.0,
+          "unit": "x_points",
+          "cap_usd": 50000,
+          "cap_period": "calendar_year"
+        },
+        {
+          "category": "U.S. supermarkets",
+          "rate": 4.0,
+          "unit": "x_points",
+          "cap_usd": 25000,
+          "cap_period": "calendar_year"
+        },
+        {
+          "category": "Prepaid Hotels",
+          "rate": 5.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Flights",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Prepaid Car Rentals",
+          "rate": 2.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other eligible purchases",
+          "rate": 1.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Dining Credit at Grubhub, Buffalo Wild Wings, Five Guys, The Cheesecake Factory, and Wonder",
+          "amount_usd": 120,
+          "period": "year"
+        },
+        {
+          "description": "Uber Cash",
+          "amount_usd": 120,
+          "period": "year"
+        },
+        {
+          "description": "Resy Credit",
+          "amount_usd": 100,
+          "period": "calendar_year"
+        },
+        {
+          "description": "Dunkin' Credit",
+          "amount_usd": 84,
+          "period": "year"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T14:30:00-05:00",
+      "content_hash": "10ffefa7a08c2a1a4269819b68331a7fce1a7d0c2f05e2e1aaf90a650c2ad503",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "amex_green",
+      "issuer_id": "amex",
+      "name": "American Express Green Card",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": true,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.americanexpress.com/us/credit-cards/card/green/",
+      "availability": "closed_to_new_applicants",
+      "closed_on": "2026-07-23",
+      "tags": [
+        "travel",
+        "points"
+      ],
+      "annual_fee_usd": null,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": null,
+      "network": null,
+      "offer": null,
+      "earning_rates": [],
+      "credits": [],
+      "notes": "",
+      "verified_at": null,
+      "content_hash": null,
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "amex_blue_cash_everyday",
+      "issuer_id": "amex",
+      "name": "Blue Cash Everyday",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.americanexpress.com/us/credit-cards/card/blue-cash-everyday/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "cashback"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 2.7,
+      "network": "American Express",
+      "offer": {
+        "amount_disclosed": false,
+        "amount": null,
+        "amount_is_up_to": false,
+        "unit": "usd",
+        "min_spend_usd": 2000,
+        "spend_window_months": 6
+      },
+      "earning_rates": [
+        {
+          "category": "U.S. supermarkets",
+          "rate": 3.0,
+          "unit": "percent_cash_back",
+          "cap_usd": 6000,
+          "cap_period": "year"
+        },
+        {
+          "category": "U.S. online retail purchases",
+          "rate": 3.0,
+          "unit": "percent_cash_back",
+          "cap_usd": 6000,
+          "cap_period": "year"
+        },
+        {
+          "category": "U.S. gas stations",
+          "rate": 3.0,
+          "unit": "percent_cash_back",
+          "cap_usd": 6000,
+          "cap_period": "year"
+        },
+        {
+          "category": "other eligible purchases",
+          "rate": 1.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Disney Streaming Credit",
+          "amount_usd": 7,
+          "period": "month"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T14:30:00-05:00",
+      "content_hash": "30a466afadcca5c01e5b5205b2ba569bfdca22fe5c5e4c7e93730205f2d47e32",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "amex_blue_cash_preferred",
+      "issuer_id": "amex",
+      "name": "Blue Cash Preferred",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.americanexpress.com/us/credit-cards/card/blue-cash-preferred/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "cashback",
+        "groceries"
+      ],
+      "annual_fee_usd": 95,
+      "first_year_annual_fee_usd": 0,
+      "foreign_transaction_fee_pct": 2.7,
+      "network": "American Express",
+      "offer": {
+        "amount_disclosed": false,
+        "amount": null,
+        "amount_is_up_to": false,
+        "unit": "usd",
+        "min_spend_usd": 3000,
+        "spend_window_months": 6
+      },
+      "earning_rates": [
+        {
+          "category": "U.S. supermarkets",
+          "rate": 6.0,
+          "unit": "percent_cash_back",
+          "cap_usd": 6000,
+          "cap_period": "year"
+        },
+        {
+          "category": "select U.S. streaming subscriptions",
+          "rate": 6.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "transit",
+          "rate": 3.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "U.S. gas stations",
+          "rate": 3.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "other eligible purchases",
+          "rate": 1.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Disney Streaming Credit",
+          "amount_usd": 10,
+          "period": "month"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T14:30:00-05:00",
+      "content_hash": "3b21859e3d8d0569520a96d2dacbde7b598c73a02b52b948f8d20e782629b0f8",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "amex_delta_gold",
+      "issuer_id": "amex",
+      "name": "Delta SkyMiles Gold",
+      "market": "US",
+      "family": "delta",
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-gold-american-express-card/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "airline"
+      ],
+      "annual_fee_usd": 150,
+      "first_year_annual_fee_usd": 0,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "American Express",
+      "offer": null,
+      "earning_rates": [
+        {
+          "category": "Dining",
+          "rate": 2.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Groceries",
+          "rate": 2.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Delta Purchases",
+          "rate": 2.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "everything else",
+          "rate": 1.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Delta Flight Credit",
+          "amount_usd": 200,
+          "period": "calendar_year"
+        },
+        {
+          "description": "Rideshare Credit",
+          "amount_usd": 120,
+          "period": "year"
+        },
+        {
+          "description": "Delta Stays Credit",
+          "amount_usd": 100,
+          "period": "year"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T14:30:00-05:00",
+      "content_hash": "9ffbcf1ae7b27f34c5bb05308b62f8ae8e75eb5fa091cdb27bd99ff904aa462a",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "amex_hilton_honors",
+      "issuer_id": "amex",
+      "name": "Hilton Honors American Express",
+      "market": "US",
+      "family": "hilton",
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.americanexpress.com/us/credit-cards/card/hilton-honors/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "hotel"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": null,
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 70000,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 2000,
+        "spend_window_months": 6
+      },
+      "earning_rates": [
+        {
+          "category": "Hotels & Resorts",
+          "rate": 7.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Dining",
+          "rate": 5.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Groceries",
+          "rate": 5.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Gas",
+          "rate": 5.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "everything else",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:30:00-05:00",
+      "content_hash": "4da0e3f27330c5d7a428cdcfc62a82e4e0a3068f62a05fec27cf8f1d1f3e5ea4",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "amex_hilton_surpass",
+      "issuer_id": "amex",
+      "name": "Hilton Honors Surpass",
+      "market": "US",
+      "family": "hilton",
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.americanexpress.com/us/credit-cards/card/hilton-honors-surpass/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "hotel"
+      ],
+      "annual_fee_usd": 150,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "American Express",
+      "offer": {
+        "amount_disclosed": false,
+        "amount": null,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": null,
+        "spend_window_months": null
+      },
+      "earning_rates": [
+        {
+          "category": "Hotels & Resorts",
+          "rate": 12.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Dining",
+          "rate": 6.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Groceries",
+          "rate": 6.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Gas",
+          "rate": 6.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "U.S. Online Retail Purchases",
+          "rate": 4.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "other eligible purchases",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Hilton statement credits",
+          "amount_usd": 50,
+          "period": "quarter"
+        },
+        {
+          "description": "Concessions credit",
+          "amount_usd": 250,
+          "period": "calendar_year"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T14:30:00-05:00",
+      "content_hash": "cc6c874b8349b447c9f65ca54ca95c40cfa99757d783bda6ca5d895655a77c05",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": true,
+      "quarantine": [
+        "raw HTML only, not shown to visitors: $0"
+      ],
+      "manually_verified": {
+        "first_year_annual_fee_usd": "2026-09-25"
+      }
+    },
+    {
+      "id": "amex_blue_business_plus",
+      "issuer_id": "amex",
+      "name": "The Blue Business Plus Card",
+      "market": "US",
+      "family": null,
+      "is_business": true,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-blue-business-plus-credit-card-amex/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "business",
+        "points"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": null,
+      "network": "American Express",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 15000,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 3000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "eligible purchases",
+          "rate": 2.0,
+          "unit": "x_points",
+          "cap_usd": 50000,
+          "cap_period": "calendar_year"
+        },
+        {
+          "category": "purchases thereafter",
+          "rate": 1.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:30:00-05:00",
+      "content_hash": "d463734b23998b88fe2654c059732292c374a5871ad156bab09dbeb03d40a7c3",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "amex_business_gold",
+      "issuer_id": "amex",
+      "name": "American Express Business Gold",
+      "market": "US",
+      "family": null,
+      "is_business": true,
+      "is_charge_card": true,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "business",
+        "points"
+      ],
+      "annual_fee_usd": 375,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "American Express",
+      "offer": {
+        "amount_disclosed": false,
+        "amount": null,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 15000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "Top 2 eligible categories each month",
+          "rate": 4.0,
+          "unit": "x_points",
+          "cap_usd": 150000,
+          "cap_period": "calendar_year"
+        },
+        {
+          "category": "Flights & Pre-Paid Hotels booked on AmexTravel.com",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "All other eligible purchases",
+          "rate": 1.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Flexible Business Credit for FedEx, Grubhub, and Office Supply Stores",
+          "amount_usd": 240,
+          "period": "year"
+        },
+        {
+          "description": "ChatGPT Business Credit",
+          "amount_usd": 300,
+          "period": "calendar_year"
+        },
+        {
+          "description": "Squarespace Credit",
+          "amount_usd": 150,
+          "period": "calendar_year"
+        },
+        {
+          "description": "Walmart+ Credit",
+          "amount_usd": 155,
+          "period": "year"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T14:30:00-05:00",
+      "content_hash": "6a13c2cdf155d50c46e69ddaae0c632fbb61adee60d5634422da634cd147badd",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "amex_business_platinum",
+      "issuer_id": "amex",
+      "name": "The Business Platinum Card",
+      "market": "US",
+      "family": null,
+      "is_business": true,
+      "is_charge_card": true,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "business",
+        "premium"
+      ],
+      "annual_fee_usd": 895,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "American Express",
+      "offer": {
+        "amount_disclosed": false,
+        "amount": null,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": null,
+        "spend_window_months": null
+      },
+      "earning_rates": [
+        {
+          "category": "flights and prepaid hotels booked through Amex Travel",
+          "rate": 5.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "key business purchases or purchases of $5K+",
+          "rate": 2.0,
+          "unit": "x_points",
+          "cap_usd": 2000000,
+          "cap_period": "calendar_year"
+        },
+        {
+          "category": "all other eligible purchases",
+          "rate": 1.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Hotel credit on prepaid bookings through Amex Travel",
+          "amount_usd": 600,
+          "period": "semi_annual"
+        },
+        {
+          "description": "Hilton statement credits",
+          "amount_usd": 200,
+          "period": "quarter"
+        },
+        {
+          "description": "Airline fee credit",
+          "amount_usd": 200,
+          "period": "calendar_year"
+        },
+        {
+          "description": "CLEAR+ membership credit",
+          "amount_usd": 219,
+          "period": "calendar_year"
+        },
+        {
+          "description": "Dell Technologies credit",
+          "amount_usd": 1150,
+          "period": "calendar_year"
+        },
+        {
+          "description": "ChatGPT Business credit",
+          "amount_usd": 300,
+          "period": "calendar_year"
+        },
+        {
+          "description": "Adobe credit",
+          "amount_usd": 250,
+          "period": "calendar_year"
+        },
+        {
+          "description": "Indeed credit",
+          "amount_usd": 360,
+          "period": "quarter"
+        },
+        {
+          "description": "Wireless credit",
+          "amount_usd": 120,
+          "period": "month"
+        },
+        {
+          "description": "Global Entry or TSA PreCheck fee credit",
+          "amount_usd": 120,
+          "period": "four_years"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T14:30:00-05:00",
+      "content_hash": "145b4713ef698f1eaf54dc2b0e9aba73307809daeb7d2e5602e23537b4e4036b",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "citi_double_cash",
+      "issuer_id": "citi",
+      "name": "Citi Double Cash",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.citi.com/credit-cards/citi-double-cash-credit-card",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "cashback"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 3.0,
+      "network": "Mastercard",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 200,
+        "amount_is_up_to": false,
+        "unit": "usd",
+        "min_spend_usd": 1500,
+        "spend_window_months": 6
+      },
+      "earning_rates": [
+        {
+          "category": "all purchases",
+          "rate": 2.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "hotels, car rentals, and attractions booked through Citi Travel portal",
+          "rate": 5.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:05:00-05:00",
+      "content_hash": "d79373be6d8bcad58c336ee3b3a1a664d5f222046e9fe50d860e5c1d542559db",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "citi_custom_cash",
+      "issuer_id": "citi",
+      "name": "Citi Custom Cash",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.citi.com/credit-cards/citi-custom-cash-credit-card",
+      "availability": "closed_to_new_applicants",
+      "closed_on": "2026-05-28",
+      "tags": [
+        "cashback"
+      ],
+      "annual_fee_usd": null,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": null,
+      "network": null,
+      "offer": null,
+      "earning_rates": [],
+      "credits": [],
+      "notes": "",
+      "verified_at": null,
+      "content_hash": null,
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "citi_strata_premier",
+      "issuer_id": "citi",
+      "name": "Citi Strata Premier",
+      "market": "US",
+      "family": "strata",
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.citi.com/credit-cards/citi-strata-premier-credit-card",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "points"
+      ],
+      "annual_fee_usd": 95,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Mastercard",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 60000,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 4000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "Hotels, Car Rentals and Attractions booked on cititravel.com",
+          "rate": 10.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Air Travel and Other Hotel Purchases",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Restaurants",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Supermarkets",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Gas & EV Charging Stations",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "All Other Purchases",
+          "rate": 1.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "$100 off hotel stay of $500+ booked through cititravel.com",
+          "amount_usd": 100,
+          "period": "calendar_year"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T14:05:00-05:00",
+      "content_hash": "87794ca5977fd982845c42368f1bedd95e5087b53e978df87a9aa5641851ed60",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "citi_strata_elite",
+      "issuer_id": "citi",
+      "name": "Citi Strata Elite",
+      "market": "US",
+      "family": "strata",
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.citi.com/credit-cards/citi-strata-elite-credit-card",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "points",
+        "premium"
+      ],
+      "annual_fee_usd": 595,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Mastercard",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 75000,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 6000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "Hotels, Car Rentals, and Attractions booked on cititravel.com",
+          "rate": 12.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Air Travel booked on cititravel.com",
+          "rate": 6.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Restaurants on Citi Nights purchases, Friday and Saturday from 6 PM - 6 AM ET",
+          "rate": 6.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Restaurants any other time",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "All Other Purchases",
+          "rate": 1.5,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Hotel stay benefit",
+          "amount_usd": 300,
+          "period": "calendar_year"
+        },
+        {
+          "description": "Splurge credit on choice of brands",
+          "amount_usd": 200,
+          "period": "calendar_year"
+        },
+        {
+          "description": "Blacklane chauffeur service credit",
+          "amount_usd": 200,
+          "period": "calendar_year"
+        },
+        {
+          "description": "Global Entry or TSA PreCheck application fee credit",
+          "amount_usd": 120,
+          "period": "four_years"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T14:05:00-05:00",
+      "content_hash": "36b8ce682e6418e647632035d28f1569271a3002f89dd058dc77f935a324a3d5",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "citi_costco",
+      "issuer_id": "citi",
+      "name": "Costco Anywhere Visa by Citi",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.citi.com/credit-cards/costco-anywhere-visa-card",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "cashback",
+        "shopping"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Visa",
+      "offer": null,
+      "earning_rates": [
+        {
+          "category": "gas at Costco",
+          "rate": 5.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "other eligible gas and EV charging",
+          "rate": 4.0,
+          "unit": "percent_cash_back",
+          "cap_usd": 7000,
+          "cap_period": "year"
+        },
+        {
+          "category": "restaurants and eligible travel",
+          "rate": 3.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other Costco and Costco.com purchases",
+          "rate": 2.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:05:00-05:00",
+      "content_hash": "ec33dc23443f28e4ecb75ea4fa28521748dd90e475fc4f0f2047e63debde8730",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "citi_aadvantage_platinum_select",
+      "issuer_id": "citi",
+      "name": "Citi / AAdvantage Platinum Select",
+      "market": "US",
+      "family": "aadvantage",
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.citi.com/credit-cards/citi-aadvantage-platinum-select-world-elite-mastercard",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "airline"
+      ],
+      "annual_fee_usd": 99,
+      "first_year_annual_fee_usd": 0,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Mastercard",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 50000,
+        "amount_is_up_to": false,
+        "unit": "miles",
+        "min_spend_usd": 2500,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "eligible American Airlines purchases",
+          "rate": 2.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "restaurants, including takeout",
+          "rate": 2.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "gas stations",
+          "rate": 2.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:05:00-05:00",
+      "content_hash": "2b2f1c9014fb61c327c46632c194e5f2871fd57ae7826db30a822abacb8bf112",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "citi_secured",
+      "issuer_id": "citi",
+      "name": "Citi Secured Mastercard",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.citi.com/credit-cards/citi-secured-credit-card",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "starter",
+        "secured"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": null,
+      "network": "Mastercard",
+      "offer": null,
+      "earning_rates": [
+        {
+          "category": "all purchases",
+          "rate": 0.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:05:00-05:00",
+      "content_hash": "ff06f87264f50c8792113b7d1771e1b762e636ffdbf9dc1141440ecfdd996ec8",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "c1_venture_x",
+      "issuer_id": "capital_one",
+      "name": "Capital One Venture X",
+      "market": "US",
+      "family": "venture",
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.capitalone.com/credit-cards/venture-x/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "points",
+        "premium"
+      ],
+      "annual_fee_usd": 395,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Visa",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 75000,
+        "amount_is_up_to": false,
+        "unit": "miles",
+        "min_spend_usd": 4000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "hotels & rental cars booked through Capital One Travel",
+          "rate": 10.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "flights and vacation rentals booked through Capital One Travel",
+          "rate": 5.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other purchases",
+          "rate": 2.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Annual Travel Credit",
+          "amount_usd": 300,
+          "period": "year"
+        },
+        {
+          "description": "Global Entry or TSA PreCheck Credit",
+          "amount_usd": 120,
+          "period": "four_years"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T14:05:00-05:00",
+      "content_hash": "7e67f05a0cbd10ae15b6d4f999f76b5a7d2cfe7926e29e1c12ae622cc0c56f17",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "c1_venture",
+      "issuer_id": "capital_one",
+      "name": "Capital One Venture",
+      "market": "US",
+      "family": "venture",
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.capitalone.com/credit-cards/venture/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "points"
+      ],
+      "annual_fee_usd": 95,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Visa",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 75000,
+        "amount_is_up_to": false,
+        "unit": "miles",
+        "min_spend_usd": 4000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "every purchase",
+          "rate": 2.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "hotels, vacation rentals, and rental cars booked through Capital One Travel",
+          "rate": 5.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Capital One Entertainment purchases",
+          "rate": 5.0,
+          "unit": "x_miles",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Global Entry or TSA PreCheck application fee",
+          "amount_usd": 120,
+          "period": "four_years"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T14:05:00-05:00",
+      "content_hash": "c346f6d9140cbd990be5cc63d30def248732cc9b4fe4518dab51a14638fc0b1d",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "c1_quicksilver",
+      "issuer_id": "capital_one",
+      "name": "Capital One Quicksilver",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.capitalone.com/credit-cards/quicksilver/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "cashback"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": null,
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 200,
+        "amount_is_up_to": false,
+        "unit": "usd",
+        "min_spend_usd": 500,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "all purchases",
+          "rate": 1.5,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Capital One Travel",
+          "rate": 5.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Capital One Entertainment",
+          "rate": 5.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:05:00-05:00",
+      "content_hash": "394ac56ec121b5552db54f15c1eb81fd6ae3cd013ef16b0ea5062657ebaabc42",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "c1_quicksilverone",
+      "issuer_id": "capital_one",
+      "name": "Capital One QuicksilverOne",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.capitalone.com/credit-cards/quicksilverone/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "starter",
+        "cashback"
+      ],
+      "annual_fee_usd": 39,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": null,
+      "offer": null,
+      "earning_rates": [
+        {
+          "category": "every purchase",
+          "rate": 1.5,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:05:00-05:00",
+      "content_hash": "0ab38db83319e45309abe4db56ef96bd75769e20640e0d59d00b52b32e20dd71",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "c1_savor",
+      "issuer_id": "capital_one",
+      "name": "Capital One Savor",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.capitalone.com/credit-cards/savor/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "cashback",
+        "dining"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": null,
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 200,
+        "amount_is_up_to": false,
+        "unit": "usd",
+        "min_spend_usd": 500,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "hotels, vacation rentals and rental cars booked through Capital One Travel",
+          "rate": 5.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "grocery stores (excluding superstores like Walmart® and Target®), dining, entertainment and popular streaming services",
+          "rate": 3.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:05:00-05:00",
+      "content_hash": "f8de260b29df0ff03570e9d906badc28ee3c7614a4022e337bdf913901b00d34",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "c1_quicksilver_student",
+      "issuer_id": "capital_one",
+      "name": "Capital One Quicksilver for Students",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.capitalone.com/credit-cards/quicksilver-student/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "starter",
+        "student",
+        "cashback"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": null,
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 50,
+        "amount_is_up_to": false,
+        "unit": "usd",
+        "min_spend_usd": 100,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "every purchase",
+          "rate": 1.5,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:05:00-05:00",
+      "content_hash": "63a07d571e731cd043ba96efbadd3e2038a2fffd477a7ea13ef882813f8e8de5",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "c1_savor_student",
+      "issuer_id": "capital_one",
+      "name": "Capital One Savor for Students",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.capitalone.com/credit-cards/savor-student/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "starter",
+        "student",
+        "cashback"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Mastercard",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 50,
+        "amount_is_up_to": false,
+        "unit": "usd",
+        "min_spend_usd": 100,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "grocery stores",
+          "rate": 3.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "dining",
+          "rate": 3.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "entertainment",
+          "rate": 3.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "popular streaming services",
+          "rate": 3.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:05:00-05:00",
+      "content_hash": "abb554f997af8e4ee109c395e1a9d93e14ec7ee98c493d06809eb45b9e26eb6c",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [
+        "raw HTML only, not shown to visitors: $200"
+      ],
+      "manually_verified": {
+        "varies_by_visitor": "2026-09-25"
+      }
+    },
+    {
+      "id": "c1_platinum",
+      "issuer_id": "capital_one",
+      "name": "Capital One Platinum",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.capitalone.com/credit-cards/platinum/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "starter"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": null,
+      "offer": null,
+      "earning_rates": [],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:05:00-05:00",
+      "content_hash": "259d3888db94fee61958d121568bfb1719dea65c0a89fe7481fd828c439bd576",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "c1_platinum_secured",
+      "issuer_id": "capital_one",
+      "name": "Capital One Platinum Secured",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.capitalone.com/credit-cards/platinum-secured/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "starter",
+        "secured"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": null,
+      "offer": null,
+      "earning_rates": [],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:05:00-05:00",
+      "content_hash": "5b1d35f54f09985db31decc0b161fcfc80b08a037024b992d0e67dfedd8f1eea",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "discover_it_cash_back",
+      "issuer_id": "discover",
+      "name": "Discover it Cash Back",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.discover.com/credit-cards/cash-back/it-card/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "cashback",
+        "rotating"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": null,
+      "network": "Discover",
+      "offer": {
+        "amount_disclosed": false,
+        "amount": null,
+        "amount_is_up_to": false,
+        "unit": "cashback_match",
+        "min_spend_usd": null,
+        "spend_window_months": null
+      },
+      "earning_rates": [
+        {
+          "category": "rotating quarterly categories (when activated)",
+          "rate": 5.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": "quarter"
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T13:52:00-05:00",
+      "content_hash": "6dee8ed6a38b97e1e324f5e6b4080ed5455b019928db77e7c964f9df13f24bbd",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "discover_it_student_cash_back",
+      "issuer_id": "discover",
+      "name": "Discover it Student Cash Back",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.discover.com/credit-cards/student-credit-card/it-card/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "starter",
+        "student",
+        "cashback"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": null,
+      "network": "Discover",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 100,
+        "amount_is_up_to": false,
+        "unit": "usd",
+        "min_spend_usd": 300,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "rotating quarterly categories (grocery stores, restaurants, gas stations, etc.)",
+          "rate": 5.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": "quarter"
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T13:52:00-05:00",
+      "content_hash": "de2c3d5c0e8cd46cea038dbcdb3c6d085afbab2a5f1638e354477f90e04bbb7f",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "bofa_customized_cash",
+      "issuer_id": "bofa",
+      "name": "BofA Customized Cash Rewards",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.bankofamerica.com/credit-cards/products/cash-back-credit-card/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "cashback"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": null,
+      "network": null,
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 200,
+        "amount_is_up_to": false,
+        "unit": "usd",
+        "min_spend_usd": 1000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "choice category (first year)",
+          "rate": 6.0,
+          "unit": "percent_cash_back",
+          "cap_usd": 2500,
+          "cap_period": "quarter"
+        },
+        {
+          "category": "grocery stores and wholesale clubs",
+          "rate": 2.0,
+          "unit": "percent_cash_back",
+          "cap_usd": 2500,
+          "cap_period": "quarter"
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:00:00-05:00",
+      "content_hash": "0a4d769d755ac185c064266498a9b1d067c649fae6d04b22c8d8d6e22ee6ba8b",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "bofa_unlimited_cash",
+      "issuer_id": "bofa",
+      "name": "BofA Unlimited Cash Rewards",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.bankofamerica.com/credit-cards/products/unlimited-cash-back-credit-card/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "cashback"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": null,
+      "network": null,
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 250,
+        "amount_is_up_to": false,
+        "unit": "usd",
+        "min_spend_usd": 1000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "all purchases",
+          "rate": 1.5,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:00:00-05:00",
+      "content_hash": "5b34254451ed93c6ad77330a48242c5a1a18639fa2198e654784f6965c330f6a",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "bofa_travel_rewards",
+      "issuer_id": "bofa",
+      "name": "BofA Travel Rewards",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.bankofamerica.com/credit-cards/products/travel-rewards-credit-card/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": null,
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 25000,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 1000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "everyday purchases",
+          "rate": 1.5,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:00:00-05:00",
+      "content_hash": "bba4c561805ccdb4c1578cb59f42f408c70846c8d68e57e7c15648176fb651b0",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "bofa_premium_rewards",
+      "issuer_id": "bofa",
+      "name": "BofA Premium Rewards",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.bankofamerica.com/credit-cards/products/premium-rewards-credit-card/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "points"
+      ],
+      "annual_fee_usd": 95,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Visa",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 60000,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 4000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "travel",
+          "rate": 2.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "dining",
+          "rate": 2.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.5,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "Airline Incidental Statement Credits",
+          "amount_usd": 100,
+          "period": "year"
+        },
+        {
+          "description": "Airport Security Statement Credits for TSA PreCheck or Global Entry",
+          "amount_usd": 100,
+          "period": "four_years"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T14:00:00-05:00",
+      "content_hash": "842781f1a597e0a661ff6332bd93327e6bcf7ad5aa739bec9441f5996fd5dd1b",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "bofa_customized_cash_student",
+      "issuer_id": "bofa",
+      "name": "BofA Customized Cash Rewards for Students",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.bankofamerica.com/credit-cards/products/student-cash-back-credit-card/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "starter",
+        "student",
+        "cashback"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": null,
+      "network": null,
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 200,
+        "amount_is_up_to": false,
+        "unit": "usd",
+        "min_spend_usd": 1000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "choice category (first year bonus)",
+          "rate": 6.0,
+          "unit": "percent_cash_back",
+          "cap_usd": 2500,
+          "cap_period": "quarter"
+        },
+        {
+          "category": "grocery stores and wholesale clubs",
+          "rate": 2.0,
+          "unit": "percent_cash_back",
+          "cap_usd": 2500,
+          "cap_period": "quarter"
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:00:00-05:00",
+      "content_hash": "d57a824c665a99d2326d630ab3219ef7f84fda705f63364c0c9a5b6287dd0f42",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "bofa_customized_cash_secured",
+      "issuer_id": "bofa",
+      "name": "BofA Customized Cash Rewards Secured",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.bankofamerica.com/credit-cards/products/cash-back-secured-credit-card/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "starter",
+        "secured"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": null,
+      "network": null,
+      "offer": {
+        "amount_disclosed": true,
+        "amount": null,
+        "amount_is_up_to": false,
+        "unit": "cashback_match",
+        "min_spend_usd": null,
+        "spend_window_months": null
+      },
+      "earning_rates": [
+        {
+          "category": "choice category (first year)",
+          "rate": 6.0,
+          "unit": "percent_cash_back",
+          "cap_usd": 2500,
+          "cap_period": "quarter"
+        },
+        {
+          "category": "grocery stores and wholesale clubs",
+          "rate": 2.0,
+          "unit": "percent_cash_back",
+          "cap_usd": 2500,
+          "cap_period": "quarter"
+        },
+        {
+          "category": "all other purchases",
+          "rate": 1.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:00:00-05:00",
+      "content_hash": "ccdddc5f0e0ed1b586bf4a8f4404f9c7f01e56f1a55f7313265f090d448edd2a",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "wf_active_cash",
+      "issuer_id": "wells_fargo",
+      "name": "Wells Fargo Active Cash",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://creditcards.wellsfargo.com/active-cash-credit-card/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "cashback"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 3.0,
+      "network": "Visa",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 100,
+        "amount_is_up_to": false,
+        "unit": "usd",
+        "min_spend_usd": 500,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "all purchases",
+          "rate": 2.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T13:52:00-05:00",
+      "content_hash": "a48874394700023af075b4b9aa8d4e09b0f441a40b83cd01ca3a11bdd24a2d33",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "wf_autograph",
+      "issuer_id": "wells_fargo",
+      "name": "Wells Fargo Autograph",
+      "market": "US",
+      "family": "autograph",
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://creditcards.wellsfargo.com/autograph-visa-credit-card/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "points"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Visa",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 20000,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 1000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "Restaurants",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Travel",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Gas",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Transit",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Popular Streaming Services",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "Phone Plans",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "other purchases",
+          "rate": 1.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T13:52:00-05:00",
+      "content_hash": "4b78113faf021edf8bd981d3c24ccebd9425639fc4a18dbe2d7105f7ee4b52b2",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "wf_autograph_journey",
+      "issuer_id": "wells_fargo",
+      "name": "Wells Fargo Autograph Journey",
+      "market": "US",
+      "family": "autograph",
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://creditcards.wellsfargo.com/autograph-journey-visa-credit-card/",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "travel",
+        "points"
+      ],
+      "annual_fee_usd": 95,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": 0.0,
+      "network": "Visa",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 60000,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 4000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "hotels",
+          "rate": 5.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "airlines",
+          "rate": 4.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "restaurants and other travel",
+          "rate": 3.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "other purchases",
+          "rate": 1.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "annual statement credit with $50 minimum airline purchase",
+          "amount_usd": 50,
+          "period": "year"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T13:52:00-05:00",
+      "content_hash": "78dd660a7358c3c64e8cef2ce383d363ace5fa5251aa745ec39f6fec492757a4",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "usb_cash_plus",
+      "issuer_id": "us_bank",
+      "name": "U.S. Bank Cash+",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.usbank.com/credit-cards/cash-plus-visa-signature-credit-card.html",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "cashback"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": null,
+      "network": "Visa",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 200,
+        "amount_is_up_to": false,
+        "unit": "usd",
+        "min_spend_usd": 1000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "two chosen 5% categories (first $2,000 per quarter)",
+          "rate": 5.0,
+          "unit": "percent_cash_back",
+          "cap_usd": 2000,
+          "cap_period": "quarter"
+        },
+        {
+          "category": "one chosen 2% everyday category",
+          "rate": 2.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "prepaid travel booked in Travel Center",
+          "rate": 5.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other eligible purchases",
+          "rate": 1.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:06:00-05:00",
+      "content_hash": "baa0addad9913d1075beec4d755000159d1fb52a79dd830e9c8643c83435dbd9",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "usb_altitude_go",
+      "issuer_id": "us_bank",
+      "name": "U.S. Bank Altitude Go",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.usbank.com/credit-cards/altitude-go-visa-signature-credit-card.html",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "dining",
+        "points"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": null,
+      "network": "Visa",
+      "offer": {
+        "amount_disclosed": true,
+        "amount": 20000,
+        "amount_is_up_to": false,
+        "unit": "points",
+        "min_spend_usd": 1000,
+        "spend_window_months": 3
+      },
+      "earning_rates": [
+        {
+          "category": "dining, takeout and restaurant delivery",
+          "rate": 4.0,
+          "unit": "x_points",
+          "cap_usd": 2000,
+          "cap_period": "quarter"
+        },
+        {
+          "category": "grocery stores",
+          "rate": 2.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "gas stations/EV charging stations",
+          "rate": 2.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "streaming services",
+          "rate": 2.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        },
+        {
+          "category": "all other eligible purchases",
+          "rate": 1.0,
+          "unit": "x_points",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [
+        {
+          "description": "streaming service credit",
+          "amount_usd": 15,
+          "period": "year"
+        }
+      ],
+      "notes": "",
+      "verified_at": "2026-09-25T14:06:00-05:00",
+      "content_hash": "6632eb3d9050c32a098cf99b2d660cb8b129fb30c0317d8298e922fed0b83d74",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    },
+    {
+      "id": "usb_smartly",
+      "issuer_id": "us_bank",
+      "name": "U.S. Bank Smartly Visa Signature",
+      "market": "US",
+      "family": null,
+      "is_business": false,
+      "is_charge_card": false,
+      "accepted_tax_ids": [
+        "SSN"
+      ],
+      "url": "https://www.usbank.com/credit-cards/bank-smartly-visa-signature-credit-card.html",
+      "availability": "open",
+      "closed_on": null,
+      "tags": [
+        "cashback"
+      ],
+      "annual_fee_usd": 0,
+      "first_year_annual_fee_usd": null,
+      "foreign_transaction_fee_pct": null,
+      "network": "Visa",
+      "offer": null,
+      "earning_rates": [
+        {
+          "category": "all purchases",
+          "rate": 2.0,
+          "unit": "percent_cash_back",
+          "cap_usd": null,
+          "cap_period": null
+        }
+      ],
+      "credits": [],
+      "notes": "",
+      "verified_at": "2026-09-25T14:06:00-05:00",
+      "content_hash": "7093bb00fc42529ca4f2fa154280c819d3e4ff80a3665920a6f605837a039d60",
+      "offer_variants": [],
+      "offer_basis": "max_public_number",
+      "varies_by_visitor": false,
+      "quarantine": [],
+      "manually_verified": {}
+    }
+  ],
+  "preview": false
+}

@@ -192,6 +192,8 @@
   issuer_id: amex
   name: American Express Gold Card
   url: https://www.americanexpress.com/us/credit-cards/card/gold-card/
+  variant_urls:
+  - https://www.americanexpress.com/us/credit-cards/card/gold-card/28810/
   priority: P0
   tags:
   - points
