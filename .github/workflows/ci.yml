@@ -23,6 +23,8 @@ jobs:
       - run: uv sync --all-packages
       - run: uv run pre-commit run --all-files
       - run: uv run pytest
+      - name: Lambda bundle (Linux arm64 wheels, no Docker)
+        run: ./scripts/bundle_lambda.sh
       - name: cdk synth
         working-directory: infra
         run: cdk synth --quiet

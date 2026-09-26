@@ -1,3 +1,5 @@
+import json
+
 import aws_cdk as cdk
 from aws_cdk.assertions import Match, Template
 from stacks.ci_stack import CiStack
@@ -47,3 +49,139 @@ def test_deploy_role_is_restricted_to_main_branch():
             }
         },
     )
+
+
+# --- S4: data, auth, api ------------------------------------------------------------------
+
+
+def _s4():
+    """All S4 stacks wired like app.py, with an inline stand-in for the Lambda bundle."""
+    from aws_cdk import aws_lambda as lambda_
+    from stacks.api_stack import ApiStack
+    from stacks.auth_stack import AuthStack
+    from stacks.data_stack import DataStack
+
+    app = cdk.App(context={"@aws-cdk/core:defaultCrossStackReferences": "strong"})
+    ops = OpsStack(app, "ops", env=ENV, alert_email="a@example.com", monthly_budget_usd=50)
+    data = DataStack(app, "data", env=ENV, alerts=ops.alerts)
+
+    def code():
+        return lambda_.Code.from_inline("def handler(event, context): return event")
+
+    auth = AuthStack(app, "auth", env=ENV, table=data.table, code=code())
+    api = ApiStack(
+        app,
+        "api",
+        env=ENV,
+        project="card-advisor",
+        table=data.table,
+        catalog_bucket=data.catalog_bucket,
+        auth=auth,
+        code=code(),
+        cors_origins=["http://localhost:3000"],
+        alerts=ops.alerts,
+    )
+    return (Template.from_stack(s) for s in (data, auth, api))
+
+
+def _one(template, kind):
+    [resource] = template.find_resources(kind).values()
+    return resource
+
+
+def test_user_data_survives_mistakes():
+    data, _, _ = _s4()
+    table = _one(data, "AWS::DynamoDB::GlobalTable")
+    assert table["DeletionPolicy"] == "Retain"
+    props = table["Properties"]
+    assert props["BillingMode"] == "PAY_PER_REQUEST"
+    assert props["TimeToLiveSpecification"] == {"AttributeName": "expires_at", "Enabled": True}
+    [replica] = props["Replicas"]
+    assert replica["DeletionProtectionEnabled"] is True
+    assert replica["PointInTimeRecoverySpecification"]["PointInTimeRecoveryEnabled"] is True
+
+
+def test_catalog_bucket_is_private_versioned_and_kept():
+    data, _, _ = _s4()
+    bucket = _one(data, "AWS::S3::Bucket")
+    assert bucket["DeletionPolicy"] == "Retain"
+    assert bucket["Properties"]["VersioningConfiguration"] == {"Status": "Enabled"}
+    assert all(bucket["Properties"]["PublicAccessBlockConfiguration"].values())
+    policy = json.dumps(_one(data, "AWS::S3::BucketPolicy"))
+    assert '"aws:SecureTransport": "false"' in policy  # HTTPS only
+
+
+def test_sign_up_is_invite_gated_and_tokens_are_short_lived():
+    _, auth, _ = _s4()
+    pool = _one(auth, "AWS::Cognito::UserPool")
+    assert pool["DeletionPolicy"] == "Retain"
+    props = pool["Properties"]
+    assert props["UsernameAttributes"] == ["email"]
+    assert props["Policies"]["PasswordPolicy"]["MinimumLength"] >= 12
+    assert set(props["LambdaConfig"]) == {"PreSignUp", "PostConfirmation"}
+
+    client = _one(auth, "AWS::Cognito::UserPoolClient")["Properties"]
+    assert client["GenerateSecret"] is False
+    assert client["AccessTokenValidity"] == 30 and client["TokenValidityUnits"]["AccessToken"] == (
+        "minutes"
+    )
+    assert client["EnableTokenRevocation"] is True
+    assert _one(auth, "AWS::Cognito::UserPoolGroup")["Properties"]["GroupName"] == "admin"
+
+    handlers = {
+        f["Properties"]["Handler"]: f["Properties"]["Timeout"]
+        for f in auth.find_resources("AWS::Lambda::Function").values()
+    }
+    assert handlers == {
+        "card_api.triggers.presignup_handler": 5,  # Cognito's own trigger limit
+        "card_api.triggers.postconfirm_handler": 5,
+    }
+
+
+def test_every_route_but_health_and_catalog_needs_a_jwt():
+    _, _, api = _s4()
+    routes = {
+        r["Properties"]["RouteKey"]: r["Properties"].get("AuthorizationType", "NONE")
+        for r in api.find_resources("AWS::ApiGatewayV2::Route").values()
+    }
+    assert routes["GET /health"] == "NONE" and routes["GET /catalog"] == "NONE"
+    private = {k: v for k, v in routes.items() if k.endswith("/{proxy+}")}
+    assert set(private) == {f"{m} /{{proxy+}}" for m in ("GET", "POST", "PUT", "DELETE")}
+    assert set(private.values()) == {"JWT"}
+    assert not any(k.startswith("ANY ") or k.startswith("OPTIONS ") for k in routes)
+
+
+def test_cors_and_throttling_are_set_at_the_edge():
+    _, _, api = _s4()
+    cors = _one(api, "AWS::ApiGatewayV2::Api")["Properties"]["CorsConfiguration"]
+    assert cors["AllowOrigins"] == ["http://localhost:3000"]
+    assert cors["ExposeHeaders"] == ["X-Catalog-Version"]
+    stage = _one(api, "AWS::ApiGatewayV2::Stage")["Properties"]
+    assert stage["DefaultRouteSettings"]["ThrottlingRateLimit"] == 20
+    assert "$context.status" in stage["AccessLogSettings"]["Format"]
+
+
+def test_api_lambda_has_least_privilege():
+    _, _, api = _s4()
+    statements = _one(api, "AWS::IAM::Policy")["Properties"]["PolicyDocument"]["Statement"]
+    actions = {a for s in statements for a in _list(s["Action"])}
+    assert not any(a.endswith(":*") or a == "*" for a in actions)
+    assert "dynamodb:DeleteTable" not in actions and "s3:PutObject" not in actions
+    s3_resources = json.dumps([s["Resource"] for s in statements if "s3:GetObject*" in s["Action"]])
+    assert "catalog/us/*" in s3_resources  # read-only, published snapshots only
+    fn = _one(api, "AWS::Lambda::Function")["Properties"]
+    assert fn["Architectures"] == ["arm64"] and fn["Runtime"] == "python3.13"
+    assert fn["Environment"]["Variables"]["APP_ENV"] == "aws"  # no dev sign-in on AWS
+
+
+def test_alarms_page_the_ops_topic_and_values_are_shared_via_ssm():
+    data, _, api = _s4()
+    alarms = [*data.find_resources("AWS::CloudWatch::Alarm").values()]
+    alarms += [*api.find_resources("AWS::CloudWatch::Alarm").values()]
+    assert len(alarms) == 3 and all(a["Properties"]["AlarmActions"] for a in alarms)
+    names = {p["Properties"]["Name"] for p in api.find_resources("AWS::SSM::Parameter").values()}
+    assert "/card-advisor/cognito-discovery-url" in names and "/card-advisor/api-url" in names
+
+
+def _list(x):
+    return x if isinstance(x, list) else [x]

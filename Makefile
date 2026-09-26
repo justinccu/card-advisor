@@ -1,7 +1,7 @@
 -include .env
 export
 
-.PHONY: install test lint synth deploy-infra preview api web demo e2e web-build
+.PHONY: install test lint lambda-bundle synth deploy-infra preview api web demo e2e web-build
 
 install:
 	uv sync --all-packages
@@ -14,10 +14,14 @@ test:
 lint:
 	uv run pre-commit run --all-files
 
-synth:
+synth: lambda-bundle
 	cd infra && cdk synth --quiet
 
-deploy-infra:
+# Linux arm64 Lambda package for the API and Cognito triggers (no Docker needed)
+lambda-bundle:
+	./scripts/bundle_lambda.sh
+
+deploy-infra: lambda-bundle
 	cd infra && cdk deploy --all --require-approval broadening
 
 # --- Local demo ($0: no AWS calls) -----------------------------------------------------------

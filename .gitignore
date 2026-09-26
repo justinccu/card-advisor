@@ -19,3 +19,6 @@ catalog/.cache/
 # Issuer card art and its manifest (source URLs, pending fixes) stay local: never pushed or
 # deployed. Only `make demo` shows them; the site itself uses the simulated card faces.
 web/public/card-art/
+
+# Lambda bundle built by scripts/bundle_lambda.sh
+infra/build/

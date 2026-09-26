@@ -6,9 +6,9 @@ from datetime import date
 
 import boto3
 import pytest
-from card_api.lambda_handler import postconfirm_handler, presignup_handler
 from card_api.models import ApplicantProfile, HeldCardIn, WalletAttestation
 from card_api.repository import DynamoRepository, InMemoryRepository
+from card_api.triggers import postconfirm_handler, presignup_handler
 from moto import mock_aws
 
 
@@ -130,11 +130,11 @@ def test_delete_user_purges_everything(repo):
 
 
 def test_presignup_trigger_requires_a_live_invite(monkeypatch):
-    from card_api import lambda_handler
+    from card_api import triggers
 
     r = InMemoryRepository()
     r.create_invite("CAGOOD", 1)
-    monkeypatch.setattr(lambda_handler, "get_repo", lambda: r)
+    monkeypatch.setattr(triggers, "get_repo", lambda: r)
     event = {"userName": "sub-1", "request": {"clientMetadata": {"invite_code": "ca-good"}}}
     assert presignup_handler(event, None) is event
     with pytest.raises(Exception, match="invite code"):
@@ -150,3 +150,15 @@ def test_presignup_trigger_requires_a_live_invite(monkeypatch):
     # a password reset also fires post-confirmation; it must not touch invites
     reset = {"triggerSource": "PostConfirmation_ConfirmForgotPassword", "userName": "sub-9"}
     assert postconfirm_handler(reset, None) is reset
+
+
+def test_triggers_stay_light_for_cognitos_5_second_limit():
+    import subprocess
+    import sys
+
+    code = (
+        "import sys, card_api.triggers; "
+        "print('fastapi' in sys.modules, 'card_api.catalog' in sys.modules)"
+    )
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
+    assert out.stdout.split() == ["False", "False"]

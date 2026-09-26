@@ -1,8 +1,15 @@
 import os
+from pathlib import Path
 
 import aws_cdk as cdk
+from aws_cdk import aws_lambda as lambda_
+from stacks.api_stack import ApiStack
+from stacks.auth_stack import AuthStack
 from stacks.ci_stack import CiStack
+from stacks.data_stack import DataStack
 from stacks.ops_stack import OpsStack
+
+LAMBDA_BUNDLE = Path(__file__).parent / "build" / "api"
 
 app = cdk.App()
 
@@ -17,7 +24,7 @@ alert_email = os.environ.get("ALERT_EMAIL")
 if not alert_email:
     raise ValueError("Set ALERT_EMAIL in .env (see README: Development)")
 
-OpsStack(
+ops = OpsStack(
     app,
     f"{project}-ops",
     env=env,
@@ -25,6 +32,31 @@ OpsStack(
     monthly_budget_usd=float(app.node.get_context("monthly_budget_usd")),
 )
 CiStack(app, f"{project}-ci", env=env, github_repo=app.node.get_context("github_repo"))
+
+# S4: user data, sign-up, API. The Lambda package is built by scripts/bundle_lambda.sh.
+if not LAMBDA_BUNDLE.is_dir():
+    raise ValueError(f"Missing {LAMBDA_BUNDLE}: run `make lambda-bundle` first")
+
+
+def code() -> lambda_.Code:
+    # One Code object per stack (CDK rule); same content hash, so the asset uploads once.
+    return lambda_.Code.from_asset(str(LAMBDA_BUNDLE))
+
+
+data = DataStack(app, f"{project}-data", env=env, alerts=ops.alerts)
+auth = AuthStack(app, f"{project}-auth", env=env, table=data.table, code=code())
+ApiStack(
+    app,
+    f"{project}-api",
+    env=env,
+    project=project,
+    table=data.table,
+    catalog_bucket=data.catalog_bucket,
+    auth=auth,
+    code=code(),
+    cors_origins=app.node.get_context("cors_origins"),
+    alerts=ops.alerts,
+)
 
 cdk.Tags.of(app).add("project", project)
 app.synth()

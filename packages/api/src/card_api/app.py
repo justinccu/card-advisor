@@ -226,8 +226,7 @@ def list_invites(caller: CallerDep, repo: RepoDep) -> list[Invite]:
 
 @app.post("/dev/signup", status_code=201)
 def dev_signup(body: SignupIn, repo: RepoDep) -> dict:
-    """Local stand-in for Cognito sign-up and its triggers (lambda_handler.presignup_handler and
-    postconfirm_handler)."""
+    """Local stand-in for Cognito sign-up and its triggers (card_api.triggers)."""
     if not settings.dev_auth:
         raise HTTPException(404)
     user = f"u-{new_id()}"
