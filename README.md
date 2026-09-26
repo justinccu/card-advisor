@@ -28,6 +28,10 @@ wallet that already holds five cards. The site and API read the newest published
 (`catalog/us/vMAJOR.MINOR.json`); with none published they fall back to the local `scout preview` and show a
 banner saying the data is unreviewed.
 
+`make web-aws` runs the site against the deployed API and Cognito instead: real invite-only
+sign-up (email code), SRP sign-in, and account deletion. `make e2e-aws` (with it running) drives
+that flow in a browser with a throwaway user and removes it afterwards.
+
 `make deploy-infra` deploys the stacks (data, auth, api); `make aws-smoke` then signs up a
 throwaway user with a one-off invite, calls the API with its JWT, and deletes both.
 

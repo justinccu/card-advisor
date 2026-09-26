@@ -3,11 +3,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { useSession } from "@/components/Providers";
 import { Segmented } from "@/components/Segmented";
 import { api } from "@/lib/api";
+import { deleteAccount } from "@/lib/auth";
 import { press, spring } from "@/lib/motion";
 import type { ApplicantProfile, TaxId } from "@/lib/types";
 
@@ -46,9 +47,22 @@ export default function ProfilePage() {
     onSettled: () => qc.invalidateQueries({ queryKey: ["eligibility", uid] }),
   });
 
+  // Signed out elsewhere (another tab, expired session) -> sign-in page. Not when this page is
+  // signing out or deleting the account itself: that navigates home.
+  const leaving = useRef(false);
   useEffect(() => {
-    if (ready && !uid) router.replace("/signin/");
+    if (ready && !uid && !leaving.current) router.replace("/signin/");
   }, [ready, uid, router]);
+  const leave = async (action: () => Promise<void>) => {
+    leaving.current = true;
+    try {
+      await action();
+      router.push("/");
+    } catch {
+      leaving.current = false;
+      window.alert("That didn’t work. Please try again.");
+    }
+  };
 
   if (!ready || !uid) return null;
   const p: ApplicantProfile = data ?? { tax_id: null, score_band: null, income_band: null, credit_history: null };
@@ -85,19 +99,20 @@ export default function ProfilePage() {
       </Field>
 
       <div className="flex items-center justify-between border-t border-hairline pt-6 text-[15px]">
-        <button onClick={() => { signOut(); router.push("/"); }} className="text-link">
+        <button onClick={() => leave(signOut)} className="text-link">
           Sign out
         </button>
         <button
-          onClick={async () => {
-            if (!window.confirm("Delete your wallet and profile? This can’t be undone.")) return;
-            await api.deleteMe();
-            signOut();
-            router.push("/");
+          onClick={() => {
+            if (!window.confirm("Delete your account, wallet and profile? This can’t be undone.")) return;
+            leave(async () => {
+              await api.deleteMe(); // purge our data first, while the token still works
+              await deleteAccount(); // then the sign-in itself (Cognito); signs out in dev mode
+            });
           }}
           className="text-bad"
         >
-          Delete my data
+          Delete my account
         </button>
       </div>
     </div>

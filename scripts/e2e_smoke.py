@@ -6,6 +6,8 @@ Needs the demo running (`make demo`), then: `make e2e`. Uses Playwright's Chromi
 
 import re
 import sys
+import urllib.error
+import urllib.request
 
 from playwright.sync_api import sync_playwright
 
@@ -14,6 +16,14 @@ WALLET_CARDS = re.compile(r".*/me/wallet/cards(\?.*)?$")
 
 BASE = "http://localhost:3000"
 results = []
+
+try:
+    with urllib.request.urlopen(BASE + "/signin/", timeout=10) as r:
+        signin_html = r.read().decode()
+except (urllib.error.URLError, OSError):
+    sys.exit("Nothing on localhost:3000: start `make demo` in another terminal, then retry.")
+if "Welcome back." in signin_html:
+    sys.exit("localhost:3000 is the AWS-backed site (`make web-aws`); stop it and run `make demo`.")
 
 
 def check(name, cond):

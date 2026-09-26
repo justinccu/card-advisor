@@ -2,26 +2,26 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MotionConfig } from "motion/react";
-import { createContext, useCallback, useContext, useMemo, useState, useSyncExternalStore } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { pinCatalogVersion } from "@/lib/api";
-import { SESSION_KEY, readSession, writeSession } from "@/lib/session";
+import { AUTH_EVENT, SESSION_KEY, currentUserId, devSignIn, signOut as authSignOut } from "@/lib/auth";
 
-// --- Session (local demo sign-in; Cognito on AWS) ---------------------------------------
+// --- Session (dev sign-in locally; Cognito with `make web-aws` and on AWS) ----------------
 
-type Session = { uid: string | null; ready: boolean; signIn: (uid: string) => void; signOut: () => void };
+type Session = {
+  uid: string | null;
+  /** false until we know whether someone is signed in (never on the server) */
+  ready: boolean;
+  /** dev mode only; Cognito sign-in happens on the sign-in page (lib/auth) */
+  signIn: (uid: string) => void;
+  signOut: () => Promise<void>;
+};
 const SessionCtx = createContext<Session | null>(null);
 
-// localStorage is the source of truth; subscribe to it instead of mirroring it into state.
-function subscribe(onChange: () => void) {
-  const onStorage = (e: StorageEvent) => e.key === SESSION_KEY && onChange();
-  window.addEventListener("storage", onStorage); // other tabs
-  window.addEventListener("card-advisor:session", onChange); // this tab
-  return () => {
-    window.removeEventListener("storage", onStorage);
-    window.removeEventListener("card-advisor:session", onChange);
-  };
-}
+// Cognito keeps its tokens in localStorage under this prefix; a change in another tab (sign-in
+// or sign-out there) must update this one too.
+const COGNITO_STORAGE_PREFIX = "CognitoIdentityServiceProvider.";
 
 // --- Compare selection ------------------------------------------------------------------
 
@@ -41,22 +41,45 @@ export function Providers({
   const [client] = useState(
     () => new QueryClient({ defaultOptions: { queries: { staleTime: 30_000, retry: 1 } } }),
   );
-  // undefined on the server / before hydration -> not ready yet.
-  const stored = useSyncExternalStore(subscribe, readSession, () => undefined);
-  const uid = stored ?? null;
-  const ready = stored !== undefined;
+  const [{ uid, ready }, setUser] = useState<{ uid: string | null; ready: boolean }>({
+    uid: null,
+    ready: false,
+  });
   const [ids, setIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    const load = () =>
+      currentUserId().then((next) => {
+        if (!alive) return;
+        setUser((cur) => {
+          if (cur.ready && cur.uid !== next) client.clear(); // someone else's cached data
+          return { uid: next, ready: true };
+        });
+      });
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || e.key === SESSION_KEY || e.key.startsWith(COGNITO_STORAGE_PREFIX)) load();
+    };
+    load();
+    window.addEventListener(AUTH_EVENT, load); // this tab
+    window.addEventListener("storage", onStorage); // other tabs
+    return () => {
+      alive = false;
+      window.removeEventListener(AUTH_EVENT, load);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, [client]);
 
   const signIn = useCallback(
     (next: string) => {
       client.clear();
-      writeSession(next);
+      devSignIn(next);
     },
     [client],
   );
-  const signOut = useCallback(() => {
+  const signOut = useCallback(async () => {
     client.clear();
-    writeSession(null);
+    await authSignOut();
   }, [client]);
 
   const toggle = useCallback((id: string) => {

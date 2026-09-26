@@ -1,6 +1,6 @@
 "use client";
 
-import { readSession } from "./session";
+import { AUTH_MODE, authHeaders, signOut } from "./auth";
 import type {
   ApplicantProfile,
   EligibilityResult,
@@ -34,10 +34,8 @@ export class ApiError extends Error {
 async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   if (init.body) headers.set("Content-Type", "application/json");
-  // Local demo identity. On AWS this becomes the Cognito access token (Authorization header);
-  // the API ignores X-Dev-User outside APP_ENV=local.
-  const devUser = readSession();
-  if (devUser) headers.set("X-Dev-User", devUser);
+  // X-Dev-User locally; the Cognito access token otherwise (the API ignores X-Dev-User on AWS).
+  for (const [k, v] of Object.entries(await authHeaders())) headers.set(k, v);
   let res: Response;
   try {
     // Plain concatenation keeps any path in BASE (e.g. an API stage prefix).
@@ -47,6 +45,11 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
     res = await fetch(`${BASE}${path}${pin}`, { ...init, headers });
   } catch {
     throw new ApiError(0, "Can’t reach the API. Is it running? (make api)");
+  }
+  if (res.status === 401 && AUTH_MODE === "cognito") {
+    // Expired or revoked session: sign out so every page shows the signed-out state.
+    await signOut();
+    throw new ApiError(401, "Your session has ended. Sign in again.");
   }
   if (!res.ok) {
     let detail = res.statusText;

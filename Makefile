@@ -1,7 +1,7 @@
 -include .env
 export
 
-.PHONY: install test lint lambda-bundle synth deploy-infra aws-smoke preview api web demo e2e web-build
+.PHONY: install test lint lambda-bundle synth deploy-infra aws-smoke web-aws e2e-aws preview api web demo e2e web-build
 
 install:
 	uv sync --all-packages
@@ -51,8 +51,19 @@ demo:
 	(cd web && NEXT_PUBLIC_CARD_ART=1 npm run dev -- --port 3000) & \
 	wait
 
+# The site on :3000 against the deployed API and Cognito (real sign-up with an invite code)
+web-aws:
+	@test -d web/node_modules || (cd web && npm install)
+	@env_lines="$$(./scripts/web_aws_env.sh)" && eval "$$env_lines" && \
+	echo "Site http://localhost:3000 -> $$NEXT_PUBLIC_API_URL (Cognito $$NEXT_PUBLIC_COGNITO_USER_POOL_ID)" && \
+	cd web && npm run dev -- --port 3000
+
 e2e:
 	uv run python scripts/e2e_smoke.py
+
+# Browser e2e in Cognito mode against the deployed stack (needs `make web-aws` running; ~$0)
+e2e-aws:
+	uv run python scripts/e2e_aws.py
 
 web-build:
 	cd web && npm run build

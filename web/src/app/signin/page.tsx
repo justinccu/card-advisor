@@ -4,18 +4,23 @@ import { motion, useAnimate } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { CognitoSignIn } from "@/components/CognitoSignIn";
 import { useSession } from "@/components/Providers";
 import { api, ApiError } from "@/lib/api";
+import { AUTH_MODE } from "@/lib/auth";
 import { press, spring } from "@/lib/motion";
 
 const DEMO_USER = "demo-user";
 
+export default function SignInPage() {
+  return AUTH_MODE === "cognito" ? <CognitoSignIn /> : <DevSignIn />;
+}
+
 /**
  * Local stand-in for Cognito's invite-only sign-up (the API's /dev/signup runs the same invite
- * redemption as the Cognito pre-sign-up trigger). On AWS this page becomes the Cognito
- * managed-login redirect with PKCE.
+ * redemption as the Cognito pre sign-up trigger).
  */
-export default function SignInPage() {
+function DevSignIn() {
   const { signIn } = useSession();
   const router = useRouter();
   const [code, setCode] = useState("");

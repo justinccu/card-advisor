@@ -20,6 +20,7 @@ import urllib.request
 
 import boto3
 from boto3.dynamodb.conditions import Key
+from botocore.exceptions import LoginRefreshRequired, NoCredentialsError
 from pycognito import Cognito
 
 PROJECT, REGION = "card-advisor", "us-east-2"
@@ -27,7 +28,10 @@ ssm = boto3.client("ssm", region_name=REGION)
 
 
 def param(name: str) -> str:
-    return ssm.get_parameter(Name=f"/{PROJECT}/{name}")["Parameter"]["Value"]
+    try:
+        return ssm.get_parameter(Name=f"/{PROJECT}/{name}")["Parameter"]["Value"]
+    except (LoginRefreshRequired, NoCredentialsError):
+        sys.exit("AWS session expired or missing: run `aws login --profile chenhan9`, then retry.")
 
 
 POOL, CLIENT, API, TABLE = (
