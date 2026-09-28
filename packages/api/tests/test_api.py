@@ -289,3 +289,76 @@ def test_settings_import_outside_the_repo_like_on_lambda(tmp_path):
 
     assert repo_root(Path("/var/task/card_api/settings.py")) == Path.cwd()
     assert (REPO_ROOT / "catalog" / "us").is_dir()  # in the repo: still finds the checkout
+
+
+# --- recommendations (ADR 0009) ---------------------------------------------------------
+
+
+def test_recommendations_ask_for_spending_first(client):
+    body = client.post("/me/recommendations", headers=as_user("ann")).json()
+    assert body["needs"] == ["spending"] and body["cards"] == []
+
+
+def test_recommendations_rank_by_the_spending_profile(client):
+    client.put(
+        "/me/profile",
+        json={
+            "tax_id": "SSN",
+            "spending": {
+                "monthly_usd": {"dining": 500, "everything_else": 500},
+                "goals": ["earn_offers"],
+            },
+        },
+        headers=as_user("ann"),
+    )
+    res = client.post("/me/recommendations", headers=as_user("ann"))
+    body = res.json()
+    assert (
+        res.status_code == 200
+        and body["catalog_version"] == "1.1"
+        and body["sort_by"] == "first_year"
+    )
+    top = body["cards"][0]
+    # CSP: 75,000 x 1¢ + 3x dining ($180) + 1x other ($60) - $95 fee
+    assert top["card_id"] == "chase_sapphire_preferred"
+    assert top["first_year_value_usd"] == 750 + 180 + 60 - 95
+    # rates the model can't see are never invented: cards without rates earn $0
+    assert all(c["card_id"] != "amex_green" for c in body["cards"])  # closed cards never ranked
+
+
+def test_recommendation_options_are_validated(client):
+    res = client.post("/me/recommendations", json={"limit": "many"}, headers=as_user("ann"))
+    assert res.status_code == 422
+
+
+# --- Advisor chat quota (ADR 0009) ------------------------------------------------------
+
+
+def test_chat_quota_counts_down_and_stops_at_ten(client, monkeypatch):
+    from datetime import datetime
+
+    monkeypatch.setattr(
+        app_module, "_now", lambda: datetime(2026, 9, 28, 23, 30, tzinfo=app_module.CHAT_TIMEZONE)
+    )
+    assert client.get("/me/chat/quota", headers=as_user("ann")).json()["remaining"] == 10
+    for i in range(10):
+        res = client.post("/me/chat/turn", headers=as_user("ann"))
+        assert res.status_code == 200 and res.json()["remaining"] == 9 - i
+    blocked = client.post("/me/chat/turn", headers=as_user("ann"))
+    assert blocked.status_code == 429
+    assert blocked.json()["detail"]["resets_at"] == "2026-09-29T00:00:00-04:00"
+    # other users are unaffected
+    assert client.post("/me/chat/turn", headers=as_user("bob")).json()["remaining"] == 9
+
+
+def test_chat_quota_resets_at_midnight_us_eastern_not_utc(client, monkeypatch):
+    from datetime import datetime
+
+    et = app_module.CHAT_TIMEZONE
+    # 11:30 PM ET on the 28th is already the 29th in UTC; it must still count toward the 28th.
+    monkeypatch.setattr(app_module, "_now", lambda: datetime(2026, 9, 28, 23, 30, tzinfo=et))
+    for _ in range(10):
+        client.post("/me/chat/turn", headers=as_user("ann"))
+    assert client.post("/me/chat/turn", headers=as_user("ann")).status_code == 429
+    monkeypatch.setattr(app_module, "_now", lambda: datetime(2026, 9, 29, 0, 1, tzinfo=et))
+    assert client.post("/me/chat/turn", headers=as_user("ann")).json()["remaining"] == 9

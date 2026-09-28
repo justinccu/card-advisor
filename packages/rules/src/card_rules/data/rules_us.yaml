@@ -128,6 +128,55 @@
   source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
   verified_on: 2026-09-24
 
+# Amex product-family ladders (ADR 0009), from each card's offer terms as copied verbatim in
+# catalog/seed/amex_offer_terms.yaml. Only the catalog cards each sentence names besides the card
+# itself (the card itself is amex_once_per_lifetime). One-directional: holding Gold does not
+# block the Platinum Offer.
+- kind: offer_history
+  id: amex_ladder_gold
+  issuer_id: amex
+  target: products
+  for_product: amex_gold
+  products: [amex_platinum]
+  basis: held
+  lookback_months: null
+  description: "Amex: may not get the Gold Card welcome offer if you have or have had the Platinum Card"
+  applies_to_products: all
+  strength: strict
+  confidence: official
+  source_url: https://www.americanexpress.com/us/credit-cards/card/gold-card/
+  verified_on: 2026-09-27
+
+- kind: offer_history
+  id: amex_ladder_blue_cash_everyday
+  issuer_id: amex
+  target: products
+  for_product: amex_blue_cash_everyday
+  products: [amex_blue_cash_preferred]
+  basis: held
+  lookback_months: null
+  description: "Amex: may not get the Blue Cash Everyday welcome offer if you have or have had the Blue Cash Preferred Card"
+  applies_to_products: all
+  strength: strict
+  confidence: official
+  source_url: https://www.americanexpress.com/us/credit-cards/card/blue-cash-everyday/
+  verified_on: 2026-09-27
+
+- kind: offer_history
+  id: amex_ladder_delta_gold
+  issuer_id: amex
+  target: products
+  for_product: amex_delta_gold
+  products: [amex_delta_platinum, amex_delta_reserve]
+  basis: held
+  lookback_months: null
+  description: "Amex: may not get the Delta SkyMiles Gold welcome offer if you have or have had the Delta SkyMiles Platinum or Reserve Card"
+  applies_to_products: all
+  strength: strict
+  confidence: official
+  source_url: https://www.americanexpress.com/us/credit-cards/card/delta-skymiles-gold-american-express-card/
+  verified_on: 2026-09-27
+
 # --- Citi ----------------------------------------------------------------------
 - kind: velocity
   id: citi_1_8

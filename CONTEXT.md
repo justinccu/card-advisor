@@ -18,7 +18,7 @@ A specific card offering in the catalog, such as Chase Sapphire Preferred. A Car
 _Avoid_: Card (ambiguous), credit card
 
 **Product Family**:
-A set of an Issuer's Card Products that share Offer restrictions (e.g. Sapphire: Preferred and Reserve).
+A set of an Issuer's Card Products that share Offer restrictions (e.g. Sapphire: Preferred and Reserve). Some families are a **ladder** (e.g. Amex Green, Gold, Platinum): each Offer can be earned going up, but not a lower tier after holding a higher one.
 _Avoid_: Card line, series
 
 **Offer**:
@@ -70,6 +70,20 @@ _Avoid_: Approved, qualified (we never predict approval)
 
 **Recommendation**:
 A ranked list of Card Products for an Applicant Profile and Wallet, computed against one Catalog Snapshot.
+
+**Spending Profile**:
+The part of the Applicant Profile that ranking uses: monthly spend per spending category, goals, an annual-fee ceiling, and whether business cards are wanted, with its source (entered manually, or later imported from statements).
+_Avoid_: Budget, habits
+
+**First-year Value** / **Ongoing Value**:
+A Card Product's estimated dollar value for a user: the Offer (if earnable) plus a year of rewards minus the first-year fee, and a year of rewards minus the annual fee. Rewards use the Conservative Point Valuation; credits count only when the user confirms they'd use them.
+
+**Advisor**:
+The conversational agent that elicits a user's needs, calls the ranking and eligibility tools, and explains Recommendations. It never states card facts or eligibility on its own (ADR 0001, 0009).
+_Avoid_: Bot, assistant
+
+**Chat Quota**:
+The number of Advisor messages a user may send per day (10), reset at midnight US Eastern.
 
 **Invite Code**:
 A limited-use code, issued by an admin, required to create an account during the invite-only phase.

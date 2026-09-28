@@ -1,9 +1,11 @@
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta
 from functools import lru_cache
 from typing import Annotated
+from zoneinfo import ZoneInfo
 
 from card_rules.catalog import VERSION_PATTERN, CatalogSnapshot
 from card_rules.dates import add_months
+from card_rules.ranking import RankOptions, rank
 from fastapi import Depends, FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -12,6 +14,7 @@ from card_api.auth import Caller, current_caller, require_admin
 from card_api.catalog import UnknownCatalogVersion, catalog_index, load_catalog
 from card_api.models import (
     ApplicantProfile,
+    ChatQuota,
     HeldCard,
     HeldCardIn,
     Invite,
@@ -25,6 +28,8 @@ from card_api.repository import DynamoRepository, InMemoryRepository, Repository
 from card_api.settings import settings
 
 MAX_WALLET_CARDS = 100
+CHAT_DAILY_LIMIT = 10  # ADR 0009
+CHAT_TIMEZONE = ZoneInfo("America/New_York")  # the quota resets at midnight US Eastern
 DEMO_INVITE = "DEMO-2026"  # local demo only: seeded into the in-memory store, never into DynamoDB
 DEMO_USER = "demo-user"
 
@@ -203,6 +208,81 @@ def get_eligibility(
         products, repo.get_profile(caller.uid), wallet, _as_of(as_of)
     )
     return {"catalog_version": snapshot.version, "evaluations": evaluations}
+
+
+# --- Recommendations (ADR 0009) --------------------------------------------------------
+
+
+@app.post("/me/recommendations")
+def recommendations(
+    caller: CallerDep,
+    repo: RepoDep,
+    snapshot: CatalogDep,
+    options: RankOptions | None = None,
+    as_of: Annotated[date | None, Query()] = None,
+) -> dict:
+    """Open cards ranked by First-year or Ongoing Value for the caller's Spending Profile.
+    `options` carries what the user confirmed in conversation (conditional rates, credits)."""
+    if not snapshot.valuations:
+        raise HTTPException(
+            409, f"catalog v{snapshot.version} has no ranking data; publish a newer snapshot"
+        )
+    profile = repo.get_profile(caller.uid)
+    base = {"catalog_version": snapshot.version}
+    if profile.spending is None or not any(profile.spending.monthly_usd.values()):
+        return base | {"needs": ["spending"], "sort_by": None, "cards": [], "excluded": []}
+    index = catalog_index(snapshot)
+    wallet = service.to_rules_wallet(
+        repo.list_cards(caller.uid), repo.get_attestation(caller.uid), index
+    )
+    products = [c for c in snapshot.cards if c.availability == "open"]
+    verdicts = service.evaluations(products, profile, wallet, _as_of(as_of))
+    ranking = rank(products, snapshot.valuations, profile.spending, verdicts, options)
+    return base | {"needs": []} | ranking.model_dump(mode="json")
+
+
+# --- Advisor chat quota (ADR 0009) -----------------------------------------------------
+
+
+def _now() -> datetime:
+    return datetime.now(CHAT_TIMEZONE)
+
+
+def _chat_day() -> tuple[date, str]:
+    now = _now().astimezone(CHAT_TIMEZONE)
+    resets = datetime.combine(now.date() + timedelta(days=1), time.min, tzinfo=CHAT_TIMEZONE)
+    return now.date(), resets.isoformat()
+
+
+def _quota(used: int, resets_at: str) -> ChatQuota:
+    return ChatQuota(
+        limit=CHAT_DAILY_LIMIT,
+        used=used,
+        remaining=max(0, CHAT_DAILY_LIMIT - used),
+        resets_at=resets_at,
+    )
+
+
+@app.get("/me/chat/quota")
+def chat_quota(caller: CallerDep, repo: RepoDep) -> ChatQuota:
+    day, resets_at = _chat_day()
+    return _quota(repo.quota_used(caller.uid, day), resets_at)
+
+
+@app.post("/me/chat/turn")
+def chat_turn(caller: CallerDep, repo: RepoDep) -> ChatQuota:
+    """Takes one Advisor message from today's quota (atomic), before any model is called."""
+    day, resets_at = _chat_day()
+    used = repo.take_quota(caller.uid, day, CHAT_DAILY_LIMIT)
+    if used is None:
+        raise HTTPException(
+            429,
+            {
+                "message": f"You've used today's {CHAT_DAILY_LIMIT} Advisor messages.",
+                **_quota(CHAT_DAILY_LIMIT, resets_at).model_dump(),
+            },
+        )
+    return _quota(used, resets_at)
 
 
 # --- Invites ----------------------------------------------------------------------------

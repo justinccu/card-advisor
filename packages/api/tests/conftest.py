@@ -11,7 +11,13 @@ os.environ["CATALOG_PATH"] = str(_catalog)
 os.environ.pop("TABLE_NAME", None)
 os.environ.pop("CATALOG_BUCKET", None)
 
-from card_rules.catalog import CatalogCard, CatalogSnapshot, Offer  # noqa: E402
+from card_rules.catalog import (  # noqa: E402
+    CatalogCard,
+    CatalogSnapshot,
+    EarningRate,
+    Offer,
+    Valuation,
+)
 from card_rules.models import Market, TaxId  # noqa: E402
 
 
@@ -26,6 +32,11 @@ CARDS = [
         "Sapphire Preferred",
         family="sapphire",
         annual_fee_usd=95,
+        currency="chase_ur",
+        earning_rates=[
+            EarningRate(category="dining", rate=3, unit="x_points", spend=["dining"]),
+            EarningRate(category="all other", rate=1, unit="x_points", spend=["everything_else"]),
+        ],
         offer=Offer(
             amount_disclosed=True,
             amount=75000,
@@ -39,6 +50,15 @@ CARDS = [
         "chase",
         "Freedom Unlimited",
         accepted_tax_ids=frozenset({TaxId.SSN, TaxId.ITIN}),
+        annual_fee_usd=0,
+        earning_rates=[
+            EarningRate(
+                category="all purchases",
+                rate=1.5,
+                unit="percent_cash_back",
+                spend=["everything_else"],
+            )
+        ],
     ),
     _card("citi_double_cash", "citi", "Double Cash"),
     _card("amex_blue_cash_everyday", "amex", "Blue Cash Everyday"),
@@ -50,6 +70,10 @@ CARDS = [
 ]
 _catalog.write_text(
     CatalogSnapshot(
-        version="1.1", market=Market.US, generated_at=datetime.now(UTC), cards=CARDS
+        version="1.1",
+        market=Market.US,
+        generated_at=datetime.now(UTC),
+        cards=CARDS,
+        valuations={"chase_ur": Valuation(name="Chase UR", cents=1.0, basis="cash")},
     ).model_dump_json()
 )

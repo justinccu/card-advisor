@@ -1,0 +1,112 @@
+# Amex welcome-offer eligibility, from each card's "Offer & Benefit Terms" (ADR 0009).
+#
+# Source: the terms pages are disallowed to crawlers by americanexpress.com/robots.txt, so these
+# sentences were copied by a person from the pages in a browser on 2026-09-27 (verbatim, not
+# rewritten). `excluded_by` is the structured reading of each sentence: holding (now or ever) any
+# of these cards means the user may not get this card's welcome offer. "This Card or previous
+# versions" is the card itself (already covered by amex_once_per_lifetime).
+#
+# Cards the catalog doesn't list have `in_catalog: false`. Decision 2026-09-28: not supported
+# yet. They're kept here as the issuer wrote them, but the rule can't match them because a Wallet
+# can't hold them; someone who holds, say, the Schwab Platinum may be told they could earn the
+# Gold offer. Supporting them means adding held-only catalog entries for these ids.
+#
+# The ladder is one-directional: Gold's list includes Platinum, but Platinum's doesn't include
+# Gold; Blue Cash Everyday's includes Blue Cash Preferred, not the reverse.
+
+source:
+  kind: issuer offer terms, copied by a person in a browser
+  verified_on: 2026-09-27
+  verified_by: user (browser), second review
+
+cards:
+  amex_platinum:
+    text: >-
+      You may not be eligible for a welcome offer if you have or have had this Card, the
+      Platinum Card® from American Express Exclusively for Charles Schwab, the Platinum Card®
+      from American Express Exclusively for Morgan Stanley or previous versions of these Cards.
+    excluded_by:
+      - {id: amex_platinum, in_catalog: true}
+      - {id: amex_platinum_schwab, name: Platinum Card Exclusively for Charles Schwab, in_catalog: false}
+      - {id: amex_platinum_morgan_stanley, name: Platinum Card Exclusively for Morgan Stanley, in_catalog: false}
+
+  amex_gold:
+    text: >-
+      You may not be eligible for a welcome offer if you have or have had this Card, the Premier
+      Rewards Gold Card, the Platinum Card®, the Platinum Card® from American Express Exclusively
+      for Charles Schwab, the Platinum Card® from American Express Exclusively for Morgan Stanley
+      or previous versions of these Cards.
+    excluded_by:
+      - {id: amex_gold, in_catalog: true}
+      - {id: amex_premier_rewards_gold, name: Premier Rewards Gold Card, in_catalog: false}
+      - {id: amex_platinum, in_catalog: true}
+      - {id: amex_platinum_schwab, name: Platinum Card Exclusively for Charles Schwab, in_catalog: false}
+      - {id: amex_platinum_morgan_stanley, name: Platinum Card Exclusively for Morgan Stanley, in_catalog: false}
+
+  amex_blue_cash_everyday:
+    text: >-
+      You may not be eligible to receive the welcome offer, intro APR offer, and intro plan fee
+      offer if you have or have had this Card, the Cash Magnet® Card, the Blue Cash Preferred®
+      Card, the Morgan Stanley Blue Cash Preferred® American Express Card or previous versions of
+      these Cards.
+    excluded_by:
+      - {id: amex_blue_cash_everyday, in_catalog: true}
+      - {id: amex_cash_magnet, name: Cash Magnet Card, in_catalog: false}
+      - {id: amex_blue_cash_preferred, in_catalog: true}
+      - {id: amex_blue_cash_preferred_morgan_stanley, name: Morgan Stanley Blue Cash Preferred, in_catalog: false}
+
+  amex_blue_cash_preferred:
+    text: >-
+      You may not be eligible to receive the welcome offer, intro APR offer, and intro plan fee
+      offer if you have or have had this Card, the Morgan Stanley Blue Cash Preferred® American
+      Express Card or previous versions of these Cards.
+    excluded_by:
+      - {id: amex_blue_cash_preferred, in_catalog: true}
+      - {id: amex_blue_cash_preferred_morgan_stanley, name: Morgan Stanley Blue Cash Preferred, in_catalog: false}
+
+  amex_delta_gold:
+    text: >-
+      You may not be eligible to receive a welcome offer if you have or have had this Card, the
+      Delta SkyMiles® Platinum American Express Card, the Delta SkyMiles® Reserve American
+      Express Card or previous versions of these Cards.
+    excluded_by:
+      - {id: amex_delta_gold, in_catalog: true}
+      - {id: amex_delta_platinum, in_catalog: true}
+      - {id: amex_delta_reserve, in_catalog: true}
+
+  amex_hilton_honors:
+    text: >-
+      You may not be eligible to receive a welcome offer if you have or have had this Card or
+      previous versions of these Cards.
+    excluded_by:
+      - {id: amex_hilton_honors, in_catalog: true}
+
+  amex_hilton_surpass:
+    text: >-
+      You may not be eligible to receive a welcome offer if you have or have had this Card, the
+      Hilton Honors Amex Ascend Card or previous versions of these Cards.
+    # Ascend is Surpass's former name ("The Hilton Honors American Express Ascend Card was renamed
+    # and is now known as the Hilton Honors American Express Surpass® Card"; confirmed 2026-09-28).
+    excluded_by:
+      - {id: amex_hilton_surpass, in_catalog: true, also_named: Hilton Honors Amex Ascend Card}
+
+  amex_blue_business_plus:
+    text: >-
+      You may not be eligible to receive the welcome offer and intro APR offer if you have or have
+      had this Card or previous versions of this Card.
+    excluded_by:
+      - {id: amex_blue_business_plus, in_catalog: true}
+
+  amex_business_gold:
+    text: >-
+      You may not be eligible to receive a welcome offer if you have or have had this Card or
+      previous versions of this Card.
+    excluded_by:
+      - {id: amex_business_gold, in_catalog: true}
+
+  amex_business_platinum:
+    text: >-
+      You may not be eligible to receive a welcome offer if you have or have had this Card or
+      previous versions of this Card.
+    excluded_by:
+      - {id: amex_business_platinum, in_catalog: true}

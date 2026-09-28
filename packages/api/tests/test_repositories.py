@@ -110,8 +110,10 @@ def test_uses_are_confirmed_once_and_listed_per_code(repo):
 
 def test_quota_stops_at_the_limit_per_day(repo):
     day = date(2026, 9, 25)
-    assert [repo.take_quota("u", day, 2) for _ in range(3)] == [True, True, False]
-    assert repo.take_quota("u", date(2026, 9, 26), 2) is True  # new day, new counter
+    assert [repo.take_quota("u", day, 2) for _ in range(3)] == [1, 2, None]
+    assert repo.quota_used("u", day) == 2
+    assert repo.take_quota("u", date(2026, 9, 26), 2) == 1  # new day, new counter
+    assert repo.quota_used("u", date(2026, 9, 27)) == 0
 
 
 def test_delete_user_purges_everything(repo):

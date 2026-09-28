@@ -1,0 +1,699 @@
+# Issuer reward categories -> the Spending Profile's categories (ADR 0009).
+#
+# One entry per (card, category text as extracted). `spend` lists the spending categories the
+# rate applies to ([] = none the profile tracks). `when` marks a condition ranking can't verify,
+# so the rate counts only if the user says it applies: portal (issuer travel site), brand
+# (one merchant or airline/hotel chain), choice (user-chosen or rotating category), relationship
+# (needs deposits), business, time_window. Drafts come from scripts/draft_earning_categories.py;
+# a person reviews each and sets `status: reviewed`. Cards that earn no rewards have an empty
+# list. Reviewed 2026-09-27 (Justin, with a second review).
+spend_categories: [dining, groceries, flights, hotels, other_travel, gas_ev, transit, streaming, online_shopping,
+  drugstores, everything_else]
+cards:
+  amex_blue_business_plus:
+  - text: eligible purchases
+    spend: [everything_else]
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  amex_blue_cash_everyday:
+  - text: U.S. supermarkets
+    spend: [groceries]
+    status: reviewed
+  - text: U.S. online retail purchases
+    spend: [online_shopping]
+    status: reviewed
+  - text: U.S. gas stations
+    spend: [gas_ev]
+    status: reviewed
+  - text: other eligible purchases
+    spend: [everything_else]
+    status: reviewed
+  amex_blue_cash_preferred:
+  - text: U.S. supermarkets
+    spend: [groceries]
+    status: reviewed
+  - text: select U.S. streaming subscriptions
+    spend: [streaming]
+    status: reviewed
+  - text: transit
+    spend: [transit]
+    status: reviewed
+  - text: U.S. gas stations
+    spend: [gas_ev]
+    status: reviewed
+  - text: other eligible purchases
+    spend: [everything_else]
+    status: reviewed
+  amex_business_gold:
+  - text: Top 2 eligible categories each month (from 6 categories)
+    spend: []
+    when: choice
+    status: reviewed
+  - text: Flights & Pre-Paid Hotels booked on AmexTravel.com
+    spend: [flights, hotels]
+    when: portal
+    status: reviewed
+    note: 'the issuer page says "3X POINTS On Flights & Pre-Paid Hotels Booked on AmexTravel.com": flights
+      too need the portal, and airfare is not one of the 4X categories'
+  - text: All other eligible purchases
+    spend: [everything_else]
+    status: reviewed
+  amex_business_platinum:
+  - text: flights and prepaid hotels booked through Amex Travel
+    spend: [flights, hotels]
+    when: portal
+    status: reviewed
+  - text: key business purchases or purchases of $5K+
+    spend: []
+    when: business
+    status: reviewed
+  - text: all other eligible purchases
+    spend: [everything_else]
+    status: reviewed
+  amex_delta_gold:
+  - text: Dining
+    spend: [dining]
+    status: reviewed
+  - text: Groceries
+    spend: [groceries]
+    status: reviewed
+  - text: Delta Purchases
+    spend: [flights]
+    when: brand
+    brand: delta
+    status: reviewed
+  - text: everything else
+    spend: [everything_else]
+    status: reviewed
+  amex_gold:
+  - text: Restaurants Worldwide
+    spend: [dining]
+    status: reviewed
+  - text: U.S. supermarkets
+    spend: [groceries]
+    status: reviewed
+  - text: Prepaid Hotels
+    spend: [hotels]
+    when: portal
+    note: Gold's hotel bonus is for prepaid hotels booked on AmexTravel.com
+    status: reviewed
+  - text: Flights
+    spend: [flights]
+    note: booked directly with airlines or on AmexTravel.com
+    status: reviewed
+  - text: Prepaid Car Rentals
+    spend: [other_travel]
+    when: portal
+    note: prepaid, booked on AmexTravel.com
+    status: reviewed
+  - text: all other eligible purchases
+    spend: [everything_else]
+    status: reviewed
+  amex_hilton_honors:
+  - text: Hotels & Resorts
+    spend: [hotels]
+    when: brand
+    brand: hilton
+    status: reviewed
+  - text: Dining
+    spend: [dining]
+    status: reviewed
+  - text: Groceries
+    spend: [groceries]
+    status: reviewed
+  - text: Gas
+    spend: [gas_ev]
+    status: reviewed
+  - text: everything else
+    spend: [everything_else]
+    status: reviewed
+  amex_hilton_surpass:
+  - text: Hotels & Resorts
+    spend: [hotels]
+    when: brand
+    brand: hilton
+    status: reviewed
+  - text: Dining
+    spend: [dining]
+    status: reviewed
+  - text: Groceries
+    spend: [groceries]
+    status: reviewed
+  - text: Gas
+    spend: [gas_ev]
+    status: reviewed
+  - text: U.S. Online Retail Purchases
+    spend: [online_shopping]
+    status: reviewed
+  - text: other eligible purchases
+    spend: [everything_else]
+    status: reviewed
+  amex_platinum:
+  - text: Flights booked directly with airlines or through American Express Travel
+    spend: [flights]
+    note: booking directly with the airline qualifies, so no portal needed
+    status: reviewed
+  - text: Prepaid Hotels Booked on American Express Travel
+    spend: [hotels]
+    when: portal
+    status: reviewed
+  - text: Other Purchases
+    spend: [everything_else]
+    status: reviewed
+  bofa_customized_cash:
+  - text: choice category (first year)
+    spend: []
+    when: choice
+    status: reviewed
+  - text: grocery stores and wholesale clubs
+    spend: [groceries]
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  bofa_customized_cash_secured:
+  - text: choice category (first year)
+    spend: []
+    when: choice
+    status: reviewed
+  - text: grocery stores and wholesale clubs
+    spend: [groceries]
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  bofa_customized_cash_student:
+  - text: choice category (first year)
+    spend: []
+    when: choice
+    status: reviewed
+  - text: grocery stores and wholesale clubs
+    spend: [groceries]
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  bofa_premium_rewards:
+  - text: travel purchases
+    spend: [flights, hotels, other_travel]
+    status: reviewed
+  - text: dining purchases
+    spend: [dining]
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  bofa_travel_rewards:
+  - text: everyday purchases
+    spend: [everything_else]
+    status: reviewed
+  bofa_unlimited_cash:
+  - text: all purchases
+    spend: [everything_else]
+    status: reviewed
+  c1_platinum: []
+  c1_platinum_secured: []
+  c1_quicksilver:
+  - text: every purchase
+    spend: [everything_else]
+    status: reviewed
+  - text: Capital One Travel
+    spend: [flights, hotels, other_travel]
+    when: portal
+    status: reviewed
+  - text: Capital One Entertainment
+    spend: []
+    when: brand
+    brand: capital_one_entertainment
+    status: reviewed
+  c1_quicksilver_student:
+  - text: every purchase
+    spend: [everything_else]
+    status: reviewed
+  - text: Capital One Entertainment purchases
+    spend: []
+    when: brand
+    brand: capital_one_entertainment
+    status: reviewed
+  c1_quicksilverone:
+  - text: every purchase
+    spend: [everything_else]
+    status: reviewed
+  c1_savor:
+  - text: grocery stores
+    spend: [groceries]
+    status: reviewed
+  - text: dining
+    spend: [dining]
+    status: reviewed
+  - text: entertainment
+    spend: []
+    note: entertainment is not a tracked category
+    status: reviewed
+  - text: streaming services
+    spend: [streaming]
+    status: reviewed
+  - text: Capital One Entertainment purchases
+    spend: []
+    when: brand
+    brand: capital_one_entertainment
+    status: reviewed
+  - text: hotels, vacation rentals and rental cars booked through Capital One Travel
+    spend: [hotels, other_travel]
+    when: portal
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  c1_savor_student:
+  - text: grocery stores
+    spend: [groceries]
+    status: reviewed
+  - text: dining
+    spend: [dining]
+    status: reviewed
+  - text: entertainment
+    spend: []
+    note: entertainment is not a tracked category
+    status: reviewed
+  - text: popular streaming services
+    spend: [streaming]
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  c1_venture:
+  - text: every purchase
+    spend: [everything_else]
+    status: reviewed
+  - text: hotels, vacation rentals and rental cars booked through Capital One Travel
+    spend: [hotels, other_travel]
+    when: portal
+    status: reviewed
+  - text: Capital One Entertainment purchases
+    spend: []
+    when: brand
+    brand: capital_one_entertainment
+    status: reviewed
+  c1_venture_x:
+  - text: hotels & rental cars booked through Capital One Travel
+    spend: [hotels, other_travel]
+    when: portal
+    status: reviewed
+  - text: flights and vacation rentals booked through Capital One Travel
+    spend: [flights, hotels]
+    when: portal
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  chase_freedom_flex:
+  - text: rotating quarterly categories
+    spend: []
+    when: choice
+    status: reviewed
+  - text: travel purchased through Chase Travel
+    spend: [flights, hotels, other_travel]
+    when: portal
+    status: reviewed
+  - text: dining including takeout
+    spend: [dining]
+    status: reviewed
+  - text: drugstores
+    spend: [drugstores]
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  chase_freedom_rise:
+  - text: all purchases
+    spend: [everything_else]
+    status: reviewed
+  - text: Lyft purchases
+    spend: [transit]
+    when: brand
+    brand: lyft
+    status: reviewed
+  chase_freedom_unlimited:
+  - text: dining at restaurants, including takeout and eligible delivery services
+    spend: [dining]
+    status: reviewed
+  - text: drugstore purchases
+    spend: [drugstores]
+    status: reviewed
+  - text: travel purchased through Chase Travel
+    spend: [flights, hotels, other_travel]
+    when: portal
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  chase_ihg_premier:
+  - text: IHG Hotels and Resorts
+    spend: [hotels]
+    when: brand
+    brand: ihg
+    status: reviewed
+  - text: travel, gas stations, dining
+    spend: [dining, gas_ev, flights, hotels, other_travel]
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  chase_ink_cash:
+  - text: office supply stores and internet, cable and phone services
+    spend: []
+    when: business
+    status: reviewed
+  - text: gas stations and restaurants
+    spend: [dining, gas_ev]
+    status: reviewed
+  - text: Lyft rides
+    spend: [transit]
+    when: brand
+    brand: lyft
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  chase_ink_preferred:
+  - text: Travel and Business categories (shipping, advertising, internet/cable/phone services, travel)
+    spend: [flights, hotels, other_travel]
+    note: travel counts for anyone; the business categories aren't tracked
+    status: reviewed
+  - text: Lyft rides
+    spend: [transit]
+    when: brand
+    brand: lyft
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  chase_ink_unlimited:
+  - text: every purchase
+    spend: [everything_else]
+    status: reviewed
+  - text: Lyft rides
+    spend: [transit]
+    when: brand
+    brand: lyft
+    status: reviewed
+  chase_marriott_boundless:
+  - text: hotels participating in Marriott Bonvoy
+    spend: [hotels]
+    when: brand
+    brand: marriott
+    status: reviewed
+  - text: grocery stores, gas stations, and dining
+    spend: [dining, groceries, gas_ev]
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  chase_prime_visa:
+  - text: Amazon.com, Whole Foods Market, Chase Travel
+    spend: [online_shopping, groceries]
+    when: brand
+    brand: amazon
+    note: Amazon and Whole Foods only (the Chase Travel part is a portal)
+    status: reviewed
+  - text: gas stations, restaurants, local transit and commuting
+    spend: [dining, gas_ev, transit]
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  chase_sapphire_preferred:
+  - text: Chase Travel
+    spend: [flights, hotels, other_travel]
+    when: portal
+    status: reviewed
+  - text: dining
+    spend: [dining]
+    status: reviewed
+  - text: gas stations, EV charging, and vacation homes at top brands
+    spend: [gas_ev]
+    note: vacation homes are a portal/brand booking, not counted
+    status: reviewed
+  - text: top streaming services and online grocery
+    spend: [streaming]
+    note: online grocery is only part of grocery spend, so not counted
+    status: reviewed
+  - text: all other travel
+    spend: [flights, hotels, other_travel]
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  chase_sapphire_reserve:
+  - text: Chase Travel purchases
+    spend: [flights, hotels, other_travel]
+    when: portal
+    status: reviewed
+  - text: flights booked direct
+    spend: [flights]
+    status: reviewed
+  - text: hotels booked direct
+    spend: [hotels]
+    status: reviewed
+  - text: dining worldwide
+    spend: [dining]
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  chase_southwest_plus:
+  - text: Southwest Airlines purchases
+    spend: [flights]
+    when: brand
+    brand: southwest
+    status: reviewed
+  - text: gas stations and grocery stores
+    spend: [groceries, gas_ev]
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  chase_united_explorer:
+  - text: eligible United flights
+    spend: [flights]
+    when: brand
+    brand: united
+    status: reviewed
+  - text: all other eligible United purchases
+    spend: [flights]
+    when: brand
+    brand: united
+    status: reviewed
+  - text: hotel stays
+    spend: [hotels]
+    note: hotel stays booked directly with the hotel; any chain
+    status: reviewed
+  - text: dining
+    spend: [dining]
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  chase_world_of_hyatt:
+  - text: Hyatt hotels and resorts
+    spend: [hotels]
+    when: brand
+    brand: hyatt
+    status: reviewed
+  - text: restaurants, airline tickets purchased directly from airlines, local transit and commuting,
+      fitness club & gym memberships
+    spend: [dining, flights, transit]
+    note: fitness/gym is not a tracked category
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  citi_aadvantage_platinum_select:
+  - text: eligible American Airlines purchases
+    spend: [flights]
+    when: brand
+    brand: american_airlines
+    status: reviewed
+  - text: restaurants, including takeout
+    spend: [dining]
+    status: reviewed
+  - text: gas stations
+    spend: [gas_ev]
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  citi_costco:
+  - text: gas at Costco
+    spend: [gas_ev]
+    when: brand
+    brand: costco
+    status: reviewed
+  - text: other eligible gas and EV charging
+    spend: [gas_ev]
+    status: reviewed
+  - text: restaurants and eligible travel
+    spend: [dining, flights, hotels, other_travel]
+    status: reviewed
+  - text: all other Costco and Costco.com purchases
+    spend: [groceries]
+    when: brand
+    brand: costco
+    note: applies to Costco shopping, counted as groceries when the user shops there
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  citi_double_cash:
+  - text: all purchases
+    spend: [everything_else]
+    status: reviewed
+  - text: hotels, car rentals, and attractions booked through Citi Travel portal
+    spend: [hotels, other_travel]
+    when: portal
+    status: reviewed
+  citi_secured: []
+  citi_strata_elite:
+  - text: Hotels, Car Rentals, and Attractions booked on cititravel.com
+    spend: [hotels, other_travel]
+    when: portal
+    status: reviewed
+  - text: Air Travel booked on cititravel.com
+    spend: [flights]
+    when: portal
+    status: reviewed
+  - text: Restaurants on Citi Nights purchases (Friday and Saturday from 6 PM - 6 AM ET)
+    spend: [dining]
+    when: time_window
+    note: only Fri/Sat 6 PM-6 AM ET; the any-other-time dining rate counts instead
+    status: reviewed
+  - text: Restaurants any other time
+    spend: [dining]
+    status: reviewed
+  - text: All Other Purchases
+    spend: [everything_else]
+    status: reviewed
+  citi_strata_premier:
+  - text: Hotels, Car Rentals and Attractions booked on cititravel.com
+    spend: [hotels, other_travel]
+    when: portal
+    status: reviewed
+  - text: Air Travel and Other Hotel Purchases
+    spend: [flights, hotels]
+    status: reviewed
+  - text: Restaurants
+    spend: [dining]
+    status: reviewed
+  - text: Supermarkets
+    spend: [groceries]
+    status: reviewed
+  - text: Gas & EV Charging Stations
+    spend: [gas_ev]
+    status: reviewed
+  - text: All Other Purchases
+    spend: [everything_else]
+    status: reviewed
+  discover_it_cash_back:
+  - text: rotating quarterly categories
+    spend: []
+    when: choice
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  discover_it_student_cash_back:
+  - text: rotating quarterly categories (grocery stores, restaurants, gas stations, etc.)
+    spend: []
+    when: choice
+    status: reviewed
+  - text: all other purchases
+    spend: [everything_else]
+    status: reviewed
+  usb_altitude_go:
+  - text: dining, takeout and restaurant delivery
+    spend: [dining]
+    status: reviewed
+  - text: grocery stores
+    spend: [groceries]
+    status: reviewed
+  - text: gas stations/EV charging stations
+    spend: [gas_ev]
+    status: reviewed
+  - text: streaming services
+    spend: [streaming]
+    status: reviewed
+  - text: all other eligible purchases
+    spend: [everything_else]
+    status: reviewed
+  usb_cash_plus:
+  - text: two chosen 5% categories (first $2,000 per quarter)
+    spend: []
+    when: choice
+    status: reviewed
+  - text: one chosen 2% everyday category
+    spend: []
+    when: choice
+    status: reviewed
+  - text: prepaid travel booked in Travel Center
+    spend: [flights, hotels, other_travel]
+    when: portal
+    status: reviewed
+  - text: all other eligible purchases
+    spend: [everything_else]
+    status: reviewed
+  usb_smartly:
+  - text: every purchase
+    spend: [everything_else]
+    status: reviewed
+  - text: eligible Net Purchases (with Smartly accounts and qualifying balances $10,000-$49,999)
+    spend: [everything_else]
+    when: relationship
+    status: reviewed
+  - text: eligible Net Purchases (with Smartly accounts and qualifying balances $50,000-$99,999)
+    spend: [everything_else]
+    when: relationship
+    status: reviewed
+  - text: eligible Net Purchases (with Smartly accounts and qualifying balances $100,000+)
+    spend: [everything_else]
+    when: relationship
+    status: reviewed
+  wf_active_cash:
+  - text: all purchases
+    spend: [everything_else]
+    status: reviewed
+  wf_autograph:
+  - text: restaurants
+    spend: [dining]
+    status: reviewed
+  - text: travel
+    spend: [flights, hotels, other_travel]
+    status: reviewed
+  - text: gas & transit
+    spend: [gas_ev, transit]
+    status: reviewed
+  - text: popular streaming services
+    spend: [streaming]
+    status: reviewed
+  - text: phone plans
+    spend: []
+    note: phone plans are not a tracked category
+    status: reviewed
+  - text: other purchases
+    spend: [everything_else]
+    status: reviewed
+  wf_autograph_journey:
+  - text: hotels
+    spend: [hotels]
+    status: reviewed
+  - text: airlines
+    spend: [flights]
+    status: reviewed
+  - text: restaurants and other travel
+    spend: [dining, flights, hotels, other_travel]
+    status: reviewed
+  - text: other purchases
+    spend: [everything_else]
+    status: reviewed

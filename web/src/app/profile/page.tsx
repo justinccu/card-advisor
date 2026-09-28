@@ -7,6 +7,7 @@ import { useEffect, useRef } from "react";
 
 import { useSession } from "@/components/Providers";
 import { Segmented } from "@/components/Segmented";
+import { SpendingProfileForm } from "@/components/SpendingProfileForm";
 import { api } from "@/lib/api";
 import { deleteAccount } from "@/lib/auth";
 import { press, spring } from "@/lib/motion";
@@ -97,6 +98,10 @@ export default function ProfilePage() {
       <Field title="Annual income">
         <Chips options={INCOME} value={p.income_band} onChange={(v) => set({ income_band: v })} />
       </Field>
+
+      <div className="border-t border-hairline pt-10">
+        <SpendingProfileForm value={p.spending} onChange={(spending) => set({ spending })} />
+      </div>
 
       <div className="flex items-center justify-between border-t border-hairline pt-6 text-[15px]">
         <button onClick={() => leave(signOut)} className="text-link">

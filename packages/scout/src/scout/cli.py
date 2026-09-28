@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 
 from card_rules.catalog import CatalogSnapshot
 
-from scout import boilerplate, compare, overrides, publish, release, report, review
+from scout import annotate, boilerplate, compare, overrides, publish, release, report, review
 from scout.bedrock import DEFAULT_MODEL, PRICES, BudgetExceeded, Ledger, cost_usd
 from scout.evidence import check_card
 from scout.extract import (
@@ -376,7 +376,12 @@ def cmd_publish(args: argparse.Namespace) -> None:
     # Human corrections win over any extraction, on every publish path.
     cards, notes = overrides.apply(cards, overrides.load())
     print("\n".join(f"  {n}" for n in notes))
-    path = publish.publish(cards)
+    # Ranking inputs (reviewed category mapping + valuations), versioned with the cards (ADR 0009).
+    try:
+        cards, valuations = annotate.annotate(cards)
+    except annotate.AnnotationError as e:
+        raise SystemExit(str(e)) from None
+    path = publish.publish(cards, valuations=valuations)
     open_cards = sum(c.availability == "open" for c in cards)
     if path is None:
         print(f"catalog unchanged ({len(cards)} cards); no new snapshot written")

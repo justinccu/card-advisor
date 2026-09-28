@@ -69,6 +69,8 @@ def _applies(rule: EligibilityRule, product: CardProduct) -> bool:
         return False
     if product.is_charge_card and not rule.applies_to_charge_cards:
         return False
+    if isinstance(rule, OfferHistoryRule) and rule.for_product:
+        return product.id == rule.for_product
     if isinstance(rule, FamilyOpenRule | OfferHistoryRule) and rule.family:
         return product.family == rule.family
     return True
@@ -205,6 +207,8 @@ def _relevant(rule: OfferHistoryRule, product: CardProduct, card: HeldCard) -> b
         return False
     if rule.target == "product":
         return card.card_product_id == product.id
+    if rule.target == "products":
+        return card.card_product_id in rule.products
     return card.family == rule.family
 
 

@@ -224,3 +224,79 @@ def test_rules_only_apply_to_their_issuer():
 def test_evaluation_is_deterministic():
     wallet = complete(*(card("citi", m) for m in (1, 5, 10)))
     assert evaluate(CSP, SSN, wallet, RULES, AS_OF) == evaluate(CSP, SSN, wallet, RULES, AS_OF)
+
+
+# --- Amex product-family ladders (ADR 0009) --------------------------------------------
+
+AMEX_PLATINUM = CardProduct(
+    id="amex_platinum", issuer_id="amex", name="Platinum", is_charge_card=True
+)
+AMEX_BCE = CardProduct(id="amex_blue_cash_everyday", issuer_id="amex", name="Blue Cash Everyday")
+AMEX_BCP_REAL = CardProduct(id="amex_blue_cash_preferred", issuer_id="amex", name="BCP")
+DELTA_GOLD = CardProduct(id="amex_delta_gold", issuer_id="amex", name="Delta Gold", family="delta")
+
+
+def held(product_id: str, months_ago: int = 30, **kw) -> HeldCard:
+    return card("amex", months_ago, card_product_id=product_id, **kw)
+
+
+def test_having_had_platinum_blocks_the_gold_offer_even_after_closing_it():
+    closed = held("amex_platinum", 60, closed_on=add_months(AS_OF, -24))
+    verdict = evaluate(AMEX_GOLD, SSN, complete(closed, issuers={"amex"}), RULES, AS_OF).offer
+    assert verdict.status is Status.INELIGIBLE
+    assert reason(verdict, "amex_ladder_gold").retry_after is None  # lifetime: no retry date
+
+
+def amex_history(*cards: HeldCard) -> Wallet:
+    # Lifetime rules can only say "never held" when the user attests their full Amex history.
+    return complete(*cards, issuers=frozenset({"amex"}))
+
+
+def test_the_ladder_only_runs_one_way():
+    # Gold then Platinum is fine; Platinum then Gold is not.
+    platinum = evaluate(AMEX_PLATINUM, SSN, amex_history(held("amex_gold")), RULES, AS_OF).offer
+    assert platinum.status is Status.ELIGIBLE
+    bcp = evaluate(AMEX_BCP_REAL, SSN, amex_history(held("amex_blue_cash_everyday")), RULES, AS_OF)
+    assert bcp.offer.status is Status.ELIGIBLE
+    bce = evaluate(AMEX_BCE, SSN, amex_history(held("amex_blue_cash_preferred")), RULES, AS_OF)
+    assert bce.offer.status is Status.INELIGIBLE
+
+
+def test_without_full_amex_history_the_ladder_is_undetermined_not_eligible():
+    v = evaluate(AMEX_GOLD, SSN, complete(), RULES, AS_OF).offer
+    assert reason(v, "amex_ladder_gold").status is Status.UNDETERMINED
+
+
+def test_delta_gold_offer_blocked_by_platinum_or_reserve_not_by_other_amex_cards():
+    for higher in ("amex_delta_platinum", "amex_delta_reserve"):
+        v = evaluate(DELTA_GOLD, SSN, amex_history(held(higher)), RULES, AS_OF).offer
+        assert v.status is Status.INELIGIBLE, higher
+    unrelated = evaluate(DELTA_GOLD, SSN, amex_history(held("amex_gold")), RULES, AS_OF).offer
+    assert unrelated.status is Status.ELIGIBLE
+
+
+def test_ladder_rules_only_apply_to_their_own_card():
+    # Holding Platinum says nothing about the Hilton card's Offer.
+    hilton = CardProduct(id="amex_hilton_honors", issuer_id="amex", name="Hilton", family="hilton")
+    v = evaluate(hilton, SSN, complete(held("amex_platinum")), RULES, AS_OF).offer
+    assert not any(r.rule_id.startswith("amex_ladder") for r in v.reasons)
+
+
+def test_ladder_rules_match_the_issuer_terms_verbatim_file():
+    """rules_us.yaml must encode exactly the catalog cards each Amex terms sentence names."""
+    from pathlib import Path
+
+    import yaml
+
+    terms = yaml.safe_load(
+        (Path(__file__).resolve().parents[3] / "catalog/seed/amex_offer_terms.yaml").read_text()
+    )["cards"]
+    expected = {
+        card: {e["id"] for e in t["excluded_by"] if e["in_catalog"] and e["id"] != card}
+        for card, t in terms.items()
+    }
+    expected = {card: ids for card, ids in expected.items() if ids}
+    ladders = {
+        r.for_product: set(r.products) for r in RULES if getattr(r, "target", "") == "products"
+    }
+    assert ladders == expected

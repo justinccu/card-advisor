@@ -26,12 +26,36 @@ class Offer(BaseModel):
     ends_on: date | None = None
 
 
+# The Spending Profile's categories (ADR 0009); issuer categories are mapped onto these.
+SpendCategory = Literal[
+    "dining",
+    "groceries",
+    "flights",
+    "hotels",
+    "other_travel",
+    "gas_ev",
+    "transit",
+    "streaming",
+    "online_shopping",
+    "drugstores",
+    "everything_else",
+]
+# A rate that needs something the Spending Profile can't show; ranking counts it only when the
+# user says it applies.
+RateCondition = Literal["portal", "brand", "choice", "relationship", "business", "time_window"]
+
+
 class EarningRate(BaseModel):
     category: str
     rate: float
     unit: Literal["x_points", "x_miles", "percent_cash_back"]
     cap_usd: int | None = None
     cap_period: str | None = None
+    # Stamped at publish from catalog/seed/earning_categories.yaml (reviewed), so ranking reads
+    # one immutable snapshot. Empty `spend`: no tracked category.
+    spend: list[SpendCategory] = []
+    when: RateCondition | None = None
+    brand: str | None = None
 
 
 class Credit(BaseModel):
@@ -53,11 +77,24 @@ class OfferVariant(BaseModel):
     fetched_at: datetime | None = None
 
 
+class Valuation(BaseModel):
+    """Conservative Point Valuation of one reward currency, from the reviewed seed table
+    catalog/seed/reward_currencies.yaml."""
+
+    name: str
+    cents: float
+    basis: str
+    upside: str | None = None
+    free_night_points: int | None = None  # "free night" Offers, valued at this many points each
+
+
 class CatalogCard(CardProduct):
     url: str
     availability: Literal["open", "closed_to_new_applicants"] = "open"
     closed_on: date | None = None
     tags: list[str] = []
+    # Reward currency for points/miles cards (a key of CatalogSnapshot.valuations); None = cash.
+    currency: str | None = None
     # Facts below are None for closed cards kept only so users can list them as Held Cards.
     annual_fee_usd: int | None = None
     first_year_annual_fee_usd: int | None = None
@@ -102,6 +139,8 @@ class CatalogSnapshot(BaseModel):
     # True for a local preview built from unreviewed extractions (ADR 0002): never published,
     # and every consumer must label it as unverified.
     preview: bool = False
+    # Point Valuations used for ranking, versioned with the cards they value.
+    valuations: dict[str, Valuation] = {}
 
     @field_validator("version", mode="before")
     @classmethod

@@ -45,7 +45,8 @@ class Repository(Protocol):
     def redeem_invite(self, code: str, user: str) -> bool: ...
     def confirm_invite_use(self, user: str) -> bool: ...
     def list_invites(self) -> list[Invite]: ...
-    def take_quota(self, uid: str, day: date, limit: int) -> bool: ...
+    def take_quota(self, uid: str, day: date, limit: int) -> int | None: ...
+    def quota_used(self, uid: str, day: date) -> int: ...
     def delete_user(self, uid: str) -> None: ...
 
 
@@ -122,12 +123,16 @@ class InMemoryRepository:
             ]
 
     def take_quota(self, uid, day, limit):
+        """Atomically take one unit of today's quota; the new count, or None at the limit."""
         with self._lock:
             used = self._quota.get((uid, day), 0)
             if used >= limit:
-                return False
+                return None
             self._quota[(uid, day)] = used + 1
-            return True
+            return used + 1
+
+    def quota_used(self, uid, day):
+        return self._quota.get((uid, day), 0)
 
     def delete_user(self, uid):
         with self._lock:
@@ -328,7 +333,7 @@ class DynamoRepository:
         from botocore.exceptions import ClientError
 
         try:
-            self._table.update_item(
+            resp = self._table.update_item(
                 Key={"PK": self._user(uid), "SK": f"QUOTA#{day.isoformat()}"},
                 UpdateExpression="ADD used :one SET expires_at = if_not_exists(expires_at, :exp)",
                 ConditionExpression="attribute_not_exists(used) OR used < :limit",
@@ -337,12 +342,19 @@ class DynamoRepository:
                     ":limit": limit,
                     ":exp": int(time.time()) + QUOTA_TTL_SECONDS,
                 },
+                ReturnValues="UPDATED_NEW",
             )
-            return True
+            return int(resp["Attributes"]["used"])
         except ClientError as e:
             if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
-                return False
+                return None
             raise
+
+    def quota_used(self, uid, day):
+        item = self._table.get_item(
+            Key={"PK": self._user(uid), "SK": f"QUOTA#{day.isoformat()}"}
+        ).get("Item")
+        return int(item["used"]) if item else 0
 
     def delete_user(self, uid):
         from boto3.dynamodb.conditions import Key

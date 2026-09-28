@@ -54,6 +54,17 @@ def evaluate_cards(
     return out
 
 
+def evaluations(
+    products: list[CatalogCard],
+    profile: ApplicantProfile,
+    wallet: rules.Wallet,
+    as_of: date,
+) -> dict[str, rules.Evaluation]:
+    rule_set = load_rules()
+    applicant = rules.ApplicantProfile(tax_id=profile.tax_id)
+    return {p.id: evaluate(p, applicant, wallet, rule_set, as_of) for p in products}
+
+
 def velocity(wallet: rules.Wallet, as_of: date) -> Velocity:
     """The 5/24 count: personal cards (authorized-user cards included) opened in 24 months."""
     start = add_months(as_of, -VELOCITY_WINDOW_MONTHS)

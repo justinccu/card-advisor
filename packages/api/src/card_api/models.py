@@ -4,6 +4,7 @@ from datetime import date
 from typing import Literal
 
 from card_rules.models import TaxId
+from card_rules.ranking import SpendingProfile
 from pydantic import BaseModel, Field, model_validator
 
 # Ranges, never exact numbers (ADR 0005): we don't want to hold precise scores or incomes.
@@ -17,6 +18,8 @@ class ApplicantProfile(BaseModel):
     score_band: ScoreBand | None = None
     income_band: IncomeBand | None = None
     credit_history: HistoryBand | None = None
+    # What ranking uses (ADR 0009); None until the user fills it in.
+    spending: SpendingProfile | None = None
 
 
 class HeldCardIn(BaseModel):
@@ -88,3 +91,12 @@ class Invite(BaseModel):
     code: str
     remaining: int
     uses: list[InviteUse] = []
+
+
+class ChatQuota(BaseModel):
+    """Advisor messages left today (ADR 0009: 10 per user per day, reset at midnight US Eastern)."""
+
+    limit: int
+    used: int
+    remaining: int
+    resets_at: str  # ISO timestamp of the next US Eastern midnight

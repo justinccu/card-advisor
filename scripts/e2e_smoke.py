@@ -173,6 +173,23 @@ with sync_playwright() as p:
     page.wait_for_timeout(900)
     after = page.get_by_role("tab", selected=True).get_attribute("aria-label")
     check(f"flinging the deck moves the selection ({before} -> {after})", before != after)
+
+    # Spending Profile (ADR 0009): amounts save on blur and survive a reload
+    page.goto(BASE + "/profile/", wait_until="networkidle")
+    page.wait_for_timeout(800)
+    page.get_by_label("Dining per month").fill("450")
+    page.get_by_label("Dining per month").press("Enter")
+    page.get_by_role("button", name="Cash back").click()
+    page.wait_for_timeout(800)
+    page.reload(wait_until="networkidle")
+    page.wait_for_timeout(1000)
+    kept = page.get_by_label("Dining per month").input_value()
+    goal = page.get_by_role("button", name="Cash back").get_attribute("aria-pressed")
+    check(
+        f"spending profile persists (dining {kept!r}, goal {goal})",
+        kept == "450" and goal == "true",
+    )
+
     check("no uncaught page errors", not errors)
     b.close()
 print("\n".join(results))

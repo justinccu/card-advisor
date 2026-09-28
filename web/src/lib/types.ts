@@ -143,9 +143,34 @@ export interface Velocity {
   complete: boolean;
 }
 
+export type SpendCategory =
+  | "dining"
+  | "groceries"
+  | "flights"
+  | "hotels"
+  | "other_travel"
+  | "gas_ev"
+  | "transit"
+  | "streaming"
+  | "online_shopping"
+  | "drugstores"
+  | "everything_else";
+
+export type Goal = "earn_offers" | "long_term" | "travel" | "cash_back" | "build_credit";
+
+/** What ranking uses (ADR 0009). `source` is manual for now; imported statements later. */
+export interface SpendingProfile {
+  monthly_usd: Partial<Record<SpendCategory, number>>;
+  goals: Goal[];
+  max_annual_fee_usd: number | null;
+  wants_business: boolean;
+  source: "manual" | "statements";
+}
+
 export interface ApplicantProfile {
   tax_id: TaxId | null;
   score_band: string | null;
   income_band: string | null;
   credit_history: string | null;
+  spending?: SpendingProfile | null;
 }

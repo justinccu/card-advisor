@@ -1,0 +1,197 @@
+# Conservative Point Valuations (ADR 0009): what one point or mile is worth in US cents for ranking.
+#
+# Bank points use the value the program guarantees as cash or a statement credit. Airline and
+# hotel programs mostly have no fixed cash value (awards are priced dynamically), so they use a
+# floor set below published typical redemption values; `basis` says which. Ranking never uses
+# transfer-partner values; the Advisor may mention `upside` (clearly labelled) as an extra.
+# Every value carries sources and a verification date; `status: draft` until a person reviews it.
+
+currencies:
+  chase_ur:
+    name: Chase Ultimate Rewards points
+    cents: 1.0
+    basis: guaranteed — cash back or statement credit at 1¢ per point
+    upside: transfers to airline/hotel partners, often valued 1.5–2¢
+    sources:
+      - https://www.chase.com/personal/credit-cards/education/basics/how-chase-ultimate-rewards-works
+      - https://www.cnbc.com/select/what-are-chase-ultimate-rewards-points-worth/
+    verified_on: 2026-09-27
+    status: reviewed
+
+  amex_mr:
+    name: American Express Membership Rewards points
+    cents: 0.6
+    basis: guaranteed — statement credit ("cover eligible charges") at 0.6¢; 1¢ only when booking flights through Amex Travel
+    upside: transfers to airline/hotel partners, often valued 1.5–2¢
+    decision: 0.6¢ kept (2026-09-27). 1¢ needs booking flights through Amex Travel, a condition ADR 0009 excludes by default; 1¢ and transfers are `upside` the Advisor may mention
+    sources:
+      - https://www.americanexpress.com/us/customer-service/faq.membership-reward-points-for-statement-credit.html
+      - https://www.americanexpress.com/en-us/credit-cards/credit-intel/american-express-points-value/
+    verified_on: 2026-09-27
+    status: reviewed
+
+  capital_one_miles:
+    name: Capital One miles
+    cents: 1.0
+    basis: guaranteed — statement credit against any travel purchase ("cover travel purchases") at 1¢; cash back is 0.5¢
+    upside: transfers to airline/hotel partners
+    sources:
+      - https://thepointsguy.com/credit-cards/redeem-capital-one-miles-fixed-value/
+      - https://www.bankrate.com/credit-cards/issuers/how-does-capital-one-purchase-eraser-work
+    verified_on: 2026-09-27
+    status: reviewed
+
+  citi_thankyou:
+    name: Citi ThankYou points (Strata Premier / Strata Elite)
+    cents: 0.75
+    basis: guaranteed — cash back or statement credit at 0.75¢ (cut from 1¢ in Aug 2025); 1¢ when booking through Citi Travel
+    upside: transfers to airline partners, often valued 1.6–1.9¢
+    sources:
+      - https://www.thankyou.com/pointsTransparency.htm
+      - https://upgradedpoints.com/news/citi-reduce-value-points-redemption-statement-credit/
+    verified_on: 2026-09-27
+    status: reviewed
+
+  bofa_points:
+    name: Bank of America points (Travel Rewards / Premium Rewards)
+    cents: 1.0
+    basis: guaranteed — statement credit against travel and dining purchases at 1¢; cash is 0.6¢
+    sources:
+      - https://www.forbes.com/advisor/credit-cards/bank-of-america-points-value/
+      - https://www.bankrate.com/credit-cards/rewards/bank-of-america-travel-rewards-guide
+    verified_on: 2026-09-27
+    status: reviewed
+
+  wells_fargo_rewards:
+    name: Wells Fargo Rewards points (Autograph / Autograph Journey)
+    cents: 1.0
+    basis: guaranteed — cash, statement credit or gift cards at 1¢
+    upside: transfers to airline/hotel partners (Autograph Journey)
+    sources:
+      - https://www.cnbc.com/select/wells-fargo-rewards-guide/
+      - https://upgradedpoints.com/credit-cards/wells-fargo-rewards-points-faqs/
+    verified_on: 2026-09-27
+    status: reviewed
+
+  usbank_altitude:
+    name: U.S. Bank Altitude points (Altitude Go)
+    cents: 1.0
+    basis: guaranteed — cash back (statement credit or deposit) at 1¢
+    sources:
+      - https://rewards.usbank.com/benefits/card/AltitudeGoBenefits/faqs
+      - https://www.nerdwallet.com/credit-cards/reviews/us-bank-altitude-go
+    verified_on: 2026-09-27
+    status: reviewed
+
+  delta_skymiles:
+    name: Delta SkyMiles
+    cents: 1.0
+    basis: guaranteed for Delta cardholders — Pay with Miles takes 1¢ per mile off any Delta ticket
+    upside: award flights sometimes above 1¢
+    sources:
+      - https://www.delta.com/us/en/skymiles/airline-credit-cards/pay-with-miles
+    verified_on: 2026-09-27
+    status: reviewed
+
+  united_miles:
+    name: United MileagePlus miles
+    cents: 1.0
+    basis: floor — Money + Miles applies miles toward a fare at about 1¢; award flights average about 1.2¢
+    sources:
+      - https://www.nerdwallet.com/travel/learn/how-much-are-my-united-miles-worth
+      - https://frequentmiler.com/what-are-united-miles-worth/
+    verified_on: 2026-09-27
+    status: reviewed
+
+  southwest_rr:
+    name: Southwest Rapid Rewards points
+    cents: 1.2
+    basis: floor — points pay the fare directly (no award chart); Wanna Get Away redemptions typically 1.3–1.5¢
+    sources:
+      - https://www.nerdwallet.com/travel/learn/how-much-are-my-southwest-rapid-rewards-points-worth
+      - https://awardtravelfinder.com/southwest-points-value
+    verified_on: 2026-09-27
+    status: reviewed
+
+  aadvantage_miles:
+    name: American Airlines AAdvantage miles
+    cents: 1.0
+    basis: floor — no fixed cash value; award flights typically 1.4–1.7¢
+    sources:
+      - https://www.nerdwallet.com/travel/learn/how-much-are-my-american-airlines-miles-worth
+      - https://frequentmiler.com/what-are-american-airlines-miles-worth/
+    verified_on: 2026-09-27
+    status: reviewed
+
+  hilton_honors:
+    name: Hilton Honors points
+    cents: 0.4
+    basis: floor — dynamic award pricing; typical stays about 0.4–0.5¢
+    sources:
+      - https://www.nerdwallet.com/travel/learn/how-much-are-my-hilton-honors-points-worth
+      - https://thepointsguy.com/loyalty-programs/award-travelers-guide-hilton-honors/
+    verified_on: 2026-09-27
+    status: reviewed
+
+  marriott_bonvoy:
+    name: Marriott Bonvoy points
+    cents: 0.6
+    basis: floor — dynamic award pricing; typical stays about 0.7–0.8¢
+    # Welcome-offer free nights (Boundless: currently 3 x "Each Free Night Award valued up to
+    # 50,000 points", per Marriott's page on 2026-09-27) are valued at this many points each.
+    # Not the annual anniversary Free Night Award, which is capped at 35,000 points.
+    free_night_points: 50000
+    sources:
+      - https://wallethub.com/answers/rp/marriott-points-value-1000548-2140718621/
+      - https://frequentmiler.com/what-are-marriott-bonvoy-points-worth/
+    verified_on: 2026-09-27
+    status: reviewed
+
+  ihg_one_rewards:
+    name: IHG One Rewards points
+    cents: 0.5
+    basis: floor — dynamic award pricing; typical stays about 0.6–0.7¢
+    sources:
+      - https://www.nerdwallet.com/travel/learn/how-much-are-my-ihg-points-worth
+      - https://wallethub.com/answers/rp/ihg-points-value-1000548-2140719925/
+    verified_on: 2026-09-27
+    status: reviewed
+
+  world_of_hyatt:
+    name: World of Hyatt points
+    cents: 1.3
+    basis: floor — published award chart; typical stays 1.5¢ and up (averages quoted up to about 2.4¢)
+    sources:
+      - https://www.nerdwallet.com/travel/learn/how-much-are-my-hyatt-points-worth
+      - https://frequentmiler.com/what-are-hyatt-points-worth/
+    verified_on: 2026-09-27
+    status: reviewed
+
+# Which currency each points/miles card earns. Cash-back cards (percent_cash_back) need no entry.
+cards:
+  chase_sapphire_preferred: chase_ur
+  chase_sapphire_reserve: chase_ur
+  chase_ink_preferred: chase_ur
+  chase_united_explorer: united_miles
+  chase_southwest_plus: southwest_rr
+  chase_marriott_boundless: marriott_bonvoy
+  chase_ihg_premier: ihg_one_rewards
+  chase_world_of_hyatt: world_of_hyatt
+  amex_platinum: amex_mr
+  amex_gold: amex_mr
+  amex_blue_business_plus: amex_mr
+  amex_business_gold: amex_mr
+  amex_business_platinum: amex_mr
+  amex_delta_gold: delta_skymiles
+  amex_hilton_honors: hilton_honors
+  amex_hilton_surpass: hilton_honors
+  citi_strata_premier: citi_thankyou
+  citi_strata_elite: citi_thankyou
+  citi_aadvantage_platinum_select: aadvantage_miles
+  c1_venture: capital_one_miles
+  c1_venture_x: capital_one_miles
+  bofa_travel_rewards: bofa_points
+  bofa_premium_rewards: bofa_points
+  wf_autograph: wells_fargo_rewards
+  wf_autograph_journey: wells_fargo_rewards
+  usb_altitude_go: usbank_altitude

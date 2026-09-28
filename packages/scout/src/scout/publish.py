@@ -353,8 +353,14 @@ def promote_preview(
     return cards, notes
 
 
-def _digest(cards: list[CatalogCard]) -> str:
-    payload = json.dumps([c.model_dump(mode="json") for c in cards], sort_keys=True)
+def _digest(cards: list[CatalogCard], valuations: dict | None = None) -> str:
+    payload = json.dumps(
+        {
+            "cards": [c.model_dump(mode="json") for c in cards],
+            "valuations": {k: v.model_dump(mode="json") for k, v in (valuations or {}).items()},
+        },
+        sort_keys=True,
+    )
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
@@ -382,16 +388,22 @@ def next_version(current: str | None) -> str:
     return f"{major}.{minor + 1}"
 
 
-def publish(cards: list[CatalogCard], catalog_dir: Path = CATALOG_DIR) -> Path | None:
-    """Write the next vMAJOR.MINOR.json if the catalog changed; return its path, or None."""
+def publish(
+    cards: list[CatalogCard], catalog_dir: Path = CATALOG_DIR, valuations: dict | None = None
+) -> Path | None:
+    """Write the next vMAJOR.MINOR.json if the catalog (cards or valuations) changed; return its
+    path, or None."""
     version, previous = latest(catalog_dir)
-    if previous is not None and _digest(previous.cards) == _digest(cards):
+    if previous is not None and _digest(previous.cards, previous.valuations) == _digest(
+        cards, valuations
+    ):
         return None
     snapshot = CatalogSnapshot(
         version=next_version(version),
         market=Market.US,
         generated_at=datetime.now(UTC),
         cards=cards,
+        valuations=valuations or {},
     )
     catalog_dir.mkdir(parents=True, exist_ok=True)
     path = catalog_dir / f"v{snapshot.version}.json"

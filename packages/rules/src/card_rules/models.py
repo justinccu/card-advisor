@@ -4,7 +4,7 @@ from datetime import date
 from enum import StrEnum
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, model_validator
 
 
 class Market(StrEnum):
@@ -114,14 +114,26 @@ class FamilyOpenRule(_RuleBase):
 
 
 class OfferHistoryRule(_RuleBase):
-    """Offer Rule: no Offer if the user held / earned a bonus on the product or family
-    within the lookback (None = lifetime)."""
+    """Offer Rule: no Offer if the user held / earned a bonus within the lookback (None =
+    lifetime) on: the product itself (`product`), any card of its family (`family`), or any of
+    listed `products` (`products`, e.g. Amex's ladder: no Gold Offer after holding Platinum).
+    `for_product` limits the rule to Offers on one Card Product."""
 
     kind: Literal["offer_history"] = "offer_history"
-    target: Literal["product", "family"]
+    target: Literal["product", "family", "products"]
     family: str | None = None
+    products: list[str] = []
+    for_product: str | None = None
     basis: Literal["held", "bonus"]
     lookback_months: int | None = None
+
+    @model_validator(mode="after")
+    def _target_fields(self) -> "OfferHistoryRule":
+        if self.target == "products" and not (self.products and self.for_product):
+            raise ValueError(f"{self.id}: target 'products' needs `products` and `for_product`")
+        if self.target == "family" and not self.family:
+            raise ValueError(f"{self.id}: target 'family' needs `family`")
+        return self
 
 
 ApplicationRule = VelocityRule | MaxOpenRule
