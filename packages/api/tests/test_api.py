@@ -89,6 +89,54 @@ def test_wallet_add_list_delete(client):
     assert client.get("/me/wallet", headers=as_user("ann")).json()["cards"] == []
 
 
+def test_a_cards_dates_and_authorized_user_flag_can_be_corrected(client):
+    card = add(client, "ann", "citi_double_cash", 5).json()
+    url = f"/me/wallet/cards/{card['id']}"
+    fixed = client.patch(url, json={"opened_on": "2025-03-14"}, headers=as_user("ann"))
+    assert fixed.status_code == 200
+    assert fixed.json()["opened_on"] == "2025-03-14" and fixed.json()["id"] == card["id"]
+    closed = client.patch(url, json={"closed_on": "2025-09-01"}, headers=as_user("ann")).json()
+    assert closed["closed_on"] == "2025-09-01" and closed["opened_on"] == "2025-03-14"
+    reopened = client.patch(url, json={"closed_on": None}, headers=as_user("ann")).json()
+    assert reopened["closed_on"] is None
+    au = client.patch(url, json={"is_authorized_user": True}, headers=as_user("ann")).json()
+    assert au["is_authorized_user"] is True
+    wallet = client.get("/me/wallet", headers=as_user("ann")).json()["cards"]
+    assert len(wallet) == 1 and wallet[0]["opened_on"] == "2025-03-14"
+
+
+@pytest.mark.parametrize(
+    "patch",
+    [{"opened_on": "2999-01-01"}, {"closed_on": "2020-01-01"}, {"opened_on": "not-a-date"}],
+)
+def test_card_corrections_are_validated_like_new_cards(client, patch):
+    card = add(client, "ann", "citi_double_cash", 5).json()
+    r = client.patch(f"/me/wallet/cards/{card['id']}", json=patch, headers=as_user("ann"))
+    assert r.status_code == 422
+
+
+def test_the_site_may_send_every_method_the_wallet_uses(client):
+    # Browsers preflight PATCH and DELETE: a method missing here fails only in the browser.
+    for method in ("POST", "PATCH", "DELETE"):
+        r = client.options(
+            "/me/wallet/cards/x",
+            headers={
+                "Origin": "http://localhost:3000",
+                "Access-Control-Request-Method": method,
+                "Access-Control-Request-Headers": "content-type",
+            },
+        )
+        assert r.status_code == 200, method
+
+
+def test_users_cannot_edit_each_others_cards(client):
+    card = add(client, "ann", "citi_double_cash", 5).json()
+    r = client.patch(
+        f"/me/wallet/cards/{card['id']}", json={"opened_on": "2025-01-01"}, headers=as_user("bob")
+    )
+    assert r.status_code == 404
+
+
 @pytest.mark.parametrize(
     "body",
     [
@@ -378,3 +426,42 @@ def test_recommendations_accept_a_what_if_without_saving_it(client):
     assert body["spending_used"]["monthly_usd"] == {"dining": 500.0, "everything_else": 500.0}
     # nothing was written to the profile
     assert client.get("/me/profile", headers=as_user("ann")).json()["spending"] is None
+
+
+def test_rules_are_explained_from_the_rules_data(client):
+    rules = client.get("/rules?issuer_id=amex", headers=as_user("ann")).json()["rules"]
+    assert rules and {r["issuer_id"] for r in rules} == {"amex"}
+    ladder = next(r for r in rules if r["rule_id"] == "amex_ladder_gold")
+    assert ladder["decides"] == "welcome offer"
+    assert any("ever held any of" in fact for fact in ladder["how_it_counts"])
+
+
+def test_delete_me_deletes_nothing_when_the_advisor_memory_cant_be_purged(client, monkeypatch):
+    from card_api import app as app_module
+
+    class Memory:
+        def __init__(self, failed):
+            self.failed = failed
+
+        def get_paginator(self, name):
+            key = {"list_memory_records": "memoryRecordSummaries"}.get(name, "sessionSummaries")
+            items = [{"memoryRecordId": "r1"}] if name == "list_memory_records" else []
+
+            class Pages:
+                def paginate(self, **kw):
+                    yield {key: items}
+
+            return Pages()
+
+        def batch_delete_memory_records(self, memoryId, records):
+            return {"failedRecords": records if self.failed else []}
+
+    client.put("/me/profile", json={"tax_id": "SSN"}, headers=as_user("ann"))
+    monkeypatch.setattr(app_module, "settings", type(app_module.settings)(advisor_memory_id="m"))
+    monkeypatch.setattr(app_module, "memory_client", lambda: Memory(failed=True))
+    assert client.delete("/me", headers=as_user("ann")).status_code == 503
+    assert client.get("/me/profile", headers=as_user("ann")).json()["tax_id"] == "SSN"
+
+    monkeypatch.setattr(app_module, "memory_client", lambda: Memory(failed=False))
+    assert client.delete("/me", headers=as_user("ann")).status_code == 204
+    assert client.get("/me/profile", headers=as_user("ann")).json()["tax_id"] is None

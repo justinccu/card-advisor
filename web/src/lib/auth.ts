@@ -18,7 +18,7 @@ import {
   signUp as amplifySignUp,
 } from "aws-amplify/auth";
 
-import { SESSION_KEY, readSession, writeSession } from "./session";
+import { SESSION_KEY, clearAdvisorConversations, readSession, writeSession } from "./session";
 
 const POOL_ID = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
 const CLIENT_ID = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID;
@@ -73,6 +73,7 @@ export async function authHeaders(): Promise<Record<string, string>> {
 }
 
 export async function signOut(): Promise<void> {
+  clearAdvisorConversations();
   if (AUTH_MODE === "dev") writeSession(null);
   else {
     configure();
@@ -129,6 +130,7 @@ export async function deleteAccount(): Promise<void> {
   if (AUTH_MODE === "dev") return signOut();
   configure();
   await deleteUser();
+  clearAdvisorConversations();
   changed();
 }
 

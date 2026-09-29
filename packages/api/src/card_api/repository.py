@@ -38,6 +38,7 @@ class Repository(Protocol):
     def put_profile(self, uid: str, profile: ApplicantProfile) -> None: ...
     def list_cards(self, uid: str) -> list[HeldCard]: ...
     def add_card(self, uid: str, card: HeldCardIn) -> HeldCard: ...
+    def update_card(self, uid: str, card_id: str, card: HeldCardIn) -> HeldCard | None: ...
     def delete_card(self, uid: str, card_id: str) -> bool: ...
     def get_attestation(self, uid: str) -> WalletAttestation: ...
     def put_attestation(self, uid: str, attestation: WalletAttestation) -> None: ...
@@ -81,6 +82,14 @@ class InMemoryRepository:
         with self._lock:
             self._cards.setdefault(uid, {})[held.id] = held
         return held
+
+    def update_card(self, uid, card_id, card):
+        with self._lock:
+            cards = self._cards.get(uid, {})
+            if card_id not in cards:
+                return None
+            cards[card_id] = HeldCard(id=card_id, **card.model_dump())
+            return cards[card_id]
 
     def delete_card(self, uid, card_id):
         with self._lock:
@@ -182,15 +191,36 @@ class DynamoRepository:
             kwargs["ExclusiveStartKey"] = page["LastEvaluatedKey"]
         return [HeldCard.model_validate(i["data"]) for i in items]
 
+    def _card_item(self, uid: str, held: HeldCard) -> dict:
+        return {
+            "PK": self._user(uid),
+            "SK": f"CARD#{held.opened_on.isoformat()}#{held.id}",
+            "card_id": held.id,
+            "data": held.model_dump(mode="json"),
+        }
+
     def add_card(self, uid, card):
         held = HeldCard(id=new_id(), **card.model_dump())
-        self._table.put_item(
-            Item={
-                "PK": self._user(uid),
-                "SK": f"CARD#{held.opened_on.isoformat()}#{held.id}",
-                "card_id": held.id,
-                "data": held.model_dump(mode="json"),
-            }
+        self._table.put_item(Item=self._card_item(uid, held))
+        return held
+
+    def update_card(self, uid, card_id, card):
+        match = [c for c in self.list_cards(uid) if c.id == card_id]
+        if not match:
+            return None
+        held = HeldCard(id=card_id, **card.model_dump())
+        item = self._card_item(uid, held)
+        old_sk = f"CARD#{match[0].opened_on.isoformat()}#{card_id}"
+        if item["SK"] == old_sk:
+            self._table.put_item(Item=item)
+            return held
+        # A new open date moves the item (the sort key embeds it): delete + put, atomically.
+        name = self._table.name
+        self._table.meta.client.transact_write_items(
+            TransactItems=[
+                {"Delete": {"TableName": name, "Key": {"PK": item["PK"], "SK": old_sk}}},
+                {"Put": {"TableName": name, "Item": item}},
+            ]
         )
         return held
 

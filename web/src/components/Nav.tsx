@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { ADVISOR_URL } from "@/lib/advisor";
 import { spring } from "@/lib/motion";
 
 import { useSession } from "./Providers";
@@ -13,6 +14,7 @@ const LINKS = [
   { href: "/cards/", label: "Cards" },
   { href: "/compare/", label: "Compare" },
   { href: "/wallet/", label: "Wallet" },
+  ...(ADVISOR_URL ? [{ href: "/advisor/", label: "Advisor" }] : []),
 ];
 
 export function Nav() {

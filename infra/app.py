@@ -62,6 +62,8 @@ ApiStack(
     code=code(),
     cors_origins=app.node.get_context("cors_origins"),
     alerts=ops.alerts,
+    # Set after `agentcore deploy` creates the Advisor's Memory (ADR 0009); empty until then.
+    advisor_memory_id=app.node.try_get_context("advisor_memory_id") or None,
 )
 
 cdk.Tags.of(app).add("project", project)

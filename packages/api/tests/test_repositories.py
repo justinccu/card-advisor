@@ -54,6 +54,19 @@ def test_delete_is_scoped_to_the_owner(repo):
     assert repo.list_cards("u") == []
 
 
+def test_editing_the_open_date_moves_the_card_and_keeps_its_id(repo):
+    held = repo.add_card("u", card("a", date(2024, 1, 1)))
+    repo.add_card("u", card("b", date(2025, 1, 1)))
+    moved = repo.update_card("u", held.id, card("a", date(2025, 6, 15)))
+    assert moved.id == held.id and moved.opened_on == date(2025, 6, 15)
+    listed = repo.list_cards("u")
+    assert [(c.card_product_id, c.opened_on) for c in listed] == [
+        ("b", date(2025, 1, 1)),
+        ("a", date(2025, 6, 15)),
+    ]  # no copy left under the old date
+    assert repo.update_card("v", held.id, card("a", date(2025, 1, 1))) is None  # not v's card
+
+
 def test_profile_and_attestation_default_then_roundtrip(repo):
     assert repo.get_profile("u") == ApplicantProfile()
     repo.put_profile("u", ApplicantProfile(tax_id="ITIN"))

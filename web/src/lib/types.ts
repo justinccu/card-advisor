@@ -126,6 +126,9 @@ export interface HeldCard extends HeldCardIn {
   id: string;
 }
 
+/** Corrections to a held card; only the fields sent change (`closed_on: null` reopens it). */
+export type HeldCardPatch = Partial<Pick<HeldCardIn, "opened_on" | "closed_on" | "is_authorized_user">>;
+
 export interface WalletAttestation {
   complete_since: string | null;
   includes_all_open_cards: boolean;
@@ -173,4 +176,12 @@ export interface ApplicantProfile {
   income_band: string | null;
   credit_history: string | null;
   spending?: SpendingProfile | null;
+}
+
+/** Advisor messages left today (ADR 0009: 10 per user per day, reset at midnight US Eastern). */
+export interface ChatQuota {
+  limit: number;
+  used: number;
+  remaining: number;
+  resets_at: string;
 }

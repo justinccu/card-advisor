@@ -3,27 +3,44 @@
 Each request: identify the caller from the verified token, take one message from today's quota
 (before any model call), then stream the agent's answer as small JSON events the site renders:
 
-    {"type": "quota", "remaining": 9, "resets_at": "..."}
+    {"type": "quota", "limit": 10, "remaining": 9, "resets_at": "..."}
     {"type": "tool", "name": "rank_cards"}        # a tool started (for a progress hint)
     {"type": "text", "text": "..."}               # answer text, streamed
     {"type": "error", "code": "quota" | "auth" | "input" | "internal", "message": "..."}
     {"type": "done"}
 """
 
+import os
 import uuid
 from collections import OrderedDict
 
 from advisor.api import AdvisorApi, ApiError, QuotaExceeded
 from advisor.identity import NotSignedIn, caller_from
-from advisor.prompt import SYSTEM_PROMPT
+from advisor.prompt import SYSTEM_PROMPT, system_prompt_for
 from advisor.tools import build_tools
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
 from memory.session import get_memory_session_manager
 from model.load import load_model
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
 from strands import Agent
 from strands.agent.conversation_manager import SlidingWindowConversationManager
 
-app = BedrockAgentCoreApp()
+
+def _local_cors() -> list[Middleware]:
+    """The demo site on :3000 calls `agentcore dev` on :8080 directly. Deployed, the AgentCore
+    endpoint answers CORS itself, so this is local only."""
+    if os.environ.get("ADVISOR_LOCAL") != "1":
+        return []
+    origins = os.environ.get("ADVISOR_CORS_ORIGINS", "http://localhost:3000").split(",")
+    return [
+        Middleware(
+            CORSMiddleware, allow_origins=origins, allow_methods=["POST"], allow_headers=["*"]
+        )
+    ]
+
+
+app = BedrockAgentCoreApp(middleware=_local_cors())
 log = app.logger
 
 MAX_PROMPT_CHARS = 2000
@@ -94,11 +111,17 @@ async def invoke(payload, context):
         log.warning("quota check failed: %s", e)
         yield _error("internal", "The Advisor can't reach your account right now.")
         return
-    yield {"type": "quota", "remaining": quota["remaining"], "resets_at": quota["resets_at"]}
+    yield {
+        "type": "quota",
+        "limit": quota.get("limit"),
+        "remaining": quota["remaining"],
+        "resets_at": quota["resets_at"],
+    }
 
     session_id = getattr(context, "session_id", None) or uuid.uuid4().hex
     session = get_session(session_id, caller.user_id)
     session.api = api
+    session.agent.system_prompt = system_prompt_for(prompt)  # this message's reply language
     last_tool = None
     try:
         async for event in session.agent.stream_async(prompt):

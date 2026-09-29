@@ -1,15 +1,20 @@
+import logging
 from datetime import date, datetime, time, timedelta
 from functools import lru_cache
 from typing import Annotated
 from zoneinfo import ZoneInfo
 
+from card_rules import load_rules
 from card_rules.catalog import VERSION_PATTERN, CatalogSnapshot
 from card_rules.dates import add_months
+from card_rules.explain import explain
 from card_rules.ranking import RankOptions, rank
 from fastapi import Depends, FastAPI, HTTPException, Query, Response
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import ValidationError
 
-from card_api import invites, service
+from card_api import invites, memory, service
 from card_api.auth import Caller, current_caller, require_admin
 from card_api.catalog import UnknownCatalogVersion, catalog_index, load_catalog
 from card_api.models import (
@@ -17,6 +22,7 @@ from card_api.models import (
     ChatQuota,
     HeldCard,
     HeldCardIn,
+    HeldCardPatch,
     Invite,
     InviteBatchIn,
     SignupIn,
@@ -65,13 +71,15 @@ def seed_demo(repo: Repository) -> None:
     )
 
 
+log = logging.getLogger(__name__)
+
 app = FastAPI(title="card-advisor API", version="0.1.0")
 
 CATALOG_VERSION_HEADER = "X-Catalog-Version"
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["Authorization", "Content-Type", "X-Dev-User"],
     expose_headers=[CATALOG_VERSION_HEADER],
 )
@@ -125,9 +133,26 @@ def put_profile(body: ApplicantProfile, caller: CallerDep, repo: RepoDep) -> App
     return body
 
 
+@lru_cache
+def memory_client():
+    import boto3
+
+    return boto3.client("bedrock-agentcore")
+
+
 @app.delete("/me", status_code=204)
 def delete_me(caller: CallerDep, repo: RepoDep) -> None:
-    # ADR 0005: account deletion purges everything we store about the user.
+    # ADR 0005: account deletion purges everything we store about the user, the Advisor's
+    # memory first: if that fails, nothing is deleted yet and the user can simply retry.
+    if settings.advisor_memory_id:
+        try:
+            purged = memory.purge(memory_client(), settings.advisor_memory_id, caller.uid)
+        except Exception as e:
+            log.exception("advisor memory purge failed")
+            raise HTTPException(
+                503, "Couldn't delete your Advisor history. Nothing was deleted; try again."
+            ) from e
+        log.info("advisor memory purged: %s", purged)
     repo.delete_user(caller.uid)
 
 
@@ -146,6 +171,23 @@ def add_card(body: HeldCardIn, caller: CallerDep, repo: RepoDep, snapshot: Catal
     if len(repo.list_cards(caller.uid)) >= MAX_WALLET_CARDS:
         raise HTTPException(409, f"a Wallet holds at most {MAX_WALLET_CARDS} cards")
     return repo.add_card(caller.uid, body)
+
+
+@app.patch("/me/wallet/cards/{card_id}")
+def update_card(card_id: str, body: HeldCardPatch, caller: CallerDep, repo: RepoDep) -> HeldCard:
+    current = next((c for c in repo.list_cards(caller.uid) if c.id == card_id), None)
+    if current is None:
+        raise HTTPException(404, "no such card in your Wallet")
+    try:  # the same checks as adding a card (not in the future, closed after opened)
+        card = HeldCardIn.model_validate(
+            {**current.model_dump(exclude={"id"}), **body.model_dump(exclude_unset=True)}
+        )
+    except ValidationError as e:
+        raise RequestValidationError(e.errors(include_url=False, include_context=False)) from e
+    updated = repo.update_card(caller.uid, card_id, card)
+    if updated is None:
+        raise HTTPException(404, "no such card in your Wallet")
+    return updated
 
 
 @app.delete("/me/wallet/cards/{card_id}", status_code=204)
@@ -291,6 +333,20 @@ def chat_turn(caller: CallerDep, repo: RepoDep) -> ChatQuota:
             },
         )
     return _quota(used, resets_at)
+
+
+@app.get("/rules")
+def issuer_rules(
+    snapshot: CatalogDep, issuer_id: Annotated[str | None, Query(max_length=40)] = None
+) -> dict:
+    """The Eligibility Rules in plain English (ADR 0009): what each counts, what it decides,
+    and its source. The Advisor explains rules only from this."""
+    names = {c.id: c.name for c in snapshot.cards}
+    return {
+        "rules": [
+            explain(r, names) for r in load_rules() if issuer_id is None or r.issuer_id == issuer_id
+        ]
+    }
 
 
 # --- Invites ----------------------------------------------------------------------------

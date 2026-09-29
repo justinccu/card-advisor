@@ -18,3 +18,18 @@ export function writeSession(uid: string | null): void {
   }
   window.dispatchEvent(new Event("card-advisor:session"));
 }
+
+// This device's Advisor conversation, per user (lib/advisor). Kept here, with no imports, so
+// sign-out (lib/auth) can clear it without importing the Advisor.
+export const ADVISOR_STORE_PREFIX = "card-advisor.advisor.";
+
+/** On sign-out: no one else on this device sees the conversation. */
+export function clearAdvisorConversations(): void {
+  try {
+    for (const key of Object.keys(window.localStorage)) {
+      if (key.startsWith(ADVISOR_STORE_PREFIX)) window.localStorage.removeItem(key);
+    }
+  } catch {
+    /* nothing stored */
+  }
+}

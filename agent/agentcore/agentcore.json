@@ -24,7 +24,7 @@
         },
         {
           "name": "ADVISOR_MODEL_ID",
-          "value": "us.amazon.nova-2-lite-v1:0"
+          "value": "qwen.qwen3-235b-a22b-2507-v1:0"
         }
       ],
       "requestHeaderAllowlist": [

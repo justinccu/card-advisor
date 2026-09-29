@@ -73,6 +73,26 @@ class FakeApi:
             )
         if path == "/catalog":
             return httpx.Response(200, json={"version": "1.5", "cards": [CARD]})
+        if path == "/rules":
+            return httpx.Response(
+                200,
+                json={
+                    "rules": [
+                        {
+                            "rule_id": "chase_5_24",
+                            "issuer_id": "chase",
+                            "summary": "Chase 5/24",
+                            "decides": "approval",
+                            "applies_to": "every chase card",
+                            "how_it_counts": ["Counts new cards opened from any bank"],
+                            "enforcement": "strict: cards are marked Ineligible",
+                            "source": "applicants' reported results",
+                            "source_url": "https://example.com/rules",
+                            "verified_on": "2026-09-24",
+                        }
+                    ]
+                },
+            )
         if path == "/me/chat/turn":
             return httpx.Response(429, json={"detail": {"message": "used up", "remaining": 0}})
         return httpx.Response(404, json={"detail": "nope"})
@@ -175,3 +195,49 @@ def test_offer_text_reads_like_the_issuer_page():
         == "cash back matched at the end of the first year"
     )
     assert offer_text({"offer": None}) is None
+
+
+def test_tool_output_never_contains_a_null():
+    # A null first-year fee was read as "$0 the first year"; absent facts are left out instead.
+    t = tools(session_with(FakeApi()))
+    details = t["get_card_details"](card_id="amex_gold")  # CARD has no first-year fee field
+    ranking = t["rank_cards"]()
+    for raw in (details, ranking, t["get_issuer_rules"](issuer_id="chase")):
+        assert "null" not in raw
+    assert json.loads(details)["annual_fee"] == (
+        "$325 a year, including the first year (no first-year discount)"
+    )
+    assert json.loads(ranking)["cards"][0]["annual_fee"] == json.loads(details)["annual_fee"]
+
+
+def test_wallet_cards_say_open_or_closed():
+    from advisor.tools import compact_wallet
+
+    out = compact_wallet(
+        {
+            "cards": [
+                {"card_product_id": "a", "closed_on": None},
+                {"card_product_id": "b", "closed_on": "2025-01-02"},
+            ]
+        },
+        {},
+    )
+    assert [c["status"] for c in out["cards"]] == ["open", "closed on 2025-01-02"]
+
+
+def test_fees_and_credits_are_spelled_out():
+    from advisor.tools import credit_value, fee_text
+
+    assert fee_text(325, None) == "$325 a year, including the first year (no first-year discount)"
+    assert fee_text(325, 325) == fee_text(325, None)
+    assert fee_text(95, 0) == "$0 the first year, then $95 a year"
+    assert fee_text(0, None) == "no annual fee"
+    assert fee_text(None, None) == "not listed in our catalog"
+    assert credit_value({"amount_usd": 10, "period": "month"}) == "$10 per month"
+    assert credit_value({"amount_usd": None, "percent": 25, "period": "per_use"}) == "25% back"
+
+
+def test_rules_come_from_the_api_without_urls():
+    out = json.loads(tools(session_with(FakeApi()))["get_issuer_rules"](issuer_id="chase"))
+    assert out[0]["how_it_counts"] == ["Counts new cards opened from any bank"]
+    assert "https://" not in json.dumps(out)

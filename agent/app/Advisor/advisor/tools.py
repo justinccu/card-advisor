@@ -4,6 +4,10 @@ verdict or a ranking; it only picks which tool to call and with what the user sa
 
 Outputs are trimmed to what the model needs to explain (fewer tokens), and never include URLs:
 the model links cards as `card:<id>` and the site turns that into the official issuer page.
+
+They also never contain a null. A model reads a null as whatever it guesses: a card with no
+first-year discount (`first_year_fee_usd: null`) came back as "$0 the first year". So facts are
+spelled out in words ("$325 a year, including the first year"), and unknown ones are left out.
 """
 
 import json
@@ -20,8 +24,20 @@ class Session(Protocol):
     api: AdvisorApi  # replaced on every request with one carrying the caller's current token
 
 
+def drop_nulls(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {k: drop_nulls(v) for k, v in value.items() if v is not None}
+    if isinstance(value, list):
+        return [drop_nulls(v) for v in value if v is not None]
+    return value
+
+
 def _json(value: Any) -> str:
-    return json.dumps(value, separators=(",", ":"), default=str)
+    return json.dumps(drop_nulls(value), separators=(",", ":"), default=str)
+
+
+def usd(n: float) -> str:
+    return f"${n:,.0f}" if n == int(n) else f"${n:,.2f}"
 
 
 def _error(e: ApiError) -> str:
@@ -45,7 +61,9 @@ def compact_profile(profile: dict) -> dict:
         "credit_history": profile.get("credit_history"),
         "monthly_spending_usd": spending.get("monthly_usd") or {},
         "goals": spending.get("goals") or [],
-        "max_annual_fee_usd": spending.get("max_annual_fee_usd"),
+        "annual_fee_limit": "none set"
+        if spending.get("max_annual_fee_usd") is None
+        else usd(spending["max_annual_fee_usd"]),
         "wants_business_cards": spending.get("wants_business", False),
         "missing": missing,
     }
@@ -57,7 +75,7 @@ def compact_wallet(wallet: dict, velocity: dict) -> dict:
             {
                 "card": c.get("card_product_id") or c.get("name"),
                 "opened_on": c.get("opened_on"),
-                "closed_on": c.get("closed_on"),
+                "status": f"closed on {c['closed_on']}" if c.get("closed_on") else "open",
                 "authorized_user": c.get("is_authorized_user", False),
             }
             for c in wallet.get("cards", [])
@@ -67,6 +85,39 @@ def compact_wallet(wallet: dict, velocity: dict) -> dict:
         "history_complete": velocity.get("complete"),
         "attestation": wallet.get("attestation"),
     }
+
+
+def fee_text(annual: float | None, first_year: float | None) -> str:
+    """ "$95 a year, including the first year" / "$0 the first year, then $95 a year"."""
+    if annual is None:
+        return "not listed in our catalog"
+    if annual == 0:
+        return "no annual fee"
+    if first_year is not None and first_year < annual:
+        return f"{usd(first_year)} the first year, then {usd(annual)} a year"
+    return f"{usd(annual)} a year, including the first year (no first-year discount)"
+
+
+_PERIODS = {
+    "month": "per month",
+    "quarter": "per quarter",
+    "semi_annual": "every six months",
+    "year": "per cardmember year",
+    "calendar_year": "per calendar year",
+    "four_years": "every four years",
+    "per_use": "each time",
+    "one_time": "once",
+}
+
+
+def credit_value(credit: dict) -> str:
+    if credit.get("amount_usd") is not None:
+        value = f"{usd(credit['amount_usd'])} {_PERIODS.get(credit['period'], credit['period'])}"
+    elif credit.get("percent") is not None:
+        value = f"{credit['percent']:g}% back"
+    else:
+        value = "a perk with no dollar amount"
+    return value + (f" ({credit['conditions']})" if credit.get("conditions") else "")
 
 
 def offer_text(card: dict | None) -> str | None:
@@ -121,7 +172,7 @@ def compact_ranking(body: dict, cards: dict[str, dict] | None = None) -> dict:
                 "apply_link": f"[Apply](card:{c['card_id']})",
                 "first_year_value_usd": c["first_year_value_usd"],
                 "ongoing_value_usd": c["ongoing_value_usd"],
-                "welcome_offer": offer_text(cards.get(c["card_id"])),
+                "welcome_offer": offer_text(cards.get(c["card_id"])) or "no welcome offer listed",
                 "welcome_offer_value_usd": c["breakdown"]["offer_usd"],
                 "minimum_spend": min_spend_text(cards.get(c["card_id"])),
                 "minimum_spend_check": (
@@ -132,8 +183,9 @@ def compact_ranking(body: dict, cards: dict[str, dict] | None = None) -> dict:
                     else f"${c['min_spend_gap_usd']:,.0f} more than usual spending in that window"
                 ),
                 "rewards_usd_per_year": c["breakdown"]["rewards_usd"],
-                "annual_fee_usd": c["breakdown"]["annual_fee_usd"],
-                "first_year_fee_usd": c["breakdown"]["first_year_fee_usd"],
+                "annual_fee": fee_text(
+                    c["breakdown"]["annual_fee_usd"], c["breakdown"]["first_year_fee_usd"]
+                ),
                 "offer_is_up_to": c.get("offer_is_up_to", False),
                 "can_apply": c["application_status"],
                 "offer_status": c["offer_status"],
@@ -178,27 +230,16 @@ def compact_eligibility(body: dict) -> list[dict]:
 
 def compact_card(card: dict) -> dict:
     offer = card.get("offer") or {}
+    fx = card.get("foreign_transaction_fee_pct")
     return {
         "card_id": card["id"],
         "name": card["name"],
         "issuer": card["issuer_id"],
-        "annual_fee_usd": card.get("annual_fee_usd"),
-        "first_year_fee_usd": card.get("first_year_annual_fee_usd"),
-        "foreign_transaction_fee_pct": card.get("foreign_transaction_fee_pct"),
-        "offer": {
-            k: offer.get(k)
-            for k in (
-                "amount",
-                "unit",
-                "amount_is_up_to",
-                "min_spend_usd",
-                "spend_window_months",
-                "statement_credit_usd",
-                "ends_on",
-            )
-        }
-        if offer
-        else None,
+        "annual_fee": fee_text(card.get("annual_fee_usd"), card.get("first_year_annual_fee_usd")),
+        "foreign_transaction_fee": None if fx is None else "none" if fx == 0 else f"{fx:g}%",
+        "welcome_offer": offer_text(card) or "no welcome offer listed",
+        "minimum_spend": min_spend_text(card),
+        "offer_is_up_to": bool(offer.get("amount_is_up_to")),
         "earning": [
             f"{r['rate']:g}{'%' if r['unit'] == 'percent_cash_back' else 'x'} on {r['category']}"
             + (
@@ -209,12 +250,26 @@ def compact_card(card: dict) -> dict:
             for r in card.get("earning_rates", [])
         ],
         "credits": [
-            {"description": c["description"], "usd": c.get("amount_usd"), "period": c["period"]}
-            for c in card.get("credits", [])
+            {"name": c["description"], "value": credit_value(c)} for c in card.get("credits", [])
         ],
         "tags": card.get("tags", []),
         "open_to_applicants": card.get("availability") == "open",
     }
+
+
+def compact_rules(body: dict) -> list[dict]:
+    return [
+        {
+            "rule_id": r["rule_id"],
+            "summary": r["summary"],
+            "decides": r["decides"],
+            "applies_to": r["applies_to"],
+            "how_it_counts": r["how_it_counts"],
+            "enforcement": r["enforcement"],
+            "source": f"{r['source']}, checked {r['verified_on']}",
+        }
+        for r in body.get("rules", [])
+    ]
 
 
 # --- tools ----------------------------------------------------------------------------------
@@ -265,7 +320,7 @@ def build_tools(session: Session) -> list:
             opted_in: Conditional rates the user confirmed apply to them, e.g. "portal:chase"
                 (books through that issuer's travel site) or "brand:delta" (flies Delta).
             confirmed_credits: Card credits the user said they would really use,
-                {card_id: [credit description exactly as get_card_details lists it]}.
+                {card_id: [credit name exactly as get_card_details lists it]}.
             limit: How many cards to return (1-10).
         """
         scenario = {
@@ -325,4 +380,27 @@ def build_tools(session: Session) -> list:
             return _json({"error": 404, "detail": f"no card {card_id!r} in the catalog"})
         return _json(compact_card(card))
 
-    return [get_my_profile, get_my_wallet, rank_cards, check_eligibility, get_card_details]
+    @tool
+    def get_issuer_rules(issuer_id: str) -> str:
+        """How a bank's application and welcome-offer rules work (for example Chase 5/24, or
+        Amex's once-per-card offers): what each rule counts, whether it decides approval or the
+        welcome offer, and where it comes from. Explain rules only from this; to know whether a
+        rule blocks this user, use check_eligibility.
+
+        Args:
+            issuer_id: One of amex, bofa, capital_one, chase, citi, discover, us_bank,
+                wells_fargo.
+        """
+        try:
+            return _json(compact_rules(session.api.rules(issuer_id)))
+        except ApiError as e:
+            return _error(e)
+
+    return [
+        get_my_profile,
+        get_my_wallet,
+        rank_cards,
+        check_eligibility,
+        get_card_details,
+        get_issuer_rules,
+    ]

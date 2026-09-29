@@ -1,7 +1,7 @@
 -include .env
 export
 
-.PHONY: install test lint lambda-bundle synth deploy-infra aws-smoke web-aws e2e-aws invite invites preview api web demo e2e web-build
+.PHONY: install test lint lambda-bundle synth deploy-infra aws-smoke web-aws e2e-aws invite invites preview api web demo e2e web-build agent
 
 install:
 	uv sync --all-packages
@@ -50,6 +50,12 @@ demo:
 	APP_ENV=local uv run uvicorn card_api.app:app --port 8000 & \
 	(cd web && NEXT_PUBLIC_CARD_ART=1 npm run dev -- --port 3000) & \
 	wait
+
+# The Advisor agent on :8080 for `make demo`'s chat (run it in a second terminal). It calls the
+# Bedrock model in AWS_PROFILE's account (Nova 2 Lite: a fraction of a cent per message) and the
+# local API as the demo's signed-in user; nothing is deployed (--skip-deploy).
+agent:
+	cd agent && agentcore dev --skip-deploy --logs
 
 # Invite codes on the deployed stack: `make invite` (N=1 USES=1 by default) and `make invites`
 N ?= 1

@@ -1,9 +1,11 @@
 """Browser smoke test of the local demo: invite sign-up, optimistic wallet add/remove, rollback
-when the API fails, sheet drag-to-dismiss vs. spring-back, modal inertness, compare, deck fling.
+when the API fails, sheet drag-to-dismiss vs. spring-back, modal inertness, compare, deck fling,
+and the Advisor chat against a scripted agent (link sanitizing, quota, persistence).
 
 Needs the demo running (`make demo`), then: `make e2e`. Uses Playwright's Chromium ($0).
 """
 
+import json
 import re
 import sys
 import urllib.error
@@ -15,6 +17,7 @@ from playwright.sync_api import sync_playwright
 WALLET_CARDS = re.compile(r".*/me/wallet/cards(\?.*)?$")
 
 BASE = "http://localhost:3000"
+ADVISOR = "http://localhost:8080/invocations"  # `make agent`; scripted here, never called
 results = []
 
 try:
@@ -179,7 +182,9 @@ with sync_playwright() as p:
     page.wait_for_timeout(800)
     page.get_by_label("Dining per month").fill("450")
     page.get_by_label("Dining per month").press("Enter")
-    page.get_by_role("button", name="Cash back").click()
+    cash_back = page.get_by_role("button", name="Cash back")
+    if cash_back.get_attribute("aria-pressed") != "true":  # a re-run on the same demo API
+        cash_back.click()
     page.wait_for_timeout(800)
     page.reload(wait_until="networkidle")
     page.wait_for_timeout(1000)
@@ -189,6 +194,169 @@ with sync_playwright() as p:
         f"spending profile persists (dining {kept!r}, goal {goal})",
         kept == "450" and goal == "true",
     )
+
+    # Editing a held card's open date (typed MM/DD/YYYY), then putting it back so a re-run on
+    # the same demo API sees the same wallet.
+    page.goto(BASE + "/wallet/", wait_until="networkidle")
+    page.wait_for_timeout(1200)
+    # by name: the list re-sorts by open date once the date changes
+    row = page.get_by_role(
+        "button",
+        name=page.get_by_role("button", name=re.compile("^Edit ")).first.get_attribute(
+            "aria-label"
+        ),
+        exact=True,
+    )
+    row.click()
+    page.wait_for_timeout(600)
+    dialog = page.get_by_role("dialog")
+    opened = dialog.get_by_label("Opened", exact=True)
+    original = opened.input_value()
+    opened.fill("")
+    opened.press_sequentially("1/15/2024")  # "1/" pads to "01/"
+    check(
+        f"typed dates are masked as MM/DD/YYYY ({opened.input_value()!r})",
+        opened.input_value() == "01/15/2024",
+    )
+    dialog.get_by_role("button", name="Save").click()
+    page.wait_for_timeout(1500)
+    page.reload(wait_until="networkidle")
+    page.wait_for_timeout(1200)
+    check(
+        "an edited open date is saved (PATCH passes CORS) and survives a reload",
+        "opened Jan 15, 2024" in row.inner_text(),
+    )
+    row.click()
+    page.wait_for_timeout(600)
+    opened = page.get_by_role("dialog").get_by_label("Opened", exact=True)
+    opened.fill("")
+    opened.press_sequentially("02/30/2024")
+    opened.press("Tab")
+    page.get_by_role("dialog").get_by_role("button", name="Save").click()
+    page.wait_for_timeout(400)
+    check(
+        "an impossible date blocks Save with a message",
+        page.get_by_role("dialog").get_by_text("Enter a real date").is_visible(),
+    )
+    # restore through the calendar: month-and-year view, then the day
+    month, day, year = (int(x) for x in original.split("/"))
+    opened.click()
+    page.wait_for_timeout(400)
+    dialog = page.get_by_role("dialog")
+    dialog.get_by_role("button", name="Choose month and year").click()
+    shown = int(dialog.get_by_role("button", name="Back to days").inner_text())
+    for _ in range(shown - year):
+        dialog.get_by_role("button", name="Previous year").click()
+    for _ in range(year - shown):
+        dialog.get_by_role("button", name="Next year").click()
+    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    dialog.get_by_role("button", name=months[month - 1], exact=True).click()
+    full = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ][month - 1]
+    dialog.get_by_role("button", name=f"{full} {day}, {year}", exact=True).click()
+    check(
+        f"the calendar fills the field ({opened.input_value()!r})", opened.input_value() == original
+    )
+    dialog.get_by_role("button", name="Save").click()
+    page.wait_for_timeout(1200)
+
+    # Advisor chat (ADR 0009), against a scripted agent: no model is called, so CI can run it.
+    replies = []
+
+    def fake_agent(route):
+        cors = {"Access-Control-Allow-Origin": BASE, "Access-Control-Allow-Headers": "*"}
+        if route.request.method == "OPTIONS":
+            return route.fulfill(status=204, headers=cors)
+        events = replies.pop(0)
+        body = "".join(f"data: {json.dumps(e)}\n\n" for e in events)
+        route.fulfill(status=200, headers=cors, content_type="text/event-stream", body=body)
+
+    page.route(ADVISOR, fake_agent)
+    replies.append(
+        [
+            {"type": "quota", "limit": 10, "remaining": 7, "resets_at": "2026-09-30T04:00:00Z"},
+            {"type": "tool", "name": "rank_cards"},
+            {"type": "text", "text": "**Chase Sapphire Preferred** fits best. "},
+            {"type": "text", "text": "[Apply](card:chase_sapphire_preferred)\n\n"},
+            {
+                "type": "text",
+                "text": "Also see [this](https://evil.example/x) or https://evil.example/y",
+            },
+            {"type": "done"},
+        ]
+    )
+    page.goto(BASE + "/advisor/", wait_until="networkidle")
+    page.wait_for_timeout(600)
+    check(
+        "advisor shows today's quota",
+        page.get_by_text(re.compile(r"of 10 left today")).is_visible(),
+    )
+    page.get_by_label("Message the Advisor").fill("Which card for dining?")
+    page.get_by_label("Message the Advisor").press("Enter")
+    page.wait_for_timeout(800)
+    log = page.get_by_role("log")
+    hrefs = [a.get_attribute("href") or "" for a in log.locator("a").all()]
+    official = [h for h in hrefs if h.startswith("https://")]
+    check(
+        f"card: links become the official page, nothing else links out ({hrefs})",
+        bool(official)
+        and all("chase.com" in h for h in official)
+        and not any("evil" in h for h in hrefs),
+    )
+    check("bare URLs are removed from the reply", "evil.example" not in log.inner_text())
+    check(
+        "the recommended card gets a row linking to its page",
+        log.get_by_role("link", name="Chase Sapphire Preferred").get_attribute("href")
+        == "/cards/chase_sapphire_preferred/",
+    )
+    check("quota updates from the stream", page.get_by_text("7 of 10 left today").is_visible())
+
+    page.reload(wait_until="networkidle")
+    page.wait_for_timeout(600)
+    check(
+        "the conversation survives a reload",
+        page.get_by_text("Which card for dining?").is_visible(),
+    )
+    replies.append(
+        [{"type": "error", "code": "quota", "message": "You've used today's 10 Advisor messages."}]
+    )
+    page.get_by_label("Message the Advisor").fill("One more?")
+    page.get_by_label("Message the Advisor").press("Enter")
+    page.wait_for_timeout(600)
+    check(
+        "a quota error is shown in the chat",
+        page.get_by_role("alert").filter(has_text="today's 10 Advisor messages").is_visible(),
+    )
+
+    page.goto(BASE + "/cards/", wait_until="networkidle")
+    page.get_by_role("button", name="Ask the Advisor").click()
+    page.wait_for_timeout(600)
+    panel = page.get_by_role("dialog")
+    check(
+        "the floating panel shows the same conversation",
+        panel.get_by_text("Which card for dining?").is_visible(),
+    )
+    panel.get_by_role("button", name="New conversation").click()
+    page.wait_for_timeout(300)
+    check(
+        "New conversation clears it",
+        panel.get_by_text("Which card for dining?").count() == 0
+        and panel.get_by_role("button", name=re.compile("fits my spending")).is_visible(),
+    )
+    page.keyboard.press("Escape")
+    page.unroute(ADVISOR)
 
     check("no uncaught page errors", not errors)
     b.close()

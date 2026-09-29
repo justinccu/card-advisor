@@ -34,3 +34,14 @@ def test_dev_user_needs_both_local_switches(monkeypatch):
     assert caller_from({}).headers == {"X-Dev-User": "demo-user"}
     # a real token always wins over the dev switch
     assert caller_from({"Authorization": token()}).user_id == "user-1"
+
+
+def test_local_dev_user_can_come_from_the_demo_site(monkeypatch):
+    from advisor.identity import DEV_USER_HEADER
+
+    monkeypatch.setenv("ADVISOR_DEV_USER", "demo-user")
+    with pytest.raises(NotSignedIn):
+        caller_from({DEV_USER_HEADER: "u-42"})  # never outside local dev
+    monkeypatch.setenv("ADVISOR_LOCAL", "1")
+    caller = caller_from({DEV_USER_HEADER.lower(): "u-42"})
+    assert caller.user_id == "u-42" and caller.headers == {"X-Dev-User": "u-42"}

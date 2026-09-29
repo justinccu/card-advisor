@@ -49,8 +49,13 @@ Cards are drawn as simulated faces: each card's own colors (sampled by
 a footer toggle switches to the issuers' card art, kept locally in `web/public/card-art` (gitignored:
 never pushed or deployed).
 
+`make agent` (in a second terminal, next to `make demo`) runs the Advisor chat agent on :8080
+without deploying it. It calls a Bedrock model with your AWS profile (a fraction of a cent per
+message), and the site's "Ask the Advisor" button and `/advisor` page talk to it.
+
 `make e2e` (with the demo running) drives a real browser through sign-up, optimistic wallet edits,
-rollback on API failure, and the gesture physics.
+rollback on API failure, the gesture physics, and the Advisor chat against a scripted agent (no
+model calls).
 
 ## Development
 

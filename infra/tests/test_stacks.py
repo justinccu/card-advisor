@@ -54,7 +54,7 @@ def test_deploy_role_is_restricted_to_main_branch():
 # --- S4: data, auth, api ------------------------------------------------------------------
 
 
-def _s4():
+def _s4(advisor_memory_id=None):
     """All S4 stacks wired like app.py, with an inline stand-in for the Lambda bundle."""
     from aws_cdk import aws_lambda as lambda_
     from stacks.api_stack import ApiStack
@@ -80,6 +80,7 @@ def _s4():
         code=code(),
         cors_origins=["http://localhost:3000"],
         alerts=ops.alerts,
+        advisor_memory_id=advisor_memory_id,
     )
     return (Template.from_stack(s) for s in (data, auth, api))
 
@@ -146,7 +147,7 @@ def test_every_route_but_health_and_catalog_needs_a_jwt():
     }
     assert routes["GET /health"] == "NONE" and routes["GET /catalog"] == "NONE"
     private = {k: v for k, v in routes.items() if k.endswith("/{proxy+}")}
-    assert set(private) == {f"{m} /{{proxy+}}" for m in ("GET", "POST", "PUT", "DELETE")}
+    assert set(private) == {f"{m} /{{proxy+}}" for m in ("GET", "POST", "PUT", "PATCH", "DELETE")}
     assert set(private.values()) == {"JWT"}
     assert not any(k.startswith("ANY ") or k.startswith("OPTIONS ") for k in routes)
 
@@ -172,6 +173,22 @@ def test_api_lambda_has_least_privilege():
     fn = _one(api, "AWS::Lambda::Function")["Properties"]
     assert fn["Architectures"] == ["arm64"] and fn["Runtime"] == "python3.13"
     assert fn["Environment"]["Variables"]["APP_ENV"] == "aws"  # no dev sign-in on AWS
+
+
+def test_account_deletion_can_only_list_and_delete_one_advisor_memory():
+    _, _, api = _s4()
+    policy = json.dumps(_one(api, "AWS::IAM::Policy"))
+    assert "bedrock-agentcore" not in policy  # no Memory deployed yet: no permission at all
+
+    _, _, api = _s4(advisor_memory_id="AdvisorMemory-abc123")
+    statements = _one(api, "AWS::IAM::Policy")["Properties"]["PolicyDocument"]["Statement"]
+    [memory] = [s for s in statements if "bedrock-agentcore" in json.dumps(s["Action"])]
+    assert all(
+        a.split(":")[1].startswith(("List", "BatchDelete", "Delete")) for a in memory["Action"]
+    )
+    assert "memory/AdvisorMemory-abc123" in json.dumps(memory["Resource"])
+    fn = _one(api, "AWS::Lambda::Function")["Properties"]
+    assert fn["Environment"]["Variables"]["ADVISOR_MEMORY_ID"] == "AdvisorMemory-abc123"
 
 
 def test_alarms_page_the_ops_topic_and_values_are_shared_via_ssm():

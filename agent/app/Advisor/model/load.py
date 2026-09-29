@@ -1,13 +1,14 @@
-"""The model is one setting (ADR 0009). Development uses Amazon Nova 2 Lite (AWS's own model,
-covered by the account's credits); DeepSeek V3.1 was first choice but stopped responding on this
-account (2026-09-28). The production model is chosen in S8 by running the golden set against the
-candidates."""
+"""The model is one setting (ADR 0009). Development uses Qwen3 235B on Bedrock (billed by AWS,
+covered by the account's credits). Nova 2 Lite, used before it, skipped the tools and answered
+issuer-rule questions from memory, wrongly (2026-09-29). The production model is chosen in S8 by
+running the golden set against the candidates, including Claude and Gemini through their own
+APIs."""
 
 import os
 
 from strands.models.bedrock import BedrockModel
 
-MODEL_ID = os.environ.get("ADVISOR_MODEL_ID", "us.amazon.nova-2-lite-v1:0")
+MODEL_ID = os.environ.get("ADVISOR_MODEL_ID", "qwen.qwen3-235b-a22b-2507-v1:0")
 REGION = os.environ.get("AWS_REGION", "us-east-2")
 
 

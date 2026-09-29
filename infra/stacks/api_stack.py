@@ -5,6 +5,7 @@ from aws_cdk import aws_apigatewayv2_integrations as integrations
 from aws_cdk import aws_cloudwatch as cw
 from aws_cdk import aws_cloudwatch_actions as cw_actions
 from aws_cdk import aws_dynamodb as ddb
+from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as lambda_
 from aws_cdk import aws_logs as logs
 from aws_cdk import aws_s3 as s3
@@ -37,6 +38,7 @@ class ApiStack(Stack):
         code: lambda_.Code,
         cors_origins: list[str],
         alerts: sns.ITopic,
+        advisor_memory_id: str | None = None,
         **kwargs,
     ):
         super().__init__(scope, construct_id, **kwargs)
@@ -66,6 +68,25 @@ class ApiStack(Stack):
         # Least privilege: this table's items, and read-only on published snapshots.
         table.grant_read_write_data(fn)
         catalog_bucket.grant_read(fn, f"{CATALOG_PREFIX}*")
+        if advisor_memory_id:
+            # Account deletion also deletes the user's Advisor memory (card_api.memory): list and
+            # delete only, on this one Memory. Reading or writing conversations stays the agent's.
+            fn.add_environment("ADVISOR_MEMORY_ID", advisor_memory_id)
+            fn.add_to_role_policy(
+                iam.PolicyStatement(
+                    actions=[
+                        "bedrock-agentcore:ListMemoryRecords",
+                        "bedrock-agentcore:BatchDeleteMemoryRecords",
+                        "bedrock-agentcore:ListSessions",
+                        "bedrock-agentcore:ListEvents",
+                        "bedrock-agentcore:DeleteEvent",
+                    ],
+                    resources=[
+                        f"arn:aws:bedrock-agentcore:{self.region}:{self.account}"
+                        f":memory/{advisor_memory_id}"
+                    ],
+                )
+            )
 
         self.http_api = apigw.HttpApi(
             self,
@@ -80,6 +101,7 @@ class ApiStack(Stack):
                     apigw.CorsHttpMethod.GET,
                     apigw.CorsHttpMethod.POST,
                     apigw.CorsHttpMethod.PUT,
+                    apigw.CorsHttpMethod.PATCH,
                     apigw.CorsHttpMethod.DELETE,
                 ],
                 allow_headers=["Authorization", "Content-Type"],
@@ -131,6 +153,7 @@ class ApiStack(Stack):
                 apigw.HttpMethod.GET,
                 apigw.HttpMethod.POST,
                 apigw.HttpMethod.PUT,
+                apigw.HttpMethod.PATCH,
                 apigw.HttpMethod.DELETE,
             ],
             integration=integration,

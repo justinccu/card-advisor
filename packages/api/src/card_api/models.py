@@ -50,6 +50,14 @@ class HeldCard(HeldCardIn):
     id: str
 
 
+class HeldCardPatch(BaseModel):
+    """Corrections to a held card. Only the fields sent change; `closed_on: null` reopens it."""
+
+    opened_on: date | None = None
+    closed_on: date | None = None
+    is_authorized_user: bool | None = None
+
+
 class WalletAttestation(BaseModel):
     complete_since: date | None = None
     includes_all_open_cards: bool = False

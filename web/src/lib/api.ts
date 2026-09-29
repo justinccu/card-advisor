@@ -3,9 +3,11 @@
 import { AUTH_MODE, authHeaders, signOut } from "./auth";
 import type {
   ApplicantProfile,
+  ChatQuota,
   EligibilityResult,
   HeldCard,
   HeldCardIn,
+  HeldCardPatch,
   Velocity,
   Wallet,
   WalletAttestation,
@@ -71,6 +73,8 @@ export const api = {
   addCard: (card: HeldCardIn) =>
     call<HeldCard>("/me/wallet/cards", { method: "POST", body: JSON.stringify(card) }),
   removeCard: (id: string) => call<void>(`/me/wallet/cards/${id}`, { method: "DELETE" }),
+  updateCard: (id: string, patch: HeldCardPatch) =>
+    call<HeldCard>(`/me/wallet/cards/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
   putAttestation: (a: WalletAttestation) =>
     call<WalletAttestation>("/me/wallet/attestation", { method: "PUT", body: JSON.stringify(a) }),
   velocity: () => call<Velocity>("/me/velocity"),
@@ -82,4 +86,5 @@ export const api = {
   putProfile: (p: ApplicantProfile) =>
     call<ApplicantProfile>("/me/profile", { method: "PUT", body: JSON.stringify(p) }),
   deleteMe: () => call<void>("/me", { method: "DELETE" }),
+  chatQuota: () => call<ChatQuota>("/me/chat/quota"),
 };

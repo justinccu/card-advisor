@@ -30,6 +30,8 @@ class Settings:
         Path(os.environ["CATALOG_PATH"]) if os.environ.get("CATALOG_PATH") else None
     )
     preview_path: Path = REPO_ROOT / "catalog" / ".cache" / "preview_snapshot.json"
+    # The Advisor's AgentCore Memory (card_api.memory); unset until the agent is deployed.
+    advisor_memory_id: str | None = os.environ.get("ADVISOR_MEMORY_ID") or None
     cors_origins: list[str] = field(
         default_factory=lambda: os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
     )

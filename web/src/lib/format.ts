@@ -11,7 +11,7 @@ const num = new Intl.NumberFormat("en-US");
 
 export const money = (n: number | null | undefined) => (n == null ? "—" : usd.format(n));
 
-export function fee(card: CatalogCard): string {
+export function fee(card: Pick<CatalogCard, "annual_fee_usd" | "first_year_annual_fee_usd">): string {
   if (card.annual_fee_usd == null) return "Fee not listed";
   if (card.annual_fee_usd === 0) return "No annual fee";
   if (card.first_year_annual_fee_usd === 0) return `${money(card.annual_fee_usd)} · $0 first year`;
@@ -111,6 +111,12 @@ export function topRate(card: CatalogCard): EarningRate | null {
  *  for acronyms and brand names (e.g. "U.S. supermarkets", "EV charging"). */
 export function sentenceCase(s: string): string {
   return s ? s[0].toUpperCase() + s.slice(1) : s;
+}
+
+/** "Apr 20, 2025" */
+export function fullDate(iso: string | null): string {
+  if (!iso) return "—";
+  return new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", { dateStyle: "medium" });
 }
 
 export function shortDate(iso: string | null): string {

@@ -61,6 +61,9 @@ class AdvisorApi:
     def eligibility(self, card_ids: list[str]) -> dict:
         return self._call("GET", "/me/eligibility", params=[("card_id", c) for c in card_ids])
 
+    def rules(self, issuer_id: str) -> dict:
+        return self._call("GET", "/rules", params={"issuer_id": issuer_id})
+
     def recommendations(self, options: dict) -> dict:
         return self._call("POST", "/me/recommendations", json=options)
 
