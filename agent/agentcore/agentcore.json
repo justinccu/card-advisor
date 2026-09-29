@@ -1,0 +1,76 @@
+{
+  "$schema": "https://schema.agentcore.aws.dev/v1/agentcore.json",
+  "name": "CardAdvisor",
+  "version": 1,
+  "managedBy": "CDK",
+  "tags": {
+    "agentcore:created-by": "agentcore-cli",
+    "agentcore:project-name": "CardAdvisor"
+  },
+  "runtimes": [
+    {
+      "name": "Advisor",
+      "build": "CodeZip",
+      "entrypoint": "main.py",
+      "codeLocation": "app/Advisor/",
+      "runtimeVersion": "PYTHON_3_13",
+      "networkMode": "PUBLIC",
+      "protocol": "HTTP",
+      "description": "Card Advisor: ranks cards with deterministic tools, explains with the model (ADR 0009)",
+      "envVars": [
+        {
+          "name": "ADVISOR_API_URL",
+          "value": "https://xcntqrkidg.execute-api.us-east-2.amazonaws.com"
+        },
+        {
+          "name": "ADVISOR_MODEL_ID",
+          "value": "us.amazon.nova-2-lite-v1:0"
+        }
+      ],
+      "requestHeaderAllowlist": [
+        "Authorization"
+      ],
+      "authorizerType": "CUSTOM_JWT",
+      "authorizerConfiguration": {
+        "customJwtAuthorizer": {
+          "discoveryUrl": "https://cognito-idp.us-east-2.amazonaws.com/us-east-2_MqA2vp6vW/.well-known/openid-configuration",
+          "allowedClients": [
+            "239qkh211dhudbg6o6oad2g3kg"
+          ]
+        }
+      }
+    }
+  ],
+  "memories": [
+    {
+      "name": "AdvisorMemory",
+      "eventExpiryDuration": 7,
+      "strategies": [
+        {
+          "type": "USER_PREFERENCE",
+          "namespaceTemplates": [
+            "/users/{actorId}/preferences"
+          ]
+        },
+        {
+          "type": "SUMMARIZATION",
+          "namespaceTemplates": [
+            "/summaries/{actorId}/{sessionId}"
+          ]
+        }
+      ]
+    }
+  ],
+  "knowledgeBases": [],
+  "credentials": [],
+  "evaluators": [],
+  "onlineEvalConfigs": [],
+  "agentCoreGateways": [],
+  "policyEngines": [],
+  "configBundles": [],
+  "abTests": [],
+  "harnesses": [],
+  "datasets": [],
+  "capacityProviders": [],
+  "payments": []
+}

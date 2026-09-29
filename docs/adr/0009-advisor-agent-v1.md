@@ -6,8 +6,15 @@ explains), 0004 (no monetization), 0005 (the Applicant Profile is the single sou
 
 ## Decision
 
-The Advisor is a Strands agent on AgentCore Runtime, using **Claude Haiku 4.5** (US inference
-profile, so data stays in the US). v1 ("S6a") is **read-only**: it reads the user's Applicant
+The Advisor is a Strands agent on AgentCore Runtime. The model is one setting
+(`ADVISOR_MODEL_ID`). Development uses **Amazon Nova 2 Lite** (AWS's own model, covered by the
+account's credits, sub-second tool calls). Claude Haiku 4.5, the first choice, is sold through
+AWS Marketplace by Anthropic, where promotional credits likely don't apply; DeepSeek V3.1, the
+second, stopped responding on this account on 2026-09-28 (as did Kimi K2.5), while Nova and
+Qwen3 answered normally. The production model is chosen in S8 by running the same golden set
+against the candidates. Because a small model paraphrases loosely, tools return the "why" as data
+(rank, top earnings, the Offer's own wording, Minimum Spend and whether usual spending covers it,
+a ready-made `card:` link) so the model quotes rather than recalls. v1 ("S6a") is **read-only**: it reads the user's Applicant
 Profile and Wallet, ranks Card Products with deterministic code, and explains the result. Writing
 (adding a Held Card, updating the Profile) comes in S6b behind AgentCore Gateway with Cedar
 policies and explicit user confirmation.
@@ -42,6 +49,11 @@ rewards          = Σ over categories: monthly spend × 12 × rate × Point Valu
   counting them (would bury every Amex card).
 - **Credits** (e.g. a monthly dining credit) are excluded by default. The Advisor lists them and
   asks which the user would really use; only confirmed ones are passed back to `rank_cards`.
+- **Conversation what-ifs**: the saved Spending Profile is the long-term record; numbers or goals
+  the user states in conversation ("say I spend $800 on dining") are passed as a `scenario` that
+  overrides only what it mentions, for that one ranking, and is never stored (v1 is read-only;
+  the Advisor offers a link to save them in the Profile). A first chat with no saved profile can
+  still be ranked this way. The response echoes the spending it used, so answers can be traced.
 - **Order follows the user's goal**: "earn Offers" ranks by First-year Value, "long-term rewards"
   by Ongoing Value; both values are always shown.
 - Ineligible (application) cards are not ranked; the Advisor explains why and when to reapply.
@@ -84,6 +96,17 @@ can't hold them, so their holders may be told an Offer is available when it isn'
   keeps only **user preferences and conversation summaries** across conversations (ADR 0005);
   facts like score or tax id always come from the Profile. Deleting an account also deletes the
   user's Memory records.
+- What is stored, and for how long (decided 2026-09-29):
+  - The user's access token is never stored. It lives only in the request, and the agent drops
+    it when the reply ends.
+  - Raw conversation events (messages, and tool results that may include Profile ranges) stay in
+    AgentCore Memory for **7 days** (`eventExpiryDuration`, counted per event from when it was
+    written, whether or not it is read again).
+  - The preferences and summaries extracted from them stay until the account is deleted.
+  - Our table stores only the daily message count (`QUOTA#<day>`, removed by TTL), never message
+    text.
+  - The web shows one conversation per device, with no list of past conversations in v1. The
+    daily quota is shared by all of a user's conversations.
 - Links: the model may only write `card:<id>` links; the site renders them as the card's official
   Issuer URL from the Catalog Snapshot and strips every other URL, so the model can't produce a
   wrong or malicious link. No affiliate links (ADR 0004).

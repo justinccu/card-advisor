@@ -239,3 +239,36 @@ def test_order_follows_the_goal(goal, first):
     r = rank([bonus, keeper], VALUATIONS, profile, ok(bonus, keeper))
     assert r.cards[0].card_id == first
     assert r.sort_by == ("first_year" if goal == "earn_offers" else "ongoing")
+
+
+def test_a_conversation_scenario_overrides_only_what_it_mentions():
+    from card_rules.ranking import SpendingScenario
+
+    saved = SpendingProfile(
+        monthly_usd={"dining": 300, "groceries": 400}, goals=["long_term"], max_annual_fee_usd=100
+    )
+    what_if = SpendingScenario(monthly_usd={"dining": 800, "groceries": 0}, goals=["earn_offers"])
+    used = what_if.apply(saved)
+    assert used.monthly_usd == {"dining": 800}  # dining replaced, groceries removed by 0
+    assert used.goals == ["earn_offers"] and used.max_annual_fee_usd == 100  # fee limit kept
+    assert SpendingScenario(no_fee_limit=True).apply(saved).max_annual_fee_usd is None
+    assert saved.monthly_usd == {"dining": 300, "groceries": 400}  # the saved profile is untouched
+    # works with no saved profile at all (a first chat)
+    assert SpendingScenario(monthly_usd={"flights": 200}).apply(None).monthly_usd == {
+        "flights": 200
+    }
+
+
+def test_each_card_says_where_its_rewards_come_from_and_its_rank():
+    c = card(
+        "csp",
+        [rate(3, "x_points", ["dining"], category="dining"), rate(1, "x_points", category="other")],
+        currency="bank",
+    )
+    r = rank([c], VALUATIONS, spend(dining=100, everything_else=200), ok(c)).cards[0]
+    assert r.rank == 1
+    assert [(e.category, e.rate, e.usd) for e in r.earnings] == [
+        ("everything_else", "1x points", 24.0),
+        ("dining", "3x points", 36.0),
+    ][::-1]  # biggest first
+    assert sum(e.usd for e in r.earnings) == r.breakdown.rewards_usd

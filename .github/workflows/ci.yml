@@ -23,6 +23,9 @@ jobs:
       - run: uv sync --all-packages
       - run: uv run pre-commit run --all-files
       - run: uv run pytest
+      - name: Advisor agent unit tests (its own environment; no model calls)
+        working-directory: agent/app/Advisor
+        run: uv run --frozen pytest -q
       - name: Lambda bundle (Linux arm64 wheels, no Docker)
         run: ./scripts/bundle_lambda.sh
       - name: cdk synth

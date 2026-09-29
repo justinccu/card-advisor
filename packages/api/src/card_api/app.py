@@ -228,8 +228,16 @@ def recommendations(
             409, f"catalog v{snapshot.version} has no ranking data; publish a newer snapshot"
         )
     profile = repo.get_profile(caller.uid)
-    base = {"catalog_version": snapshot.version}
-    if profile.spending is None or not any(profile.spending.monthly_usd.values()):
+    scenario = options.scenario if options else None
+    # The saved profile is the long-term record; a conversation what-if applies on top, for this
+    # ranking only (never stored).
+    spending = scenario.apply(profile.spending) if scenario else profile.spending
+    base = {
+        "catalog_version": snapshot.version,
+        "scenario": scenario is not None,
+        "spending_used": spending.model_dump(mode="json") if spending else None,
+    }
+    if spending is None or not any(spending.monthly_usd.values()):
         return base | {"needs": ["spending"], "sort_by": None, "cards": [], "excluded": []}
     index = catalog_index(snapshot)
     wallet = service.to_rules_wallet(
@@ -237,7 +245,7 @@ def recommendations(
     )
     products = [c for c in snapshot.cards if c.availability == "open"]
     verdicts = service.evaluations(products, profile, wallet, _as_of(as_of))
-    ranking = rank(products, snapshot.valuations, profile.spending, verdicts, options)
+    ranking = rank(products, snapshot.valuations, spending, verdicts, options)
     return base | {"needs": []} | ranking.model_dump(mode="json")
 
 

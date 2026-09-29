@@ -362,3 +362,19 @@ def test_chat_quota_resets_at_midnight_us_eastern_not_utc(client, monkeypatch):
     assert client.post("/me/chat/turn", headers=as_user("ann")).status_code == 429
     monkeypatch.setattr(app_module, "_now", lambda: datetime(2026, 9, 29, 0, 1, tzinfo=et))
     assert client.post("/me/chat/turn", headers=as_user("ann")).json()["remaining"] == 9
+
+
+def test_recommendations_accept_a_what_if_without_saving_it(client):
+    # No saved profile yet: a first chat can still get a ranking from the conversation's numbers.
+    what_if = {
+        "scenario": {
+            "monthly_usd": {"dining": 500, "everything_else": 500},
+            "goals": ["earn_offers"],
+        }
+    }
+    body = client.post("/me/recommendations", json=what_if, headers=as_user("ann")).json()
+    assert body["scenario"] is True and body["needs"] == []
+    assert body["cards"][0]["card_id"] == "chase_sapphire_preferred"
+    assert body["spending_used"]["monthly_usd"] == {"dining": 500.0, "everything_else": 500.0}
+    # nothing was written to the profile
+    assert client.get("/me/profile", headers=as_user("ann")).json()["spending"] is None

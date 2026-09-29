@@ -46,14 +46,56 @@ class SpendingProfile(BaseModel):
     source: Literal["manual", "statements"] = "manual"
 
 
+class SpendingScenario(BaseModel):
+    """A what-if from the conversation ("say I spend $800 on dining"), applied on top of the
+    saved Spending Profile for one ranking only; never stored. Categories given replace the
+    profile's amounts for those categories (0 removes one); other fields replace when given."""
+
+    monthly_usd: dict[SpendCategory, float] = {}
+    goals: list[Goal] | None = None
+    max_annual_fee_usd: int | None = None
+    no_fee_limit: bool = False  # lift a saved fee ceiling ("any fee is fine this time")
+    wants_business: bool | None = None
+
+    def apply(self, base: SpendingProfile | None) -> SpendingProfile:
+        base = base or SpendingProfile()
+        monthly = {**base.monthly_usd, **self.monthly_usd}
+        monthly = {k: v for k, v in monthly.items() if v and v > 0}
+        fee_limit = base.max_annual_fee_usd
+        if self.no_fee_limit:
+            fee_limit = None
+        elif self.max_annual_fee_usd is not None:
+            fee_limit = self.max_annual_fee_usd
+        return SpendingProfile(
+            monthly_usd=monthly,
+            goals=self.goals if self.goals is not None else base.goals,
+            max_annual_fee_usd=fee_limit,
+            wants_business=(
+                self.wants_business if self.wants_business is not None else base.wants_business
+            ),
+            source=base.source,
+        )
+
+
 class RankOptions(BaseModel):
     """What the user confirmed in conversation: conditional rates that apply to them
     ("portal:chase", "brand:delta") and credits they'd really use ({card_id: [description]})."""
 
     opted_in: set[str] = set()
     credits: dict[str, list[str]] = {}
+    scenario: SpendingScenario | None = None  # conversation what-if over the saved profile
     include_business: bool | None = None  # None: follow the Spending Profile
     limit: int = 10
+
+
+class Earning(BaseModel):
+    """What one spending category earns on a card over a year, at the rate that applied."""
+
+    category: str
+    rate: str  # "3x points", "2% cash back", "5x points (portal)"
+    issuer_category: str
+    annual_spend_usd: float
+    usd: float
 
 
 class Breakdown(BaseModel):
@@ -66,6 +108,7 @@ class Breakdown(BaseModel):
 
 
 class RankedCard(BaseModel):
+    rank: int = 0
     card_id: str
     name: str
     first_year_value_usd: float
@@ -80,6 +123,8 @@ class RankedCard(BaseModel):
     notes: list[str] = []
     # Rates not counted because of a condition, for the Advisor to mention.
     conditional_rates: list[str] = []
+    # Where the rewards come from, biggest first.
+    earnings: list[Earning] = []
 
 
 class Excluded(BaseModel):
@@ -126,10 +171,16 @@ def _annual_cap(rate: EarningRate) -> float | None:
 
 
 def annual_rewards(
-    card: CatalogCard, cents: float | None, monthly: dict[str, float], opted_in: set[str]
+    card: CatalogCard,
+    cents: float | None,
+    monthly: dict[str, float],
+    opted_in: set[str],
+    earnings: list["Earning"] | None = None,
 ) -> tuple[float, list[str]]:
     """A year of rewards in dollars, allocating each category's spend to the best counted rate
-    first (respecting caps shared across a rate's categories); what's left earns the base rate."""
+    first (respecting caps shared across a rate's categories); what's left earns the base rate.
+    If `earnings` is given, it receives what each (category, rate) contributed, so answers can
+    say why a card earns what it does without restating rates from memory."""
     remaining = {c: 12 * max(0.0, v) for c, v in monthly.items() if v}
     conditional: list[str] = []
     counted = []
@@ -157,9 +208,26 @@ def annual_rewards(
                 cap -= take
             total += take * _rate_usd(rate, cents)
             remaining[category] = remaining.get(category, 0.0) - take
+            if earnings is not None and take:
+                earnings.append(_earning(category, rate, take, cents))
     if base is not None:
         total += sum(remaining.values()) * _rate_usd(base, cents)
+        if earnings is not None:
+            for category, left in remaining.items():
+                if left > 0:
+                    earnings.append(_earning(category, base, left, cents))
     return round(total, 2), conditional
+
+
+def _earning(category: str, rate: EarningRate, spend: float, cents: float | None) -> "Earning":
+    unit = "% cash back" if rate.unit == "percent_cash_back" else f"x {rate.unit[2:]}"
+    return Earning(
+        category=category,
+        rate=f"{rate.rate:g}{unit}" + (f" ({rate.when})" if rate.when else ""),
+        issuer_category=rate.category,
+        annual_spend_usd=round(spend, 2),
+        usd=round(spend * _rate_usd(rate, cents), 2),
+    )
 
 
 def _unit(rate: EarningRate) -> str:
@@ -264,7 +332,8 @@ def rank(
             continue
 
         cents = _cents(card, valuations)
-        rewards, conditional = annual_rewards(card, cents, monthly, options.opted_in)
+        earnings: list[Earning] = []
+        rewards, conditional = annual_rewards(card, cents, monthly, options.opted_in, earnings)
         credits_first, credits_ongoing = _credits(card, options.credits.get(card.id, []))
         offer_counted = evaluation.offer.status is not Status.INELIGIBLE
         offer_value, notes = _offer_usd(card, cents, valuations, rewards)
@@ -308,10 +377,13 @@ def rank(
                 offer_status=evaluation.offer.status,
                 notes=notes,
                 conditional_rates=conditional,
+                earnings=sorted(earnings, key=lambda e: e.usd, reverse=True),
             )
         )
 
     key = "first_year_value_usd" if sort_by == "first_year" else "ongoing_value_usd"
     ranking.cards.sort(key=lambda c: (getattr(c, key), c.card_id), reverse=True)
     ranking.cards = ranking.cards[: options.limit]
+    for i, card in enumerate(ranking.cards, start=1):
+        card.rank = i
     return ranking
