@@ -25,6 +25,14 @@
         {
           "name": "ADVISOR_MODEL_ID",
           "value": "qwen.qwen3-235b-a22b-2507-v1:0"
+        },
+        {
+          "name": "OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT",
+          "value": "false"
+        },
+        {
+          "name": "OTEL_SEMCONV_STABILITY_OPT_IN",
+          "value": "gen_ai_unredacted_attributes="
         }
       ],
       "lifecycleConfiguration": {

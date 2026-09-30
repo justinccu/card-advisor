@@ -57,10 +57,12 @@ demo:
 agent:
 	cd agent && agentcore dev --skip-deploy --logs
 
-# Deploy the Advisor runtime + memory to AWS (billable per use, ADR 0009). Then set the printed
-# Memory id as advisor_memory_id in infra/cdk.json so account deletion can purge it.
+# Deploy the Advisor runtime + memory to AWS (billable per use, ADR 0009), then keep its logs
+# and traces 7 days. After a first deploy, set the Memory id as advisor_memory_id in
+# infra/cdk.json so account deletion can purge it.
 agent-deploy:
 	cd agent && agentcore deploy
+	./scripts/agent_log_retention.sh
 
 # Invite codes on the deployed stack: `make invite` (N=1 USES=1 by default) and `make invites`
 N ?= 1

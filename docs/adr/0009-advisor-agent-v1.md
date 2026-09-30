@@ -134,6 +134,13 @@ can't hold them, so their holders may be told an Offer is available when it isn'
     `advisor_memory_id` is set in `infra/cdk.json` after `agentcore deploy`.
   - Our table stores only the daily message count (`QUOTA#<day>`, removed by TTL), never message
     text.
+  - CloudWatch logs and traces from the runtime hold timing, token counts, tool names and errors,
+    but no conversation text, for 7 days. On AgentCore, ADOT records message content by default,
+    and a first deploy wrote user questions into a log group kept forever. Now:
+    - `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=false` stops ADOT recording it.
+    - `OTEL_SEMCONV_STABILITY_OPT_IN=gen_ai_unredacted_attributes=` makes Strands redact
+      messages, the system prompt and tool inputs/outputs; `tests/test_telemetry.py` pins this.
+    - `make agent-deploy` sets 7-day retention on the log groups AgentCore creates itself.
   - The web shows one conversation per device, with no list of past conversations in v1. The
     daily quota is shared by all of a user's conversations.
 - Links: the model may only write `card:<id>` links; the site renders them as the card's official
@@ -179,6 +186,23 @@ owner's approval with a cost estimate.
   offers, ranking, eligibility). Retrieval returns text, not computed values, and the model then
   reads and does the math itself, the failure the no-null rule exists to stop. Retrieval is
   planned only for fine print (below).
+
+## Planned: answer feedback (with S5, the public site)
+
+Each Advisor answer gets a 👍 / 👎, with an optional reason ("wrong information", "not what I
+asked", "missing something"). The goal is not fine-tuning. It is finding bad answers, telling
+whether the data, a tool, the prompt or the model caused them, and turning them into golden-set
+cases (S8) and A/B metrics (S10).
+
+- **Every turn**: the agent writes a turn record through the API, with the user's own token:
+  question, answer, tools called and their results, model id, prompt and catalog versions, and
+  trace id. It is stored under `USER#<id>` / `TURN#<time>#<id>` with a 7-day TTL, like Memory.
+- **A rated turn** (`PUT /me/chat/turns/{id}/feedback`) is kept 90 days. The feedback control
+  says so: sending feedback shares that conversation to improve the Advisor.
+- **Unrated turns** expire after 7 days. Deleting the account deletes all of them.
+- **Why this design**: content survives only where a user chose to share it. Logs never carry
+  it (above). The tool results are what show whether a bad answer came from the data or the
+  model.
 
 ## Planned: fine-print lookup (after the S8 golden set)
 
