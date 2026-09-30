@@ -20,7 +20,7 @@ const DEV_USER_HEADER = "X-Amzn-Bedrock-AgentCore-Runtime-Custom-Dev-User";
 /** Just what the chat needs to turn `card:<id>` links into cards (passed down from the build). */
 export type AdvisorCard = Pick<
   CatalogCard,
-  "id" | "issuer_id" | "name" | "url" | "annual_fee_usd" | "first_year_annual_fee_usd" | "offer"
+  "id" | "issuer_id" | "name" | "url" | "annual_fee_usd" | "first_year_annual_fee_usd" | "offer" | "availability"
 >;
 
 export type ErrorCode = "quota" | "auth" | "input" | "internal" | "network";

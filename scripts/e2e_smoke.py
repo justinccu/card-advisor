@@ -292,7 +292,8 @@ with sync_playwright() as p:
             {"type": "text", "text": "[Apply](card:chase_sapphire_preferred)\n\n"},
             {
                 "type": "text",
-                "text": "Also see [this](https://evil.example/x) or https://evil.example/y",
+                "text": "Also see [this](https://evil.example/x) or https://evil.example/y. "
+                "[Amex Green](card:amex_green) is closed to new applicants.",
             },
             {"type": "done"},
         ]
@@ -320,6 +321,14 @@ with sync_playwright() as p:
         "the recommended card gets a row linking to its page",
         log.get_by_role("link", name="Chase Sapphire Preferred").get_attribute("href")
         == "/cards/chase_sapphire_preferred/",
+    )
+    green = log.locator("li", has_text="American Express Green Card")
+    check(
+        "a card closed to applicants gets no Apply button, and its link stays on our site",
+        green.get_by_text("No longer offered").is_visible()
+        and green.get_by_role("link", name="Apply").count() == 0
+        and log.get_by_role("link", name="Amex Green").get_attribute("href")
+        == "/cards/amex_green/",
     )
     check("quota updates from the stream", page.get_by_text("27 of 30 left today").is_visible())
 

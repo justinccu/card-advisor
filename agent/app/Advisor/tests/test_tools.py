@@ -20,6 +20,31 @@ CARD = {
 }
 
 
+GREEN = {
+    "id": "amex_green",
+    "name": "American Express Green Card",
+    "issuer_id": "amex",
+    "availability": "closed_to_new_applicants",
+    "closed_on": "2026-07-23",
+    "annual_fee_usd": None,
+    "offer": None,
+    "earning_rates": [],
+    "credits": [],
+}
+SAPPHIRES = [
+    {
+        "id": f"chase_sapphire_{tier}",
+        "name": f"Chase Sapphire {tier.title()}",
+        "issuer_id": "chase",
+        "availability": "open",
+        "annual_fee_usd": fee,
+        "earning_rates": [],
+        "credits": [],
+    }
+    for tier, fee in (("preferred", 95), ("reserve", 795))
+]
+
+
 class FakeApi:
     """Records what the tools send, answers like the real API."""
 
@@ -72,7 +97,7 @@ class FakeApi:
                 },
             )
         if path == "/catalog":
-            return httpx.Response(200, json={"version": "1.5", "cards": [CARD]})
+            return httpx.Response(200, json={"version": "1.5", "cards": [CARD, GREEN, *SAPPHIRES]})
         if path == "/rules":
             return httpx.Response(
                 200,
@@ -187,7 +212,7 @@ def test_card_details_never_include_urls_and_mark_conditions():
 
 def test_unknown_card_and_api_errors_come_back_as_data_not_exceptions():
     t = tools(session_with(FakeApi()))
-    assert json.loads(t["get_card_details"](card_id="nope"))["error"] == 404
+    assert json.loads(t["get_card_details"](card="nope"))["not_in_catalog"] == "nope"
     assert json.loads(t["get_my_profile"]())["error"] == 404
 
 
@@ -230,7 +255,7 @@ def test_offer_text_reads_like_the_issuer_page():
 def test_tool_output_never_contains_a_null():
     # A null first-year fee was read as "$0 the first year"; absent facts are left out instead.
     t = tools(session_with(FakeApi()))
-    details = t["get_card_details"](card_id="amex_gold")  # CARD has no first-year fee field
+    details = t["get_card_details"](card="amex_gold")  # CARD has no first-year fee field
     ranking = t["rank_cards"]()
     for raw in (details, ranking, t["get_issuer_rules"](issuer_id="chase")):
         assert "null" not in raw
@@ -282,3 +307,28 @@ def test_eligibility_findings_carry_how_each_rule_works():
     assert because["how_the_rule_works"] == ["Counts new cards opened from any bank"]
     assert "retry_after" not in because  # nulls are dropped
     assert out[0]["can_apply_because"] == []
+
+
+def test_cards_are_found_by_what_the_user_calls_them():
+    t = tools(session_with(FakeApi()))
+    assert json.loads(t["get_card_details"](card="Amex Gold"))["card_id"] == "amex_gold"
+    assert json.loads(t["get_card_details"](card="sapphire preferred"))["card_id"] == (
+        "chase_sapphire_preferred"
+    )
+    both = json.loads(t["get_card_details"](card="Chase Sapphire card"))
+    assert [c["card_id"] for c in both["cards"]] == [
+        "chase_sapphire_preferred",
+        "chase_sapphire_reserve",
+    ]
+
+
+def test_a_card_we_dont_cover_is_said_plainly():
+    out = json.loads(tools(session_with(FakeApi()))["get_card_details"](card="Bilt Mastercard"))
+    assert out["not_in_catalog"] == "Bilt Mastercard"
+    assert out["catalog_covers"] == "4 cards from amex, chase"
+
+
+def test_a_closed_card_says_so_instead_of_listing_empty_fields():
+    out = json.loads(tools(session_with(FakeApi()))["get_card_details"](card="amex green"))
+    assert set(out) == {"card_id", "name", "issuer", "status"}
+    assert out["status"].startswith("closed to new applicants since 2026-07-23")

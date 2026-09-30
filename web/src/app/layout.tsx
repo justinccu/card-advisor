@@ -35,6 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     annual_fee_usd: c.annual_fee_usd,
     first_year_annual_fee_usd: c.first_year_annual_fee_usd,
     offer: c.offer,
+    availability: c.availability,
   }));
   return (
     <html lang="en">

@@ -11,6 +11,7 @@ spelled out in words ("$325 a year, including the first year"), and unknown ones
 """
 
 import json
+import re
 from typing import Any, Protocol
 
 from strands import tool
@@ -240,7 +241,41 @@ def compact_eligibility(body: dict, rules: dict[str, dict] | None = None) -> lis
     ]
 
 
+_STOP_WORDS = {"card", "cards", "credit", "the", "from", "a", "an"}
+
+
+def _words(text: str) -> set[str]:
+    text = text.lower().replace("american express", "amex american express")
+    return set(re.findall(r"[a-z0-9]+", text)) - _STOP_WORDS
+
+
+def find_cards(query: str, cards: dict[str, dict]) -> list[dict]:
+    """Catalog cards a user's words name: an exact id, or every card whose name, id and issuer
+    contain all the query's words ("amex green", "sapphire preferred"). Empty when the catalog
+    doesn't have it, so the Advisor says so instead of describing the card from memory."""
+    key = query.strip().lower()
+    if key in cards:
+        return [cards[key]]
+    wanted = _words(query)
+    if not wanted:
+        return []
+    return [
+        c
+        for c in cards.values()
+        if wanted <= _words(c["name"]) | _words(c["id"].replace("_", " ")) | {c["issuer_id"]}
+    ]
+
+
 def compact_card(card: dict) -> dict:
+    if card.get("availability") != "open":
+        since = f" since {card['closed_on']}" if card.get("closed_on") else ""
+        return {
+            "card_id": card["id"],
+            "name": card["name"],
+            "issuer": card["issuer_id"],
+            "status": f"closed to new applicants{since}. It is listed only so people who hold it "
+            "can add it to their Wallet; we don't track its fees, offer or rewards.",
+        }
     offer = card.get("offer") or {}
     fx = card.get("foreign_transaction_fee_pct")
     return {
@@ -381,20 +416,43 @@ def build_tools(session: Session) -> list:
         return _json(compact_eligibility(body, rules))
 
     @tool
-    def get_card_details(card_id: str) -> str:
-        """Facts about one card from the catalog: fees, welcome offer, earning rates (with any
-        condition such as a travel portal or brand), credits and perks.
+    def get_card_details(card: str) -> str:
+        """Facts about one card from our catalog: fees, welcome offer, earning rates (with any
+        condition such as a travel portal or brand), credits and perks. Also finds a card by
+        name, and says when a card isn't in the catalog or is closed to new applicants.
 
         Args:
-            card_id: Catalog card id, e.g. "amex_gold".
+            card: A catalog card id ("amex_gold") or the card's name as the user said it
+                ("amex green", "Chase Sapphire Preferred").
         """
         try:
-            card = session.api.card(card_id)
+            cards = session.api.cards()
         except ApiError as e:
             return _error(e)
-        if card is None:
-            return _json({"error": 404, "detail": f"no card {card_id!r} in the catalog"})
-        return _json(compact_card(card))
+        matches = find_cards(card, cards)
+        if not matches:
+            issuers = sorted({c["issuer_id"] for c in cards.values()})
+            return _json(
+                {
+                    "not_in_catalog": card,
+                    "catalog_covers": f"{len(cards)} cards from {', '.join(issuers)}",
+                }
+            )
+        if len(matches) > 1:
+            return _json(
+                {
+                    "several_cards_match": card,
+                    "cards": [
+                        {
+                            "card_id": c["id"],
+                            "name": c["name"],
+                            "open_to_applicants": c.get("availability") == "open",
+                        }
+                        for c in matches[:8]
+                    ],
+                }
+            )
+        return _json(compact_card(matches[0]))
 
     @tool
     def get_issuer_rules(issuer_id: str) -> str:

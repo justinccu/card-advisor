@@ -75,6 +75,10 @@ class AdvisorApi:
         return self._call("POST", "/me/recommendations", json=options)
 
     def card(self, card_id: str) -> dict | None:
+        return self.cards().get(card_id)
+
+    def cards(self) -> dict[str, dict]:
+        """Every catalog card by id, open and closed."""
         if time.monotonic() - _catalog["at"] > CATALOG_TTL_SECONDS or not _catalog["cards"]:
             snapshot = self._call("GET", "/catalog")
             _catalog.update(
@@ -82,4 +86,4 @@ class AdvisorApi:
                 version=snapshot["version"],
                 cards={c["id"]: c for c in snapshot["cards"]},
             )
-        return _catalog["cards"].get(card_id)
+        return _catalog["cards"]

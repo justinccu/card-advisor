@@ -278,6 +278,7 @@ function Reply({
 }
 
 function CardRow({ card }: { card: AdvisorCard }) {
+  const open = card.availability === "open"; // a closed card gets no Apply button
   return (
     // overflow-hidden: the card art's drop shadow would otherwise be clipped by the scrolling log.
     <li className="flex items-center gap-3 overflow-hidden rounded-2xl bg-surface p-2.5 ring-1 ring-hairline">
@@ -287,17 +288,19 @@ function CardRow({ card }: { card: AdvisorCard }) {
           {card.name}
         </Link>
         <p className="truncate text-[12px] text-ink-2">
-          {offerHeadline(card.offer)} · {fee(card)}
+          {open ? `${offerHeadline(card.offer)} · ${fee(card)}` : "No longer offered to new applicants"}
         </p>
       </div>
-      <a
-        href={card.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="shrink-0 rounded-full bg-action px-3 py-1 text-[13px] text-white hover:bg-action-hover"
-      >
-        Apply
-      </a>
+      {open && (
+        <a
+          href={card.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="shrink-0 rounded-full bg-action px-3 py-1 text-[13px] text-white hover:bg-action-hover"
+        >
+          Apply
+        </a>
+      )}
     </li>
   );
 }
@@ -311,6 +314,14 @@ function markdownComponents(cards: Map<string, AdvisorCard>): Components {
     a: ({ href, children }) => {
       const card = href?.startsWith("card:") ? cards.get(href.slice(5)) : undefined;
       if (!card) return <span>{children}</span>;
+      if (card.availability !== "open") {
+        // Closed to new applicants: our page says so; the issuer's page would invite an application.
+        return (
+          <Link href={`/cards/${card.id}/`} className="text-link hover:underline">
+            {children}
+          </Link>
+        );
+      }
       return (
         <a href={card.url} target="_blank" rel="noopener noreferrer" className="text-link hover:underline">
           {children}
