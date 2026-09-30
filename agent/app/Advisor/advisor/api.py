@@ -26,6 +26,8 @@ class QuotaExceeded(ApiError):
 
 # The catalog is public and the same for everyone; cache it per process.
 _catalog: dict[str, Any] = {"at": 0.0, "version": None, "cards": {}}
+# So are the Eligibility Rules' plain-English facts (GET /rules), by rule id.
+_rules: dict[str, Any] = {"at": 0.0, "by_id": {}}
 
 
 class AdvisorApi:
@@ -61,8 +63,13 @@ class AdvisorApi:
     def eligibility(self, card_ids: list[str]) -> dict:
         return self._call("GET", "/me/eligibility", params=[("card_id", c) for c in card_ids])
 
-    def rules(self, issuer_id: str) -> dict:
-        return self._call("GET", "/rules", params={"issuer_id": issuer_id})
+    def rule_facts(self) -> dict[str, dict]:
+        if time.monotonic() - _rules["at"] > CATALOG_TTL_SECONDS or not _rules["by_id"]:
+            body = self._call("GET", "/rules")
+            _rules.update(
+                at=time.monotonic(), by_id={r["rule_id"]: r for r in body.get("rules", [])}
+            )
+        return _rules["by_id"]
 
     def recommendations(self, options: dict) -> dict:
         return self._call("POST", "/me/recommendations", json=options)

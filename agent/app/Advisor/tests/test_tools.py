@@ -93,6 +93,36 @@ class FakeApi:
                     ]
                 },
             )
+        if path == "/me/eligibility":
+            return httpx.Response(
+                200,
+                json={
+                    "evaluations": [
+                        {
+                            "card_product_id": "chase_sapphire_preferred",
+                            "name": "Chase Sapphire Preferred",
+                            "application": {"status": "Eligible", "reasons": [], "warnings": []},
+                            "offer": {
+                                "status": "Undetermined",
+                                "reasons": [
+                                    {
+                                        "rule_id": "chase_5_24",
+                                        "status": "Eligible",
+                                        "message": "under 5/24",
+                                    },
+                                    {
+                                        "rule_id": "chase_5_24",
+                                        "status": "Undetermined",
+                                        "message": "Chase 5/24: wallet not confirmed complete",
+                                        "retry_after": None,
+                                    },
+                                ],
+                                "warnings": [],
+                            },
+                        }
+                    ]
+                },
+            )
         if path == "/me/chat/turn":
             return httpx.Response(429, json={"detail": {"message": "used up", "remaining": 0}})
         return httpx.Response(404, json={"detail": "nope"})
@@ -241,3 +271,14 @@ def test_rules_come_from_the_api_without_urls():
     out = json.loads(tools(session_with(FakeApi()))["get_issuer_rules"](issuer_id="chase"))
     assert out[0]["how_it_counts"] == ["Counts new cards opened from any bank"]
     assert "https://" not in json.dumps(out)
+
+
+def test_eligibility_findings_carry_how_each_rule_works():
+    out = json.loads(
+        tools(session_with(FakeApi()))["check_eligibility"](card_ids=["chase_sapphire_preferred"])
+    )
+    [because] = out[0]["offer_because"]  # the Eligible reason is left out
+    assert because["rule"] == "chase_5_24" and because["status"] == "Undetermined"
+    assert because["how_the_rule_works"] == ["Counts new cards opened from any bank"]
+    assert "retry_after" not in because  # nulls are dropped
+    assert out[0]["can_apply_because"] == []

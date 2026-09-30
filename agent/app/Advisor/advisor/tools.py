@@ -207,13 +207,25 @@ def compact_ranking(body: dict, cards: dict[str, dict] | None = None) -> dict:
     }
 
 
-def compact_eligibility(body: dict) -> list[dict]:
-    def reasons(verdict: dict) -> list[str]:
+def compact_eligibility(body: dict, rules: dict[str, dict] | None = None) -> list[dict]:
+    """Each rule that blocks or can't be decided comes with how that rule works (GET /rules), so
+    the model explains it as written. Given only the one-line finding, a model widened "no bonus
+    if you earned this same card's bonus in 24 months" into "any Chase card"."""
+    rules = rules or {}
+
+    def reasons(verdict: dict) -> list[dict]:
+        found = [(r, r["status"]) for r in verdict.get("reasons", []) if r["status"] != "Eligible"]
+        found += [(w, "warning") for w in verdict.get("warnings", [])]
         return [
-            r["message"] + (f" (retry after {r['retry_after']})" if r.get("retry_after") else "")
-            for r in verdict.get("reasons", [])
-            if r["status"] != "Eligible"
-        ] + [f"warning: {w['message']}" for w in verdict.get("warnings", [])]
+            {
+                "rule": r["rule_id"],
+                "status": status,
+                "finding": r["message"],
+                "retry_after": r.get("retry_after"),
+                "how_the_rule_works": rules.get(r["rule_id"], {}).get("how_it_counts"),
+            }
+            for r, status in found
+        ]
 
     return [
         {
@@ -360,9 +372,13 @@ def build_tools(session: Session) -> list:
         """
         try:
             body = session.api.eligibility(card_ids[:MAX_CARDS])
-            return _json(compact_eligibility(body))
         except ApiError as e:
             return _error(e)
+        try:
+            rules = session.api.rule_facts()
+        except ApiError:
+            rules = {}  # the findings alone still answer the question
+        return _json(compact_eligibility(body, rules))
 
     @tool
     def get_card_details(card_id: str) -> str:
@@ -392,9 +408,10 @@ def build_tools(session: Session) -> list:
                 wells_fargo.
         """
         try:
-            return _json(compact_rules(session.api.rules(issuer_id)))
+            facts = session.api.rule_facts().values()
         except ApiError as e:
             return _error(e)
+        return _json(compact_rules({"rules": [r for r in facts if r["issuer_id"] == issuer_id]}))
 
     return [
         get_my_profile,
