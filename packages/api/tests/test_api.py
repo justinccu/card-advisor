@@ -382,21 +382,22 @@ def test_recommendation_options_are_validated(client):
 # --- Advisor chat quota (ADR 0009) ------------------------------------------------------
 
 
-def test_chat_quota_counts_down_and_stops_at_ten(client, monkeypatch):
+def test_chat_quota_counts_down_and_stops_at_the_limit(client, monkeypatch):
     from datetime import datetime
 
+    limit = app_module.CHAT_DAILY_LIMIT
     monkeypatch.setattr(
         app_module, "_now", lambda: datetime(2026, 9, 28, 23, 30, tzinfo=app_module.CHAT_TIMEZONE)
     )
-    assert client.get("/me/chat/quota", headers=as_user("ann")).json()["remaining"] == 10
-    for i in range(10):
+    assert client.get("/me/chat/quota", headers=as_user("ann")).json()["remaining"] == limit
+    for i in range(limit):
         res = client.post("/me/chat/turn", headers=as_user("ann"))
-        assert res.status_code == 200 and res.json()["remaining"] == 9 - i
+        assert res.status_code == 200 and res.json()["remaining"] == limit - 1 - i
     blocked = client.post("/me/chat/turn", headers=as_user("ann"))
     assert blocked.status_code == 429
     assert blocked.json()["detail"]["resets_at"] == "2026-09-29T00:00:00-04:00"
     # other users are unaffected
-    assert client.post("/me/chat/turn", headers=as_user("bob")).json()["remaining"] == 9
+    assert client.post("/me/chat/turn", headers=as_user("bob")).json()["remaining"] == limit - 1
 
 
 def test_chat_quota_resets_at_midnight_us_eastern_not_utc(client, monkeypatch):
@@ -405,11 +406,12 @@ def test_chat_quota_resets_at_midnight_us_eastern_not_utc(client, monkeypatch):
     et = app_module.CHAT_TIMEZONE
     # 11:30 PM ET on the 28th is already the 29th in UTC; it must still count toward the 28th.
     monkeypatch.setattr(app_module, "_now", lambda: datetime(2026, 9, 28, 23, 30, tzinfo=et))
-    for _ in range(10):
+    limit = app_module.CHAT_DAILY_LIMIT
+    for _ in range(limit):
         client.post("/me/chat/turn", headers=as_user("ann"))
     assert client.post("/me/chat/turn", headers=as_user("ann")).status_code == 429
     monkeypatch.setattr(app_module, "_now", lambda: datetime(2026, 9, 29, 0, 1, tzinfo=et))
-    assert client.post("/me/chat/turn", headers=as_user("ann")).json()["remaining"] == 9
+    assert client.post("/me/chat/turn", headers=as_user("ann")).json()["remaining"] == limit - 1
 
 
 def test_recommendations_accept_a_what_if_without_saving_it(client):

@@ -286,7 +286,7 @@ with sync_playwright() as p:
     page.route(ADVISOR, fake_agent)
     replies.append(
         [
-            {"type": "quota", "limit": 10, "remaining": 7, "resets_at": "2026-09-30T04:00:00Z"},
+            {"type": "quota", "limit": 30, "remaining": 27, "resets_at": "2026-09-30T04:00:00Z"},
             {"type": "tool", "name": "rank_cards"},
             {"type": "text", "text": "**Chase Sapphire Preferred** fits best. "},
             {"type": "text", "text": "[Apply](card:chase_sapphire_preferred)\n\n"},
@@ -301,7 +301,7 @@ with sync_playwright() as p:
     page.wait_for_timeout(600)
     check(
         "advisor shows today's quota",
-        page.get_by_text(re.compile(r"of 10 left today")).is_visible(),
+        page.get_by_text(re.compile(r"of 30 left today")).is_visible(),
     )
     page.get_by_label("Message the Advisor").fill("Which card for dining?")
     page.get_by_label("Message the Advisor").press("Enter")
@@ -321,7 +321,7 @@ with sync_playwright() as p:
         log.get_by_role("link", name="Chase Sapphire Preferred").get_attribute("href")
         == "/cards/chase_sapphire_preferred/",
     )
-    check("quota updates from the stream", page.get_by_text("7 of 10 left today").is_visible())
+    check("quota updates from the stream", page.get_by_text("27 of 30 left today").is_visible())
 
     page.reload(wait_until="networkidle")
     page.wait_for_timeout(600)
@@ -330,14 +330,14 @@ with sync_playwright() as p:
         page.get_by_text("Which card for dining?").is_visible(),
     )
     replies.append(
-        [{"type": "error", "code": "quota", "message": "You've used today's 10 Advisor messages."}]
+        [{"type": "error", "code": "quota", "message": "You've used today's 30 Advisor messages."}]
     )
     page.get_by_label("Message the Advisor").fill("One more?")
     page.get_by_label("Message the Advisor").press("Enter")
     page.wait_for_timeout(600)
     check(
         "a quota error is shown in the chat",
-        page.get_by_role("alert").filter(has_text="today's 10 Advisor messages").is_visible(),
+        page.get_by_role("alert").filter(has_text="today's 30 Advisor messages").is_visible(),
     )
 
     page.goto(BASE + "/cards/", wait_until="networkidle")

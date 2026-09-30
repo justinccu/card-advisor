@@ -178,7 +178,7 @@ export interface ApplicantProfile {
   spending?: SpendingProfile | null;
 }
 
-/** Advisor messages left today (ADR 0009: 10 per user per day, reset at midnight US Eastern). */
+/** Advisor messages left today (ADR 0009: 30 per user per day, reset at midnight US Eastern). */
 export interface ChatQuota {
   limit: number;
   used: number;

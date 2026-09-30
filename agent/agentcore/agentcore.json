@@ -27,6 +27,10 @@
           "value": "qwen.qwen3-235b-a22b-2507-v1:0"
         }
       ],
+      "lifecycleConfiguration": {
+        "idleRuntimeSessionTimeout": 300,
+        "maxLifetime": 3600
+      },
       "requestHeaderAllowlist": [
         "Authorization"
       ],

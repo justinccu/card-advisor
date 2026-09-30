@@ -1,7 +1,7 @@
 -include .env
 export
 
-.PHONY: install test lint lambda-bundle synth deploy-infra aws-smoke web-aws e2e-aws invite invites preview api web demo e2e web-build agent
+.PHONY: install test lint lambda-bundle synth deploy-infra aws-smoke web-aws e2e-aws invite invites preview api web demo e2e web-build agent agent-deploy
 
 install:
 	uv sync --all-packages
@@ -56,6 +56,11 @@ demo:
 # local API as the demo's signed-in user; nothing is deployed (--skip-deploy).
 agent:
 	cd agent && agentcore dev --skip-deploy --logs
+
+# Deploy the Advisor runtime + memory to AWS (billable per use, ADR 0009). Then set the printed
+# Memory id as advisor_memory_id in infra/cdk.json so account deletion can purge it.
+agent-deploy:
+	cd agent && agentcore deploy
 
 # Invite codes on the deployed stack: `make invite` (N=1 USES=1 by default) and `make invites`
 N ?= 1

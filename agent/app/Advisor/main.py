@@ -3,7 +3,7 @@
 Each request: identify the caller from the verified token, take one message from today's quota
 (before any model call), then stream the agent's answer as small JSON events the site renders:
 
-    {"type": "quota", "limit": 10, "remaining": 9, "resets_at": "..."}
+    {"type": "quota", "limit": 30, "remaining": 29, "resets_at": "..."}
     {"type": "tool", "name": "rank_cards"}        # a tool started (for a progress hint)
     {"type": "text", "text": "..."}               # answer text, streamed
     {"type": "error", "code": "quota" | "auth" | "input" | "internal", "message": "..."}

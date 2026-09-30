@@ -156,7 +156,7 @@ can't hold them, so their holders may be told an Offer is available when it isn'
 
 ### Cost control
 
-Each user gets **10 messages per day**, reset at midnight US Eastern, enforced by the API
+Each user gets **30 messages per day** (raised from 10 on 2026-09-30), reset at midnight US Eastern, enforced by the API
 (`POST /me/chat/turn`, an atomic DynamoDB counter) before the model is called; the UI shows what
 is left. Estimated cost is about $0.02 per turn with Haiku 4.5. Deploying the Runtime needs the
 owner's approval with a cost estimate.

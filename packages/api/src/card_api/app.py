@@ -34,7 +34,7 @@ from card_api.repository import DynamoRepository, InMemoryRepository, Repository
 from card_api.settings import settings
 
 MAX_WALLET_CARDS = 100
-CHAT_DAILY_LIMIT = 10  # ADR 0009
+CHAT_DAILY_LIMIT = 30  # ADR 0009
 CHAT_TIMEZONE = ZoneInfo("America/New_York")  # the quota resets at midnight US Eastern
 DEMO_INVITE = "DEMO-2026"  # local demo only: seeded into the in-memory store, never into DynamoDB
 DEMO_USER = "demo-user"

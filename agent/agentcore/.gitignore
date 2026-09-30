@@ -13,3 +13,7 @@ cdk/node_modules/
 
 # Exception: Commit the State
 !.cli/deployed-state.json
+
+# Build output of `agentcore package` / `deploy` (a zip per runtime and its staging folder)
+*.zip
+*/staging/
