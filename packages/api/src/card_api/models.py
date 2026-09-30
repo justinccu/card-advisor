@@ -108,3 +108,43 @@ class ChatQuota(BaseModel):
     used: int
     remaining: int
     resets_at: str  # ISO timestamp of the next US Eastern midnight
+
+
+# --- Advisor answer feedback (ADR 0009) ---------------------------------------------------
+
+
+class ToolCall(BaseModel):
+    """A tool the Advisor called for an answer, with what it returned (truncated by the agent).
+    This is what tells a data mistake from a model mistake when an answer is rated down."""
+
+    name: str = Field(max_length=60)
+    input: str = Field("", max_length=2000)
+    result: str = Field("", max_length=6000)
+
+
+class ChatTurnIn(BaseModel):
+    """One Advisor answer, written by the agent with the user's own token. Kept 7 days, like
+    Memory, or 90 once the user rates it; deleted with the account."""
+
+    turn_id: str = Field(pattern=r"^[0-9a-z-]{8,64}$")
+    question: str = Field(max_length=2000)
+    answer: str = Field(max_length=12000)
+    tools: list[ToolCall] = Field(default_factory=list, max_length=20)
+    model_id: str = Field(max_length=100)
+    prompt_version: str = Field(max_length=40)
+    catalog_version: str | None = Field(None, max_length=20)
+
+
+FeedbackReason = Literal["wrong_info", "not_what_i_asked", "missing_info", "other"]
+
+
+class TurnFeedback(BaseModel):
+    rating: Literal["up", "down"]
+    reason: FeedbackReason | None = None
+    comment: str | None = Field(None, max_length=500)
+
+
+class ChatTurn(ChatTurnIn):
+    created_at: str  # ISO timestamp
+    feedback: TurnFeedback | None = None
+    rated_at: str | None = None

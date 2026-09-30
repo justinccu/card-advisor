@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp, Maximize2, RotateCcw, Sparkles, Square } from "lucide-react";
+import { ArrowUp, Maximize2, RotateCcw, Sparkles, Square, ThumbsDown, ThumbsUp } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -17,6 +17,7 @@ import {
 } from "@/lib/advisor";
 import { fee, offerHeadline } from "@/lib/format";
 import { press, spring } from "@/lib/motion";
+import type { FeedbackReason, TurnFeedback } from "@/lib/types";
 
 import { useAdvisor } from "./AdvisorProvider";
 import { CardArt } from "./CardArt";
@@ -273,7 +274,117 @@ function Reply({
           ))}
         </ul>
       )}
+      {m.done && !m.error && m.turnId && <Feedback message={m} />}
     </div>
+  );
+}
+
+const REASONS: { value: FeedbackReason; label: string }[] = [
+  { value: "wrong_info", label: "Wrong information" },
+  { value: "not_what_i_asked", label: "Not what I asked" },
+  { value: "missing_info", label: "Missing something" },
+  { value: "other", label: "Other" },
+];
+
+/** 👍 / 👎 under an answer. Rating keeps that exchange (question, answer, the data the Advisor
+ *  looked up) for 90 days to improve answers, and the control says so before anything is sent. */
+function Feedback({ message: m }: { message: ChatMessage }) {
+  const { rate } = useAdvisor();
+  const [asking, setAsking] = useState(false); // the "what went wrong?" form after 👎
+  const [reason, setReason] = useState<FeedbackReason | null>(null);
+  const [comment, setComment] = useState("");
+  const status = m.feedback?.status;
+  const send = (feedback: TurnFeedback) => {
+    setAsking(false);
+    rate(m.id, feedback);
+  };
+
+  if (status === "sent")
+    return (
+      <p className="mt-2 text-[12px] text-ink-3" role="status">
+        {m.feedback!.rating === "up" ? "Thanks for the feedback." : "Thanks. We’ll look into it."}
+      </p>
+    );
+  return (
+    <div className="mt-2">
+      <div className="flex flex-wrap items-center gap-1">
+        <Thumb label="Helpful" pressed={m.feedback?.rating === "up"} disabled={status === "sending"} onClick={() => send({ rating: "up" })}>
+          <ThumbsUp size={14} aria-hidden />
+        </Thumb>
+        <Thumb label="Not helpful" pressed={asking || m.feedback?.rating === "down"} disabled={status === "sending"} onClick={() => setAsking((a) => !a)}>
+          <ThumbsDown size={14} aria-hidden />
+        </Thumb>
+        <span className="ml-1 text-[11px] text-ink-3">Rating shares this exchange with us for 90 days to improve answers.</span>
+      </div>
+      {status === "error" && <p className="mt-1 text-[12px] text-bad">Couldn’t send that. Try again.</p>}
+      {asking && (
+        <div className="mt-2 rounded-2xl bg-tile p-3">
+          <p className="text-[13px] font-medium">What went wrong?</p>
+          <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="Reason">
+            {REASONS.map((r) => (
+              <button
+                key={r.value}
+                type="button"
+                aria-pressed={reason === r.value}
+                onClick={() => setReason(r.value)}
+                className={`rounded-full px-3 py-1 text-[13px] ${reason === r.value ? "bg-action text-white" : "bg-surface ring-1 ring-hairline hover:bg-black/[0.04] dark:hover:bg-white/10"}`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+          <label className="sr-only" htmlFor={`${m.id}-comment`}>
+            Anything else
+          </label>
+          <textarea
+            id={`${m.id}-comment`}
+            rows={2}
+            maxLength={500}
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Anything else? (optional)"
+            className="mt-2 w-full resize-none rounded-xl bg-surface px-3 py-2 text-[14px] outline-none ring-1 ring-hairline focus:ring-2 focus:ring-action"
+          />
+          <button
+            type="button"
+            disabled={!reason}
+            onClick={() => send({ rating: "down", reason: reason!, comment: comment.trim() || undefined })}
+            className="mt-2 rounded-full bg-action px-4 py-1.5 text-[13px] text-white disabled:opacity-40"
+          >
+            Send feedback
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Thumb({
+  label,
+  pressed,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  pressed: boolean;
+  disabled: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <motion.button
+      type="button"
+      whileTap={press}
+      transition={spring.micro}
+      aria-label={label}
+      aria-pressed={pressed}
+      disabled={disabled}
+      onClick={onClick}
+      className={`grid size-7 place-items-center rounded-full transition-colors disabled:opacity-50 ${pressed ? "bg-action/15 text-action" : "text-ink-3 hover:bg-black/[0.05] hover:text-ink dark:hover:bg-white/10"}`}
+    >
+      {children}
+    </motion.button>
   );
 }
 

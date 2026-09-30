@@ -20,12 +20,15 @@ from card_api.catalog import UnknownCatalogVersion, catalog_index, load_catalog
 from card_api.models import (
     ApplicantProfile,
     ChatQuota,
+    ChatTurn,
+    ChatTurnIn,
     HeldCard,
     HeldCardIn,
     HeldCardPatch,
     Invite,
     InviteBatchIn,
     SignupIn,
+    TurnFeedback,
     Velocity,
     Wallet,
     WalletAttestation,
@@ -347,6 +350,22 @@ def issuer_rules(
             explain(r, names) for r in load_rules() if issuer_id is None or r.issuer_id == issuer_id
         ]
     }
+
+
+@app.post("/me/chat/turns", status_code=201)
+def save_chat_turn(body: ChatTurnIn, caller: CallerDep, repo: RepoDep) -> dict:
+    """The agent records each answer (with the user's token) so the user can rate it."""
+    created = datetime.now(ZoneInfo("UTC")).isoformat(timespec="seconds")
+    repo.put_turn(caller.uid, ChatTurn(**body.model_dump(), created_at=created))
+    return {"turn_id": body.turn_id}
+
+
+@app.put("/me/chat/turns/{turn_id}/feedback", status_code=204)
+def rate_chat_turn(turn_id: str, body: TurnFeedback, caller: CallerDep, repo: RepoDep) -> None:
+    """👍 / 👎 on one answer; the site says rating keeps that exchange 90 days (ADR 0009)."""
+    rated = datetime.now(ZoneInfo("UTC")).isoformat(timespec="seconds")
+    if not repo.rate_turn(caller.uid, turn_id, body, rated):
+        raise HTTPException(404, "That answer has expired or isn't yours.")
 
 
 # --- Invites ----------------------------------------------------------------------------

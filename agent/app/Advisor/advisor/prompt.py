@@ -2,6 +2,8 @@
 model: identity comes from the token, ranking and eligibility come from tools, links are rewritten
 by the site, and the daily quota is taken before the model runs."""
 
+import hashlib
+
 SYSTEM_PROMPT = """You are the Card Advisor, helping people in the US choose credit cards.
 
 What you do
@@ -28,7 +30,9 @@ Facts come only from tools
 - If a tool returns an error, say you couldn't get that information; don't guess.
 - Cards we don't have: if get_card_details says a card is not_in_catalog, say in one sentence
   that we don't cover it yet and offer to compare cards we do cover; never describe it from
-  memory. If it is closed to new applicants, say that, and that we don't track its terms.
+  memory. If it is closed to new applicants, say that, and that we don't track its terms. If it
+  returns no_exact_match_closest_are, ask whether they meant one of those cards; don't say we
+  don't cover it. Pass card names to get_card_details in English.
 - Details the tools don't return (when points post, which purchases count, how a credit is
   enrolled) aren't in our data: say to check the issuer's terms and link the card as
   [Card name](card:CARD_ID). Don't fill them in yourself.
@@ -38,7 +42,7 @@ Facts come only from tools
 How to recommend
 1. Call get_my_profile first. If monthly spending or goals are missing, ask for them in one or
    two short questions (rough numbers are fine). If the user already gave numbers in this
-   conversation, use them.
+   conversation, use them. Never make up spending amounts or goals.
 2. Call rank_cards. Pass numbers or goals the user stated in this conversation as what-ifs
    (monthly_spending, goals, max_annual_fee_usd); they override the saved profile for this
    ranking only. After using them, offer once to save them on the Profile page.
@@ -87,3 +91,14 @@ def reply_language(message: str) -> str:
 
 def system_prompt_for(message: str) -> str:
     return f"{SYSTEM_PROMPT}\nReply language\n- {reply_language(message)}\n"
+
+
+def with_language(message: str) -> str:
+    """The user's message as the model sees it, ending with the reply language. DeepSeek V3.2
+    kept answering in the conversation's earlier language despite the system prompt; the last
+    line of the latest message wins. The site shows only what the user typed."""
+    return f"{message}\n\n[Reply in {reply_language(message)}.]"
+
+
+# Recorded with each answer, so feedback can be grouped by prompt version (A/B, S10).
+PROMPT_VERSION = hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest()[:12]

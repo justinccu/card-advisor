@@ -6,7 +6,7 @@ from datetime import date
 
 import boto3
 import pytest
-from card_api.models import ApplicantProfile, HeldCardIn, WalletAttestation
+from card_api.models import ApplicantProfile, ChatTurn, HeldCardIn, TurnFeedback, WalletAttestation
 from card_api.repository import DynamoRepository, InMemoryRepository
 from card_api.triggers import postconfirm_handler, presignup_handler
 from moto import mock_aws
@@ -186,3 +186,27 @@ def test_triggers_stay_light_for_cognitos_5_second_limit():
     )
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
     assert out.stdout.split() == ["False", "False"]
+
+
+def turn(turn_id):
+    return ChatTurn(
+        turn_id=turn_id,
+        question="Amex Gold fee?",
+        answer="$325 a year",
+        model_id="deepseek.v3.2",
+        prompt_version="abc",
+        created_at="2026-09-30T00:00:00+00:00",
+    )
+
+
+def test_answers_can_be_rated_only_by_their_owner_and_leave_with_the_account(repo):
+    repo.put_turn("u", turn("t-00000001"))
+    repo.put_turn("u", turn("t-00000002"))
+    down = TurnFeedback(rating="down", reason="wrong_info", comment="fee is wrong")
+    assert repo.rate_turn("u", "t-00000001", down, "2026-09-30T01:00:00+00:00")
+    assert not repo.rate_turn("v", "t-00000001", down, "x")  # someone else's answer
+    assert not repo.rate_turn("u", "t-missing0", down, "x")
+    [(uid, rated)] = repo.rated_turns()  # unrated answers aren't listed
+    assert uid == "u" and rated.turn_id == "t-00000001" and rated.feedback == down
+    repo.delete_user("u")
+    assert repo.rated_turns() == []

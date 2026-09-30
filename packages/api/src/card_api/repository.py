@@ -22,14 +22,19 @@ from typing import Protocol
 
 from card_api.models import (
     ApplicantProfile,
+    ChatTurn,
     HeldCard,
     HeldCardIn,
     Invite,
     InviteUse,
+    TurnFeedback,
     WalletAttestation,
 )
 
 QUOTA_TTL_SECONDS = 3 * 24 * 3600
+# Advisor answers (ADR 0009): 7 days like Memory's raw events; 90 once the user rates one.
+TURN_TTL_SECONDS = 7 * 24 * 3600
+RATED_TURN_TTL_SECONDS = 90 * 24 * 3600
 INVITE_PK = "INVITE"
 
 
@@ -48,6 +53,9 @@ class Repository(Protocol):
     def list_invites(self) -> list[Invite]: ...
     def take_quota(self, uid: str, day: date, limit: int) -> int | None: ...
     def quota_used(self, uid: str, day: date) -> int: ...
+    def put_turn(self, uid: str, turn: ChatTurn) -> None: ...
+    def rate_turn(self, uid: str, turn_id: str, feedback: TurnFeedback, rated_at: str) -> bool: ...
+    def rated_turns(self) -> list[tuple[str, ChatTurn]]: ...
     def delete_user(self, uid: str) -> None: ...
 
 
@@ -67,6 +75,7 @@ class InMemoryRepository:
         self._invites: dict[str, int] = {}
         self._uses: dict[str, dict[str, InviteUse]] = {}
         self._quota: dict[tuple[str, date], int] = {}
+        self._turns: dict[str, dict[str, ChatTurn]] = {}
 
     def get_profile(self, uid):
         return self._profiles.get(uid, ApplicantProfile())
@@ -143,8 +152,28 @@ class InMemoryRepository:
     def quota_used(self, uid, day):
         return self._quota.get((uid, day), 0)
 
+    def put_turn(self, uid, turn):
+        with self._lock:
+            self._turns.setdefault(uid, {})[turn.turn_id] = turn
+
+    def rate_turn(self, uid, turn_id, feedback, rated_at):
+        with self._lock:
+            turn = self._turns.get(uid, {}).get(turn_id)
+            if turn is None:
+                return False
+            self._turns[uid][turn_id] = turn.model_copy(
+                update={"feedback": feedback, "rated_at": rated_at}
+            )
+            return True
+
+    def rated_turns(self):
+        return [
+            (uid, t) for uid, turns in self._turns.items() for t in turns.values() if t.feedback
+        ]
+
     def delete_user(self, uid):
         with self._lock:
+            self._turns.pop(uid, None)
             self._profiles.pop(uid, None)
             self._cards.pop(uid, None)
             self._attest.pop(uid, None)
@@ -385,6 +414,54 @@ class DynamoRepository:
             Key={"PK": self._user(uid), "SK": f"QUOTA#{day.isoformat()}"}
         ).get("Item")
         return int(item["used"]) if item else 0
+
+    def put_turn(self, uid, turn):
+        self._table.put_item(
+            Item={
+                "PK": self._user(uid),
+                "SK": f"TURN#{turn.turn_id}",
+                "data": turn.model_dump(mode="json", exclude={"feedback", "rated_at"}),
+                "expires_at": int(time.time()) + TURN_TTL_SECONDS,
+            }
+        )
+
+    def rate_turn(self, uid, turn_id, feedback, rated_at):
+        from botocore.exceptions import ClientError
+
+        try:
+            self._table.update_item(
+                Key={"PK": self._user(uid), "SK": f"TURN#{turn_id}"},
+                UpdateExpression="SET feedback = :f, rated_at = :t, expires_at = :exp",
+                ConditionExpression="attribute_exists(PK)",
+                ExpressionAttributeValues={
+                    ":f": feedback.model_dump(mode="json"),
+                    ":t": rated_at,
+                    ":exp": int(time.time()) + RATED_TURN_TTL_SECONDS,
+                },
+            )
+            return True
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
+                return False
+            raise
+
+    def rated_turns(self):
+        """Every rated answer, for the owner's review (scripts/feedback.py). A scan: fine at an
+        invite-only beta's size, and it keeps the table free of a second copy to delete."""
+        from boto3.dynamodb.conditions import Attr
+
+        kwargs = {"FilterExpression": Attr("SK").begins_with("TURN#") & Attr("feedback").exists()}
+        out = []
+        while True:
+            page = self._table.scan(**kwargs)
+            for item in page["Items"]:
+                turn = ChatTurn.model_validate(
+                    {**item["data"], "feedback": item["feedback"], "rated_at": item["rated_at"]}
+                )
+                out.append((item["PK"].removeprefix("USER#"), turn))
+            if "LastEvaluatedKey" not in page:
+                return out
+            kwargs["ExclusiveStartKey"] = page["LastEvaluatedKey"]
 
     def delete_user(self, uid):
         from boto3.dynamodb.conditions import Key

@@ -9,7 +9,8 @@ import { useMemo, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { publicAmount } from "@/lib/format";
 import { press, spring } from "@/lib/motion";
-import type { CatalogCard } from "@/lib/types";
+import { searchCards } from "@/lib/search";
+import type { CatalogCard, Issuer } from "@/lib/types";
 
 import { CardDetail } from "./CardDetail";
 import { CardTile } from "./CardTile";
@@ -46,25 +47,26 @@ function offerWeight(c: CatalogCard): number {
   return o.unit === "usd" || o.unit === "gift_card_usd" ? amount : amount / 100;
 }
 
-export function CatalogBrowser({ cards }: { cards: CatalogCard[] }) {
+export function CatalogBrowser({ cards, issuers }: { cards: CatalogCard[]; issuers: Record<string, Issuer> }) {
   const [kind, setKind] = useState<Kind>("all");
   const [sort, setSort] = useState<Sort>("offer");
   const [noFee, setNoFee] = useState(false);
   const [q, setQ] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
 
-  const shown = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    return cards
+  const { shown, exact } = useMemo(() => {
+    const filtered = cards
       .filter((c) => matchesKind(c, kind))
       .filter((c) => !noFee || c.annual_fee_usd === 0)
-      .filter((c) => !needle || `${c.name} ${c.issuer_id}`.toLowerCase().includes(needle))
       .sort((a, b) =>
         sort === "offer"
           ? offerWeight(b) - offerWeight(a)
           : (a.annual_fee_usd ?? 9999) - (b.annual_fee_usd ?? 9999),
       );
-  }, [cards, kind, sort, noFee, q]);
+    // Search keeps the chosen order among equally good matches (the sort is stable).
+    const found = searchCards(q, filtered, issuers);
+    return { shown: found.cards, exact: found.exact };
+  }, [cards, issuers, kind, sort, noFee, q]);
 
   const open = cards.find((c) => c.id === openId) ?? null;
 
@@ -105,7 +107,9 @@ export function CatalogBrowser({ cards }: { cards: CatalogCard[] }) {
           />
         </div>
         <p className="text-[13px] text-ink-2" aria-live="polite">
-          {shown.length} {shown.length === 1 ? "card" : "cards"}
+          {!exact && shown.length > 0
+            ? `No exact match for “${q.trim()}”. Closest ${shown.length === 1 ? "card" : "cards"}:`
+            : `${shown.length} ${shown.length === 1 ? "card" : "cards"}`}
         </p>
       </div>
 

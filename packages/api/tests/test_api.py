@@ -467,3 +467,44 @@ def test_delete_me_deletes_nothing_when_the_advisor_memory_cant_be_purged(client
     monkeypatch.setattr(app_module, "memory_client", lambda: Memory(failed=False))
     assert client.delete("/me", headers=as_user("ann")).status_code == 204
     assert client.get("/me/profile", headers=as_user("ann")).json()["tax_id"] is None
+
+
+TURN = {
+    "turn_id": "1759200000000-ab12cd34",
+    "question": "What is the Amex Gold annual fee?",
+    "answer": "$325 a year, including the first year.",
+    "tools": [{"name": "get_card_details", "input": '{"card": "amex gold"}', "result": "..."}],
+    "model_id": "deepseek.v3.2",
+    "prompt_version": "abc123",
+    "catalog_version": "1.5",
+}
+
+
+def test_an_answer_can_be_saved_and_rated_by_its_owner(client):
+    assert client.post("/me/chat/turns", json=TURN, headers=as_user("ann")).status_code == 201
+    url = f"/me/chat/turns/{TURN['turn_id']}/feedback"
+    down = {"rating": "down", "reason": "wrong_info", "comment": "The fee is wrong"}
+    assert client.put(url, json=down, headers=as_user("ann")).status_code == 204
+    assert client.put(url, json={"rating": "up"}, headers=as_user("ann")).status_code == 204
+    assert client.put(url, json={"rating": "up"}, headers=as_user("bob")).status_code == 404
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"rating": "meh"},
+        {"rating": "down", "reason": "because"},
+        {"rating": "down", "comment": "x" * 501},
+    ],
+)
+def test_feedback_is_validated(client, bad):
+    client.post("/me/chat/turns", json=TURN, headers=as_user("ann"))
+    url = f"/me/chat/turns/{TURN['turn_id']}/feedback"
+    assert client.put(url, json=bad, headers=as_user("ann")).status_code == 422
+
+
+def test_answer_records_are_bounded(client):
+    too_big = TURN | {"answer": "x" * 12001}
+    assert client.post("/me/chat/turns", json=too_big, headers=as_user("ann")).status_code == 422
+    bad_id = TURN | {"turn_id": "../../etc"}
+    assert client.post("/me/chat/turns", json=bad_id, headers=as_user("ann")).status_code == 422

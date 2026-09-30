@@ -25,7 +25,7 @@ class QuotaExceeded(ApiError):
 
 
 # The catalog is public and the same for everyone; cache it per process.
-_catalog: dict[str, Any] = {"at": 0.0, "version": None, "cards": {}}
+_catalog: dict[str, Any] = {"at": 0.0, "version": None, "cards": {}, "issuers": {}}
 # So are the Eligibility Rules' plain-English facts (GET /rules), by rule id.
 _rules: dict[str, Any] = {"at": 0.0, "by_id": {}}
 
@@ -71,6 +71,9 @@ class AdvisorApi:
             )
         return _rules["by_id"]
 
+    def save_turn(self, record: dict) -> dict:
+        return self._call("POST", "/me/chat/turns", json=record)
+
     def recommendations(self, options: dict) -> dict:
         return self._call("POST", "/me/recommendations", json=options)
 
@@ -85,5 +88,16 @@ class AdvisorApi:
                 at=time.monotonic(),
                 version=snapshot["version"],
                 cards={c["id"]: c for c in snapshot["cards"]},
+                issuers=snapshot.get("issuers") or {},
             )
         return _catalog["cards"]
+
+    def issuers(self) -> dict[str, dict]:
+        """Bank names and search aliases from the same snapshot as cards()."""
+        self.cards()
+        return _catalog["issuers"]
+
+
+def catalog_version() -> str | None:
+    """The catalog version the tools last read (None before any card lookup)."""
+    return _catalog["version"]

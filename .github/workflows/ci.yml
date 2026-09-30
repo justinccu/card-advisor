@@ -113,11 +113,13 @@ jobs:
           aws-region: us-east-2
       - name: Lambda bundle
         run: ./scripts/bundle_lambda.sh
-      - name: cdk deploy
+      - name: cdk deploy (everything but the site)
         working-directory: infra
         env:
           ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
-        run: cdk deploy --all --require-approval never --outputs-file ../cdk-outputs.json
+        run: >-
+          cdk deploy card-advisor-ops card-advisor-ci card-advisor-data card-advisor-auth
+          card-advisor-api --require-approval never --outputs-file ../cdk-outputs.json
       - name: Smoke test the live API
         run: |
           api=$(jq -r '."card-advisor-api".ApiUrl' cdk-outputs.json)
@@ -126,3 +128,37 @@ jobs:
           echo "$health" | jq -e '.ok == true and (.catalog_version | test("^[0-9]+\\.[0-9]+$"))'
           test "$(curl -s -o /dev/null -w '%{http_code}' "$api/me/wallet")" = 401
           test "$(curl -s -o /dev/null -w '%{http_code}' -H 'X-Dev-User: demo-user' "$api/me/wallet")" = 401
+      # S5: build the site against the live stack, check it under the CloudFront headers, deploy.
+      - name: Build the site for AWS
+        working-directory: web
+        run: |
+          npm ci
+          export NEXT_PUBLIC_API_URL=$(jq -r '."card-advisor-api".ApiUrl' ../cdk-outputs.json)
+          export NEXT_PUBLIC_COGNITO_USER_POOL_ID=$(jq -r '."card-advisor-api".UserPoolId' ../cdk-outputs.json)
+          export NEXT_PUBLIC_COGNITO_CLIENT_ID=$(jq -r '."card-advisor-api".WebClientId' ../cdk-outputs.json)
+          export NEXT_PUBLIC_ADVISOR_URL=$(python3 ../scripts/advisor_url.py)
+          test -n "$NEXT_PUBLIC_ADVISOR_URL"
+          npm run build
+          test ! -e out/card-art  # issuer card art is never published
+      - name: Check the site under its security headers
+        run: |
+          uv run playwright install --with-deps chromium
+          export NEXT_PUBLIC_API_URL=$(jq -r '."card-advisor-api".ApiUrl' cdk-outputs.json)
+          export NEXT_PUBLIC_ADVISOR_URL=$(python3 scripts/advisor_url.py)
+          uv run python scripts/check_site_headers.py
+      - name: cdk deploy (site)
+        working-directory: infra
+        env:
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+        run: >-
+          cdk deploy card-advisor-web -c site_dir=../web/out --require-approval never
+          --outputs-file ../web-outputs.json
+      - name: Smoke test the live site
+        run: |
+          site=$(jq -r '."card-advisor-web".SiteUrl' web-outputs.json)
+          echo "$site"
+          curl -sf "$site/" | grep -q 'Card Advisor'
+          curl -sf "$site/cards/amex_gold/" | grep -q 'American Express Gold'
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$site/cards")" = 301
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$site/no-such-page/")" = 404
+          curl -sI "$site/" | grep -qi '^content-security-policy:'

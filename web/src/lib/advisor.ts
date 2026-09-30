@@ -29,8 +29,11 @@ export type AdvisorEvent =
   | { type: "quota"; limit: number; remaining: number; resets_at: string }
   | { type: "tool"; name: string }
   | { type: "text"; text: string }
+  /** the answer so far is discarded (the agent retries after a malformed reply) */
+  | { type: "reset" }
   | { type: "error"; code: ErrorCode; message: string; resets_at?: string }
-  | { type: "done" };
+  /** turn_id: the saved answer the user can rate (absent when it couldn't be saved) */
+  | { type: "done"; turn_id?: string };
 
 // --- streaming ----------------------------------------------------------------------------
 
@@ -153,6 +156,9 @@ export type ChatMessage = {
   tool?: string | null;
   error?: { code: ErrorCode; message: string } | null;
   done?: boolean;
+  /** assistant only: the saved answer's id, for 👍 / 👎 */
+  turnId?: string;
+  feedback?: { rating: "up" | "down"; status: "sending" | "sent" | "error" };
 };
 
 export type Conversation = { sessionId: string; messages: ChatMessage[]; updatedAt: number };

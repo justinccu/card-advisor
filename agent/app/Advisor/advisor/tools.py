@@ -16,6 +16,7 @@ from typing import Any, Protocol
 
 from strands import tool
 
+from advisor import search
 from advisor.api import AdvisorApi, ApiError
 
 MAX_CARDS = 10
@@ -23,6 +24,8 @@ MAX_CARDS = 10
 
 class Session(Protocol):
     api: AdvisorApi  # replaced on every request with one carrying the caller's current token
+
+    def user_said(self) -> str: ...
 
 
 def drop_nulls(value: Any) -> Any:
@@ -241,31 +244,6 @@ def compact_eligibility(body: dict, rules: dict[str, dict] | None = None) -> lis
     ]
 
 
-_STOP_WORDS = {"card", "cards", "credit", "the", "from", "a", "an"}
-
-
-def _words(text: str) -> set[str]:
-    text = text.lower().replace("american express", "amex american express")
-    return set(re.findall(r"[a-z0-9]+", text)) - _STOP_WORDS
-
-
-def find_cards(query: str, cards: dict[str, dict]) -> list[dict]:
-    """Catalog cards a user's words name: an exact id, or every card whose name, id and issuer
-    contain all the query's words ("amex green", "sapphire preferred"). Empty when the catalog
-    doesn't have it, so the Advisor says so instead of describing the card from memory."""
-    key = query.strip().lower()
-    if key in cards:
-        return [cards[key]]
-    wanted = _words(query)
-    if not wanted:
-        return []
-    return [
-        c
-        for c in cards.values()
-        if wanted <= _words(c["name"]) | _words(c["id"].replace("_", " ")) | {c["issuer_id"]}
-    ]
-
-
 def compact_card(card: dict) -> dict:
     if card.get("availability") != "open":
         since = f" since {card['closed_on']}" if card.get("closed_on") else ""
@@ -319,6 +297,28 @@ def compact_rules(body: dict) -> list[dict]:
     ]
 
 
+_AMOUNT = re.compile(r"(\d[\d,]*(?:\.\d+)?)\s*(k\b)?", re.IGNORECASE)
+
+
+def stated_amounts(text: str) -> set[float]:
+    """Numbers in what the user wrote: "$1,500", "800", "1.5k"."""
+    return {
+        float(m.group(1).replace(",", "")) * (1000 if m.group(2) else 1)
+        for m in _AMOUNT.finditer(text)
+    }
+
+
+def unstated_spending(monthly: dict[str, float], said: str) -> list[str]:
+    """Categories whose amount the user never said, as a monthly figure or a yearly one (x12).
+    Qwen once ranked cards with spending it made up, so what-ifs must come from the user."""
+    amounts = stated_amounts(said)
+    return [
+        category
+        for category, usd in monthly.items()
+        if usd and not any(abs(usd - a) < 1 or abs(usd * 12 - a) < 12 for a in amounts)
+    ]
+
+
 # --- tools ----------------------------------------------------------------------------------
 
 
@@ -358,6 +358,7 @@ def build_tools(session: Session) -> list:
 
         Args:
             monthly_spending: What-if monthly USD by category, overriding only those categories.
+                Only amounts the user stated; never estimate or invent them.
                 Categories: dining, groceries, flights, hotels, other_travel, gas_ev, transit,
                 streaming, online_shopping, drugstores, everything_else. 0 removes one.
             goals: What-if goals: earn_offers, long_term, travel, cash_back, build_credit.
@@ -370,6 +371,16 @@ def build_tools(session: Session) -> list:
                 {card_id: [credit name exactly as get_card_details lists it]}.
             limit: How many cards to return (1-10).
         """
+        if monthly_spending and (
+            unsaid := unstated_spending(monthly_spending, session.user_said())
+        ):
+            return _json(
+                {
+                    "error": "spending_not_from_user",
+                    "detail": f"The user never said amounts for: {', '.join(unsaid)}. Ask them, "
+                    "or omit monthly_spending to use their saved profile.",
+                }
+            )
         scenario = {
             k: v
             for k, v in {
@@ -422,36 +433,36 @@ def build_tools(session: Session) -> list:
         name, and says when a card isn't in the catalog or is closed to new applicants.
 
         Args:
-            card: A catalog card id ("amex_gold") or the card's name as the user said it
-                ("amex green", "Chase Sapphire Preferred").
+            card: A catalog card id ("amex_gold"), or the card's name in English as the user
+                meant it ("amex green", "Chase Sapphire Preferred", "CSP"); a bank's name
+                ("Amex") lists that bank's cards.
         """
         try:
-            cards = session.api.cards()
+            cards, issuers = session.api.cards(), session.api.issuers()
         except ApiError as e:
             return _error(e)
-        matches = find_cards(card, cards)
-        if not matches:
-            issuers = sorted({c["issuer_id"] for c in cards.values()})
+        kind, matches = search.find(card, cards, issuers)
+        if kind == "none":
+            names = sorted(i.get("name", k) for k, i in issuers.items()) or sorted(
+                {c["issuer_id"] for c in cards.values()}
+            )
             return _json(
                 {
                     "not_in_catalog": card,
-                    "catalog_covers": f"{len(cards)} cards from {', '.join(issuers)}",
+                    "catalog_covers": f"{len(cards)} cards from {', '.join(names)}",
                 }
             )
-        if len(matches) > 1:
-            return _json(
+        if kind in ("several", "closest"):
+            listed = [
                 {
-                    "several_cards_match": card,
-                    "cards": [
-                        {
-                            "card_id": c["id"],
-                            "name": c["name"],
-                            "open_to_applicants": c.get("availability") == "open",
-                        }
-                        for c in matches[:8]
-                    ],
+                    "card_id": c["id"],
+                    "name": c["name"],
+                    "open_to_applicants": c.get("availability") == "open",
                 }
-            )
+                for c in matches[:12]
+            ]
+            key = "several_cards_match" if kind == "several" else "no_exact_match_closest_are"
+            return _json({key: listed, "query": card, "total": len(matches)})
         return _json(compact_card(matches[0]))
 
     @tool

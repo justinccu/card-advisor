@@ -88,11 +88,20 @@ class Valuation(BaseModel):
     free_night_points: int | None = None  # "free night" Offers, valued at this many points each
 
 
+class Issuer(BaseModel):
+    """How people name a bank when they search ("Amex" or "American Express")."""
+
+    name: str
+    aliases: list[str] = []
+
+
 class CatalogCard(CardProduct):
     url: str
     availability: Literal["open", "closed_to_new_applicants"] = "open"
     closed_on: date | None = None
     tags: list[str] = []
+    # Other names people search this card by ("CSP", "VX"), reviewed in the seed.
+    aliases: list[str] = []
     # Reward currency for points/miles cards (a key of CatalogSnapshot.valuations); None = cash.
     currency: str | None = None
     # Facts below are None for closed cards kept only so users can list them as Held Cards.
@@ -141,6 +150,8 @@ class CatalogSnapshot(BaseModel):
     preview: bool = False
     # Point Valuations used for ranking, versioned with the cards they value.
     valuations: dict[str, Valuation] = {}
+    # Issuer display names and search aliases, keyed by issuer_id.
+    issuers: dict[str, Issuer] = {}
 
     @field_validator("version", mode="before")
     @classmethod

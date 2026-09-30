@@ -202,3 +202,54 @@ def test_alarms_page_the_ops_topic_and_values_are_shared_via_ssm():
 
 def _list(x):
     return x if isinstance(x, list) else [x]
+
+
+def _web(site_dir=None):
+    from stacks.web_stack import WebStack
+
+    app = cdk.App()
+    return Template.from_stack(
+        WebStack(app, "web", env=ENV, project="card-advisor", site_dir=site_dir)
+    )
+
+
+def test_site_bucket_is_private_and_only_cloudfront_reads_it():
+    web = _web()
+    bucket = _one(web, "AWS::S3::Bucket")["Properties"]
+    assert all(bucket["PublicAccessBlockConfiguration"].values())
+    policy = json.dumps(web.find_resources("AWS::S3::BucketPolicy"))
+    assert "cloudfront.amazonaws.com" in policy and "AWS:SourceArn" in policy  # OAC
+    web.resource_count_is("AWS::CloudFront::OriginAccessControl", 1)
+
+
+def test_site_is_https_only_with_security_headers_and_a_404_page():
+    web = _web()
+    dist = _one(web, "AWS::CloudFront::Distribution")["Properties"]["DistributionConfig"]
+    assert dist["DefaultCacheBehavior"]["ViewerProtocolPolicy"] == "redirect-to-https"
+    assert {
+        (e["ErrorCode"], e["ResponseCode"], e["ResponsePagePath"])
+        for e in dist["CustomErrorResponses"]
+    } == {
+        (403, 404, "/404.html"),
+        (404, 404, "/404.html"),
+    }
+    headers = _one(web, "AWS::CloudFront::ResponseHeadersPolicy")["Properties"]
+    security = headers["ResponseHeadersPolicyConfig"]["SecurityHeadersConfig"]
+    csp = security["ContentSecurityPolicy"]["ContentSecurityPolicy"]
+    assert "frame-ancestors 'none'" in csp and "bedrock-agentcore.us-east-2" in csp
+    assert security["FrameOptions"]["FrameOption"] == "DENY"
+    assert security["StrictTransportSecurity"]["AccessControlMaxAgeSec"] == 31536000
+
+
+def test_site_files_are_published_only_from_a_ci_build():
+    no_content = _web()
+    assert not no_content.find_resources("Custom::CDKBucketDeployment")
+    import tempfile
+    from pathlib import Path
+
+    out = Path(tempfile.mkdtemp())
+    (out / "index.html").write_text("<html></html>")
+    deployments = _web(site_dir=str(out)).find_resources("Custom::CDKBucketDeployment")
+    assert len(deployments) == 2  # hashed assets, then pages + cache invalidation
+    pages = [d for d in deployments.values() if "DistributionId" in d["Properties"]]
+    assert len(pages) == 1 and pages[0]["Properties"]["DistributionPaths"] == ["/*"]

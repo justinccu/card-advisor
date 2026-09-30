@@ -6,8 +6,10 @@ Needs the demo running (`make demo`), then: `make e2e`. Uses Playwright's Chromi
 """
 
 import json
+import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 
@@ -16,7 +18,8 @@ from playwright.sync_api import sync_playwright
 # Matches with or without a query string (the site pins ?catalog_version=...).
 WALLET_CARDS = re.compile(r".*/me/wallet/cards(\?.*)?$")
 
-BASE = "http://localhost:3000"
+BASE = os.environ.get("E2E_BASE", "http://localhost:3000")
+API = os.environ.get("E2E_API", "http://localhost:8000")
 ADVISOR = "http://localhost:8080/invocations"  # `make agent`; scripted here, never called
 results = []
 
@@ -80,13 +83,12 @@ with sync_playwright() as p:
     )
 
     # rollback on failure
+    # The failing POST is held until the optimistic row has been counted, then answered, so the
+    # check doesn't depend on how fast the build reacts.
+    held = []
     page.route(
         WALLET_CARDS,
-        lambda route: (
-            route.fulfill(status=500, body='{"detail":"boom"}')
-            if route.request.method == "POST"
-            else route.continue_()
-        ),
+        lambda route: held.append(route) if route.request.method == "POST" else route.continue_(),
     )
     page.get_by_role("button", name="Add card").click()
     page.wait_for_timeout(500)
@@ -97,8 +99,10 @@ with sync_playwright() as p:
     ).first.click()
     page.wait_for_timeout(400)
     page.get_by_role("button", name="Add to wallet").click()
-    page.wait_for_timeout(150)
+    page.wait_for_timeout(300)
     mid = rows.count()
+    for route in held:
+        route.fulfill(status=500, body='{"detail":"boom"}')
     page.wait_for_timeout(1500)
     after = rows.count()
     check(
@@ -152,6 +156,39 @@ with sync_playwright() as p:
     page.keyboard.press("Escape")
     page.wait_for_timeout(600)
     check("Escape closes the sheet", page.get_by_role("dialog").count() == 0)
+
+    # search: a bank by either name, a card by its alias, a typo, and a card we don't list
+    page.goto(BASE + "/cards/", wait_until="networkidle")
+    box = page.get_by_label("Search cards")
+    # Card tiles only: in `next dev` the dev-tools button is also labelled "Open ...".
+    tiles = page.locator("main button[aria-label^='Open ']")
+
+    def search(q):
+        box.fill(q)
+        # Tiles leaving the grid animate out; wait until the grid holds just the results.
+        for _ in range(40):
+            page.wait_for_timeout(100)
+            said = re.search(
+                r"(\d+) cards?", page.locator("p[aria-live=polite]").first.inner_text()
+            )
+            if said and tiles.count() == int(said.group(1)):
+                break
+        return [tiles.nth(i).get_attribute("aria-label")[5:] for i in range(tiles.count())]
+
+    amex, american_express = search("Amex"), search("American Express")
+    check(
+        f"'Amex' and 'American Express' both find the Amex cards ({len(amex)})",
+        len(amex) == 10 and sorted(amex) == sorted(american_express),
+    )
+    check("an alias finds its card ('CSP')", search("CSP")[:1] == ["Chase Sapphire Preferred"])
+    check("a typo still finds the card ('saphire')", "Chase Sapphire Reserve" in search("saphire"))
+    check(
+        "'amex gold' puts the Gold first",
+        search("amex gold")[:1] == ["American Express Gold Card"],
+    )
+    search("Bilt")
+    check("a card we don't list finds nothing", page.get_by_text("No cards match").is_visible())
+    box.fill("")
 
     # compare tray
     for name in ["Chase Sapphire Preferred", "Capital One Venture X"]:
@@ -284,9 +321,28 @@ with sync_playwright() as p:
         route.fulfill(status=200, headers=cors, content_type="text/event-stream", body=body)
 
     page.route(ADVISOR, fake_agent)
+    # The real agent saves each answer through the API; do the same so it can be rated.
+    turn_id = f"{int(time.time() * 1000)}-e2e00001"
+    saved = urllib.request.Request(
+        API + "/me/chat/turns",
+        data=json.dumps(
+            {
+                "turn_id": turn_id,
+                "question": "Which card for dining?",
+                "answer": "Chase Sapphire Preferred fits best.",
+                "model_id": "scripted",
+                "prompt_version": "e2e",
+            }
+        ).encode(),
+        headers={"Content-Type": "application/json", "X-Dev-User": "demo-user"},
+        method="POST",
+    )
+    urllib.request.urlopen(saved, timeout=10)
     replies.append(
         [
             {"type": "quota", "limit": 30, "remaining": 27, "resets_at": "2026-09-30T04:00:00Z"},
+            {"type": "text", "text": 'Checking. {"name": "rank_cards", "arguments": {}}'},
+            {"type": "reset"},
             {"type": "tool", "name": "rank_cards"},
             {"type": "text", "text": "**Chase Sapphire Preferred** fits best. "},
             {"type": "text", "text": "[Apply](card:chase_sapphire_preferred)\n\n"},
@@ -295,7 +351,7 @@ with sync_playwright() as p:
                 "text": "Also see [this](https://evil.example/x) or https://evil.example/y. "
                 "[Amex Green](card:amex_green) is closed to new applicants.",
             },
-            {"type": "done"},
+            {"type": "done", "turn_id": turn_id},
         ]
     )
     page.goto(BASE + "/advisor/", wait_until="networkidle")
@@ -318,6 +374,10 @@ with sync_playwright() as p:
     )
     check("bare URLs are removed from the reply", "evil.example" not in log.inner_text())
     check(
+        "a reset clears the discarded text (a leaked tool call never stays on screen)",
+        '"arguments"' not in log.inner_text() and "Checking." not in log.inner_text(),
+    )
+    check(
         "the recommended card gets a row linking to its page",
         log.get_by_role("link", name="Chase Sapphire Preferred").get_attribute("href")
         == "/cards/chase_sapphire_preferred/",
@@ -331,6 +391,26 @@ with sync_playwright() as p:
         == "/cards/amex_green/",
     )
     check("quota updates from the stream", page.get_by_text("27 of 30 left today").is_visible())
+
+    check(
+        "an answer offers 👍 / 👎 and says what rating shares",
+        log.get_by_role("button", name="Helpful", exact=True).is_visible()
+        and log.get_by_text("Rating shares this exchange").is_visible(),
+    )
+    log.get_by_role("button", name="Not helpful").click()
+    send = log.get_by_role("button", name="Send feedback")
+    check("👎 asks what went wrong before sending", send.is_disabled())
+    log.get_by_role("button", name="Wrong information").click()
+    log.get_by_placeholder("Anything else? (optional)").fill("The fee looks off")
+    with page.expect_response(
+        lambda r: "/feedback" in r.url and r.request.method == "PUT"
+    ) as rated:
+        send.click()
+    page.wait_for_timeout(300)
+    check(
+        f"the rating reaches the API ({rated.value.status}) and the answer says thanks",
+        rated.value.status == 204 and log.get_by_text("look into it").is_visible(),
+    )
 
     page.reload(wait_until="networkidle")
     page.wait_for_timeout(600)

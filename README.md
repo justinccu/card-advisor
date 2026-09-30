@@ -37,6 +37,19 @@ site build, and the browser e2e against the local demo. On `main`, once all of t
 deploys every stack with short-lived OIDC credentials (no stored AWS keys; the role only trusts
 `main`) and smoke-tests the live API. It needs one repository secret, `ALERT_EMAIL`.
 
+The public site (S5) deploys in the same job, in four steps:
+1. Build `web/out` against the live API, Cognito and Advisor runtime.
+2. Load every page under CloudFront's security headers (`scripts/check_site_headers.py`). A
+   Content-Security-Policy that would block anything fails the job before the site changes.
+3. Publish through the `card-advisor-web` stack: a private S3 bucket behind CloudFront with
+   origin access control, HTTPS only, and CSP, HSTS and frame-deny headers. Hashed assets are
+   cached for a year and HTML is revalidated on each visit.
+4. Smoke-test the live URL.
+
+`make site-check` runs steps 1 and 2 locally, and deploys nothing. Issuer card art is never
+published. After the first deploy, add the site's URL (the `SiteUrl` output, also in SSM at
+`/card-advisor/site-url`) to `cors_origins` in `infra/cdk.json`, so the API accepts calls from it.
+
 `make deploy-infra` deploys the stacks (data, auth, api); `make aws-smoke` then signs up a
 throwaway user with a one-off invite, calls the API with its JWT, and deletes both.
 
@@ -52,6 +65,14 @@ never pushed or deployed).
 `make agent` (in a second terminal, next to `make demo`) runs the Advisor chat agent on :8080
 without deploying it. It calls a Bedrock model with your AWS profile (a fraction of a cent per
 message), and the site's "Ask the Advisor" button and `/advisor` page talk to it.
+
+Card search (the site's boxes and the Advisor's card lookup) takes a bank by either name ("Amex",
+"American Express"), card aliases ("CSP") and typos. Names live in `catalog/seed/issuers.yaml`
+and each seed card's `aliases`, and are stamped into the snapshot by `scout publish`.
+
+Each Advisor answer can be rated 👍 / 👎. `make feedback` (`DOWN=1` for 👎 only) lists rated
+answers on the deployed stack, with the tools each one called, so a bad answer can be traced to
+the data or to the model.
 
 `make e2e` (with the demo running) drives a real browser through sign-up, optimistic wallet edits,
 rollback on API failure, the gesture physics, and the Advisor chat against a scripted agent (no

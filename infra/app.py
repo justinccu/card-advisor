@@ -8,6 +8,7 @@ from stacks.auth_stack import AuthStack
 from stacks.ci_stack import CiStack
 from stacks.data_stack import DataStack
 from stacks.ops_stack import OpsStack
+from stacks.web_stack import WebStack
 
 LAMBDA_BUNDLE = Path(__file__).parent / "build" / "api"
 
@@ -64,6 +65,16 @@ ApiStack(
     alerts=ops.alerts,
     # Set after `agentcore deploy` creates the Advisor's Memory (ADR 0009); empty until then.
     advisor_memory_id=app.node.try_get_context("advisor_memory_id") or None,
+)
+
+# S5: the public site. CI builds web/out against the live API, then deploys with
+# `-c site_dir=../web/out`; without it the site's files are left as they are.
+WebStack(
+    app,
+    f"{project}-web",
+    env=env,
+    project=project,
+    site_dir=app.node.try_get_context("site_dir"),
 )
 
 cdk.Tags.of(app).add("project", project)

@@ -10,7 +10,8 @@ import { api, ApiError } from "@/lib/api";
 import { fullDate } from "@/lib/format";
 import { issuerName } from "@/lib/issuers";
 import { press, project, spring } from "@/lib/motion";
-import type { CatalogCard, Evaluation, HeldCard, HeldCardIn, HeldCardPatch, Wallet, WalletAttestation } from "@/lib/types";
+import { searchCards } from "@/lib/search";
+import type { CatalogCard, Evaluation, HeldCard, HeldCardIn, HeldCardPatch, Issuer, Wallet, WalletAttestation } from "@/lib/types";
 
 import { CardArt } from "./CardArt";
 import { DatePicker, todayIso } from "./DatePicker";
@@ -23,7 +24,7 @@ import { Reasons, StatusPill } from "./Verdict";
 
 const WALLET = ["wallet"] as const;
 
-export function WalletView({ catalog }: { catalog: CatalogCard[] }) {
+export function WalletView({ catalog, issuers }: { catalog: CatalogCard[]; issuers: Record<string, Issuer> }) {
   const { uid, ready } = useSession();
   if (!ready) return <div className="h-64 animate-pulse rounded-3xl bg-tile" />;
   if (!uid) {
@@ -39,10 +40,18 @@ export function WalletView({ catalog }: { catalog: CatalogCard[] }) {
       </div>
     );
   }
-  return <SignedInWallet uid={uid} catalog={catalog} />;
+  return <SignedInWallet uid={uid} catalog={catalog} issuers={issuers} />;
 }
 
-function SignedInWallet({ uid, catalog }: { uid: string; catalog: CatalogCard[] }) {
+function SignedInWallet({
+  uid,
+  catalog,
+  issuers,
+}: {
+  uid: string;
+  catalog: CatalogCard[];
+  issuers: Record<string, Issuer>;
+}) {
   const qc = useQueryClient();
   const toast = useToast();
   const byId = useMemo(() => new Map(catalog.map((c) => [c.id, c])), [catalog]);
@@ -220,6 +229,7 @@ function SignedInWallet({ uid, catalog }: { uid: string; catalog: CatalogCard[] 
         open={adding}
         onClose={() => setAdding(false)}
         catalog={catalog}
+        issuers={issuers}
         onAdd={(card) => {
           setAdding(false);
           add.mutate({ card, tempId: `temp-${crypto.randomUUID()}` });
@@ -369,21 +379,20 @@ function AddCardSheet({
   open,
   onClose,
   catalog,
+  issuers,
   onAdd,
 }: {
   open: boolean;
   onClose: () => void;
   catalog: CatalogCard[];
+  issuers: Record<string, Issuer>;
   onAdd: (card: HeldCardIn) => void;
 }) {
   const [q, setQ] = useState("");
   const [picked, setPicked] = useState<CatalogCard | null>(null);
   const [opened, setOpened] = useState(todayIso);
   const [au, setAu] = useState(false);
-  const results = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    return catalog.filter((c) => !needle || `${c.name} ${issuerName(c.issuer_id)}`.toLowerCase().includes(needle)).slice(0, 30);
-  }, [catalog, q]);
+  const results = useMemo(() => searchCards(q, catalog, issuers).cards.slice(0, 30), [catalog, issuers, q]);
 
   const reset = () => {
     setPicked(null);

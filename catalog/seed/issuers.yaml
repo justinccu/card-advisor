@@ -1,0 +1,26 @@
+# How people name each bank when they search. Stamped into every Catalog Snapshot at publish
+# (scout/search_names.py), so the site's search and the Advisor's card lookup read one list.
+amex:
+  name: American Express
+  aliases: [Amex]
+bofa:
+  name: Bank of America
+  aliases: [BofA, BoA]
+capital_one:
+  name: Capital One
+  aliases: [Cap One, C1]
+chase:
+  name: Chase
+  aliases: [JPMorgan Chase]
+citi:
+  name: Citi
+  aliases: [Citibank]
+discover:
+  name: Discover
+  aliases: []
+us_bank:
+  name: U.S. Bank
+  aliases: [US Bank, USB]
+wells_fargo:
+  name: Wells Fargo
+  aliases: [WF, Wells]

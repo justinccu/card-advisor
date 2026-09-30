@@ -6,6 +6,7 @@
 # priority: P0 = MVP catalog, P1 = add after MVP. tax_id_hint = unverified lead for Scout.
 # Drafted 2026-09-24 from issuer listing pages; is_charge_card and URLs to be confirmed by Scout.
 - id: chase_freedom_flex
+  aliases: [CFF]
   issuer_id: chase
   name: Chase Freedom Flex
   url: https://creditcards.chase.com/cash-back-credit-cards/freedom/flex
@@ -14,6 +15,7 @@
   - cashback
   - rotating
 - id: chase_freedom_unlimited
+  aliases: [CFU]
   issuer_id: chase
   name: Chase Freedom Unlimited
   url: https://creditcards.chase.com/cash-back-credit-cards/freedom/unlimited
@@ -38,6 +40,7 @@
   - starter
   - balance-transfer
 - id: chase_sapphire_preferred
+  aliases: [CSP]
   issuer_id: chase
   name: Chase Sapphire Preferred
   url: https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred
@@ -47,6 +50,7 @@
   - points
   family: sapphire
 - id: chase_sapphire_reserve
+  aliases: [CSR]
   issuer_id: chase
   name: Chase Sapphire Reserve
   url: https://creditcards.chase.com/rewards-credit-cards/sapphire/reserve
@@ -127,6 +131,7 @@
   - travel
   - airline
 - id: chase_prime_visa
+  aliases: [Amazon Prime Visa, Amazon card]
   issuer_id: chase
   name: Prime Visa
   url: https://creditcards.chase.com/cash-back-credit-cards/amazon-prime-rewards
@@ -143,6 +148,7 @@
   - cashback
   - shopping
 - id: chase_ink_unlimited
+  aliases: [CIU, Ink Unlimited]
   issuer_id: chase
   name: Ink Business Unlimited
   url: https://creditcards.chase.com/business-credit-cards/ink/unlimited
@@ -152,6 +158,7 @@
   - cashback
   is_business: true
 - id: chase_ink_cash
+  aliases: [CIC, Ink Cash]
   issuer_id: chase
   name: Ink Business Cash
   url: https://creditcards.chase.com/business-credit-cards/ink/cash
@@ -161,6 +168,7 @@
   - cashback
   is_business: true
 - id: chase_ink_preferred
+  aliases: [CIP, Ink Preferred]
   issuer_id: chase
   name: Ink Business Preferred
   url: https://creditcards.chase.com/business-credit-cards/ink/business-preferred
@@ -179,6 +187,7 @@
   - premium
   is_business: true
 - id: amex_platinum
+  aliases: [Amex Platinum, Amex Plat]
   issuer_id: amex
   name: The Platinum Card
   url: https://www.americanexpress.com/us/credit-cards/card/platinum/
@@ -189,6 +198,7 @@
   - premium
   is_charge_card: true
 - id: amex_gold
+  aliases: [Amex Gold]
   issuer_id: amex
   name: American Express Gold Card
   url: https://www.americanexpress.com/us/credit-cards/card/gold-card/
@@ -201,6 +211,7 @@
   is_charge_card: true
   tax_id_hint: ITIN; Nova Credit
 - id: amex_green
+  aliases: [Amex Green]
   issuer_id: amex
   name: American Express Green Card
   url: https://www.americanexpress.com/us/credit-cards/card/green/
@@ -212,6 +223,7 @@
   availability: closed_to_new_applicants
   closed_on: '2026-07-23'
 - id: amex_blue_cash_everyday
+  aliases: [BCE]
   issuer_id: amex
   name: Blue Cash Everyday
   url: https://www.americanexpress.com/us/credit-cards/card/blue-cash-everyday/
@@ -219,6 +231,7 @@
   tags:
   - cashback
 - id: amex_blue_cash_preferred
+  aliases: [BCP]
   issuer_id: amex
   name: Blue Cash Preferred
   url: https://www.americanexpress.com/us/credit-cards/card/blue-cash-preferred/
@@ -264,6 +277,7 @@
   - hotel
   family: hilton
 - id: amex_hilton_surpass
+  aliases: [Hilton Ascend]
   issuer_id: amex
   name: Hilton Honors Surpass
   url: https://www.americanexpress.com/us/credit-cards/card/hilton-honors-surpass/
@@ -302,6 +316,7 @@
   - premium
   family: marriott
 - id: amex_blue_business_plus
+  aliases: [BBP]
   issuer_id: amex
   name: The Blue Business Plus Card
   url: https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-blue-business-plus-credit-card-amex/
@@ -312,6 +327,7 @@
   is_business: true
   tax_id_hint: ITIN + EIN
 - id: amex_business_gold
+  aliases: [Biz Gold, Amex Business Gold]
   issuer_id: amex
   name: American Express Business Gold
   url: https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-gold-card-amex/
@@ -322,6 +338,7 @@
   is_business: true
   is_charge_card: true
 - id: amex_business_platinum
+  aliases: [Biz Plat, Amex Business Platinum]
   issuer_id: amex
   name: The Business Platinum Card
   url: https://www.americanexpress.com/us/credit-cards/business/business-credit-cards/american-express-business-platinum-credit-card-amex/
@@ -339,6 +356,7 @@
   tags:
   - cashback
 - id: citi_custom_cash
+  aliases: [CCC]
   issuer_id: citi
   name: Citi Custom Cash
   url: https://www.citi.com/credit-cards/citi-custom-cash-credit-card
@@ -356,6 +374,7 @@
   - points
   family: strata
 - id: citi_strata_premier
+  aliases: [Citi Premier, ThankYou Premier]
   issuer_id: citi
   name: Citi Strata Premier
   url: https://www.citi.com/credit-cards/citi-strata-premier-credit-card
@@ -375,6 +394,7 @@
   - premium
   family: strata
 - id: citi_costco
+  aliases: [Costco Visa]
   issuer_id: citi
   name: Costco Anywhere Visa by Citi
   url: https://www.citi.com/credit-cards/costco-anywhere-visa-card
@@ -426,6 +446,7 @@
   - starter
   - secured
 - id: c1_venture_x
+  aliases: [VX]
   issuer_id: capital_one
   name: Capital One Venture X
   url: https://www.capitalone.com/credit-cards/venture-x/
@@ -470,6 +491,7 @@
   - cashback
   tax_id_hint: ITIN
 - id: c1_savor
+  aliases: [SavorOne]
   issuer_id: capital_one
   name: Capital One Savor
   url: https://www.capitalone.com/credit-cards/savor/
@@ -671,6 +693,7 @@
   - premium
   family: atmos
 - id: wf_active_cash
+  aliases: [WFAC]
   issuer_id: wells_fargo
   name: Wells Fargo Active Cash
   url: https://creditcards.wellsfargo.com/active-cash-credit-card/

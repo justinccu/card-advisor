@@ -25,6 +25,8 @@ class SeedCard(BaseModel):
     # Public campaign/landing pages for the same card (e.g. an ad-channel URL with a different
     # offer). Fetched with the same honest profile; each becomes an offer variant.
     variant_urls: list[str] = []
+    # Other names people search this card by ("CSP"); stamped into the snapshot at publish.
+    aliases: list[str] = []
 
 
 def load_seed(path: Path = SEED_PATH) -> list[SeedCard]:

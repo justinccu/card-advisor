@@ -8,6 +8,7 @@ import type {
   HeldCard,
   HeldCardIn,
   HeldCardPatch,
+  TurnFeedback,
   Velocity,
   Wallet,
   WalletAttestation,
@@ -87,4 +88,9 @@ export const api = {
     call<ApplicantProfile>("/me/profile", { method: "PUT", body: JSON.stringify(p) }),
   deleteMe: () => call<void>("/me", { method: "DELETE" }),
   chatQuota: () => call<ChatQuota>("/me/chat/quota"),
+  rateTurn: (turnId: string, feedback: TurnFeedback) =>
+    call<void>(`/me/chat/turns/${encodeURIComponent(turnId)}/feedback`, {
+      method: "PUT",
+      body: JSON.stringify(feedback),
+    }),
 };

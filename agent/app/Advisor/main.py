@@ -6,21 +6,25 @@ Each request: identify the caller from the verified token, take one message from
     {"type": "quota", "limit": 30, "remaining": 29, "resets_at": "..."}
     {"type": "tool", "name": "rank_cards"}        # a tool started (for a progress hint)
     {"type": "text", "text": "..."}               # answer text, streamed
+    {"type": "reset"}                             # discard the answer text so far (a retry follows)
     {"type": "error", "code": "quota" | "auth" | "input" | "internal", "message": "..."}
-    {"type": "done"}
+    {"type": "done", "turn_id": "..."}            # turn_id: rate this answer (absent if not saved)
 """
 
+import json
 import os
+import re
+import time
 import uuid
 from collections import OrderedDict
 
-from advisor.api import AdvisorApi, ApiError, QuotaExceeded
+from advisor.api import AdvisorApi, ApiError, QuotaExceeded, catalog_version
 from advisor.identity import NotSignedIn, caller_from
-from advisor.prompt import SYSTEM_PROMPT, system_prompt_for
+from advisor.prompt import PROMPT_VERSION, SYSTEM_PROMPT, system_prompt_for, with_language
 from advisor.tools import build_tools
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
 from memory.session import get_memory_session_manager
-from model.load import load_model
+from model.load import MODEL_ID, load_model
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from strands import Agent
@@ -43,6 +47,16 @@ def _local_cors() -> list[Middleware]:
 app = BedrockAgentCoreApp(middleware=_local_cors())
 log = app.logger
 
+# Qwen sometimes writes a tool call into its reply instead of making it
+# ('{"name": "rank_cards", "arguments": {...}} </tool_call>').
+LEAKED_TOOL_CALL = re.compile(r'</?tool_call>|\{\s*"name"\s*:\s*"\w+"\s*,\s*"arguments"\s*:')
+# DeepSeek's tool-call markup can surface in the text stream even when the call itself works
+# ("<｜DSML｜function_calls"); it is never part of an answer.
+MODEL_MARKUP = re.compile(r"</?｜DSML｜[A-Za-z_]*>?|<｜[^｜<>\n]{1,40}｜>")
+RETRY_HINT = (
+    "\nYour previous reply wrote a tool call as text. Call tools only through tool use; "
+    "never write a tool call in the reply."
+)
 MAX_PROMPT_CHARS = 2000
 MAX_SESSIONS = 200  # agents kept warm per runtime process
 WINDOW_MESSAGES = 20  # conversation turns sent to the model (bounds tokens per request)
@@ -51,6 +65,17 @@ WINDOW_MESSAGES = 20  # conversation turns sent to the model (bounds tokens per 
 class Session:
     """One user's conversation. `api` is replaced on every request, so tools always call the API
     with the caller's current token."""
+
+    def user_said(self) -> str:
+        """What the user typed in this conversation (not tool results), for checking that tool
+        arguments such as spending amounts came from the user."""
+        return "\n".join(
+            block["text"]
+            for message in self.agent.messages
+            if message.get("role") == "user"
+            for block in message.get("content", [])
+            if "text" in block
+        )
 
     def __init__(self, session_id: str, user_id: str) -> None:
         self.api: AdvisorApi | None = None
@@ -122,23 +147,201 @@ async def invoke(payload, context):
     session = get_session(session_id, caller.user_id)
     session.api = api
     session.agent.system_prompt = system_prompt_for(prompt)  # this message's reply language
-    last_tool = None
+    answer = ""  # what the page shows: text since the last reset
+    nudge = ""  # a retry's instruction, at the end of the message where DeepSeek heeds it
     try:
-        async for event in session.agent.stream_async(prompt):
-            if isinstance(event, dict) and isinstance(event.get("data"), str):
-                yield {"type": "text", "text": event["data"]}
-            elif isinstance(event, dict) and "current_tool_use" in event:
-                name = (event["current_tool_use"] or {}).get("name")
-                if name and name != last_tool:
-                    last_tool = name
-                    yield {"type": "tool", "name": name}
+        for attempt in range(2):
+            start = len(session.agent.messages)
+            leaked = False
+            # Until the model makes a tool call, its text is held back: before a call it is
+            # narration ("Let me check...", never shown), and an answer with no call at all is
+            # shown only once its amounts are known to come from a lookup or the user.
+            looked_up = False
+            shown = False  # anything sent to the page in this attempt
+            events = _stream(session, with_language(prompt) + nudge)
+            async for event in events:
+                kind = event["type"]
+                if kind == "leak":
+                    leaked = True
+                    break
+                if kind == "tool":
+                    looked_up = True
+                if kind == "text":
+                    answer += event["text"]
+                    if not looked_up:
+                        continue
+                    shown = True
+                elif kind == "reset":
+                    answer = ""
+                    if not shown:
+                        continue  # nothing on the page to clear
+                    shown = False
+                yield event
+            await events.aclose()  # stops the model call when it leaked
+            problem = (
+                "tool call written as text"
+                if leaked
+                else "facts stated without a lookup"
+                if not looked_up and unlooked_facts(answer, session.agent.messages, start)
+                else None
+            )
+            if problem is None:
+                if not looked_up and answer:
+                    yield {"type": "text", "text": answer}  # the held answer, checked
+                break
+            # Drop the answer from the conversation, clear anything shown, ask once more.
+            log.warning("%s (attempt %d)", problem, attempt + 1)
+            del session.agent.messages[start:]
+            if shown:
+                yield {"type": "reset"}
+            if attempt == 1:
+                message = (
+                    "The Advisor had trouble answering. Please try again."
+                    if leaked
+                    else "I couldn't check that against our card data. Please ask again."
+                )
+                yield _error("internal", message)
+                return
+            hint = RETRY_HINT if leaked else LOOKUP_HINT
+            session.agent.system_prompt = system_prompt_for(prompt) + hint
+            nudge = "\n[Before answering, look this up with the tools and quote what they return.]"
+            answer = ""
+        turn_id = _save_turn(api, turn_record(session.agent.messages[start:], prompt, answer))
     except Exception:
         log.exception("advisor turn failed")
         yield _error("internal", "Something went wrong while answering. Please try again.")
         return
     finally:
         session.api = None  # don't keep the caller's token after the reply
-    yield {"type": "done"}
+    yield {"type": "done", **({"turn_id": turn_id} if turn_id else {})}
+
+
+# Dollar amounts and point counts ("$250", "95 美元", "USD 95", "75,000"): card facts a reply
+# may state only when a tool (or the user) supplied them.
+_AMOUNT = r"(\d[\d,]*(?:\.\d+)?)"
+_FACT_NUMBER = re.compile(
+    "|".join(
+        [
+            rf"\$\s?{_AMOUNT}",  # $95
+            rf"(?:usd|us\$)\s?{_AMOUNT}",  # USD 95
+            rf"{_AMOUNT}\s?(?:美元|美金|dollars?\b|usd\b)",  # 95 美元, 95 dollars
+            r"\b(\d{1,3}(?:,\d{3})+)\b",  # 75,000 (points, miles)
+        ]
+    ),
+    re.IGNORECASE,
+)
+LOOKUP_HINT = (
+    "\nYour previous reply stated card facts (amounts) without looking them up. Call the tools "
+    "(get_card_details, rank_cards, check_eligibility) and quote what they return."
+)
+
+
+def _numbers(text: str) -> set[str]:
+    return {
+        next(g for g in groups if g).replace(",", "").removesuffix(".00")
+        for groups in _FACT_NUMBER.findall(text)
+    }
+
+
+def unlooked_facts(answer: str, messages: list[dict], start: int) -> bool:
+    """True when this turn called no tool, yet the answer states an amount that no tool result
+    and nothing the user wrote in this conversation contains. DeepSeek once answered "The Amex
+    Gold has a $250 annual fee" from memory ($325 in the catalog) without calling a tool."""
+    turn = messages[start:]
+    if any("toolUse" in block for m in turn for block in m.get("content", [])):
+        return False  # it looked things up; amounts it derives from them are fine
+    stated = _numbers(answer)
+    if not stated:
+        return False
+    sources = []
+    for message in messages:
+        for block in message.get("content", []):
+            if "toolResult" in block:
+                sources += [p.get("text", "") for p in block["toolResult"].get("content", [])]
+            elif message.get("role") == "user" and "text" in block:
+                sources.append(block["text"])
+    known = _numbers("\n".join(sources)) | {
+        n.replace(",", "") for n in re.findall(r"\d[\d,]*", "\n".join(sources))
+    }
+    return not stated <= known
+
+
+def turn_record(messages: list[dict], question: str, answer: str) -> dict:
+    """This answer as the API stores it for feedback (ADR 0009): the question, the answer the
+    page showed, and each tool call with its result, so a bad answer can be traced to the data
+    or to the model."""
+    calls, results = [], {}
+    for message in messages:
+        for block in message.get("content", []):
+            if "toolUse" in block:
+                use = block["toolUse"]
+                calls.append(
+                    (
+                        use.get("toolUseId"),
+                        use["name"],
+                        json.dumps(use.get("input"), ensure_ascii=False),
+                    )
+                )
+            elif "toolResult" in block:
+                result = block["toolResult"]
+                results[result.get("toolUseId")] = "".join(
+                    part.get("text", "") for part in result.get("content", [])
+                )
+    return {
+        "turn_id": f"{int(time.time() * 1000)}-{uuid.uuid4().hex[:8]}",
+        "question": question[:2000],
+        "answer": answer[:12000],
+        "tools": [
+            {"name": name, "input": args[:2000], "result": results.get(use_id, "")[:6000]}
+            for use_id, name, args in calls[:20]
+        ],
+        "model_id": MODEL_ID,
+        "prompt_version": PROMPT_VERSION,
+        "catalog_version": catalog_version(),
+    }
+
+
+def _save_turn(api: AdvisorApi, record: dict) -> str | None:
+    """The turn id for feedback, or None: failing to save never fails the answer."""
+    try:
+        return api.save_turn(record)["turn_id"]
+    except Exception:
+        log.warning("couldn't save the answer for feedback", exc_info=True)
+        return None
+
+
+async def _stream(session: Session, prompt: str):
+    """The agent's answer as site events. Text the model writes before a tool call ("Let me
+    check...") is narration, not the answer: when a new tool call starts, the page is told to
+    clear it. A {"type": "leak"} event ends the stream early when the model writes a tool call
+    as text instead of making it."""
+    text = ""
+    shown = False  # text sent since the last clear
+    tool_calls: set[str] = set()
+    stream = session.agent.stream_async(prompt)
+    try:
+        async for event in stream:
+            if isinstance(event, dict) and isinstance(event.get("data"), str):
+                text += event["data"]
+                if LEAKED_TOOL_CALL.search(text):
+                    yield {"type": "leak"}
+                    return
+                chunk = MODEL_MARKUP.sub("", event["data"])
+                if chunk:
+                    shown = True
+                    yield {"type": "text", "text": chunk}
+            elif isinstance(event, dict) and "current_tool_use" in event:
+                use = event["current_tool_use"] or {}
+                call = use.get("toolUseId") or use.get("name")
+                if call and call not in tool_calls:
+                    tool_calls.add(call)
+                    if shown:
+                        yield {"type": "reset"}
+                        shown = False
+                    text = ""
+                    yield {"type": "tool", "name": use.get("name")}
+    finally:
+        await stream.aclose()
 
 
 if __name__ == "__main__":

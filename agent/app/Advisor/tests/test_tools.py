@@ -155,6 +155,10 @@ class FakeApi:
 
 class S:
     api = None
+    said = "I spend about $800 a month on dining."
+
+    def user_said(self):
+        return self.said
 
 
 def posted(fake):
@@ -316,7 +320,7 @@ def test_cards_are_found_by_what_the_user_calls_them():
         "chase_sapphire_preferred"
     )
     both = json.loads(t["get_card_details"](card="Chase Sapphire card"))
-    assert [c["card_id"] for c in both["cards"]] == [
+    assert [c["card_id"] for c in both["several_cards_match"]] == [
         "chase_sapphire_preferred",
         "chase_sapphire_reserve",
     ]
@@ -332,3 +336,18 @@ def test_a_closed_card_says_so_instead_of_listing_empty_fields():
     out = json.loads(tools(session_with(FakeApi()))["get_card_details"](card="amex green"))
     assert set(out) == {"card_id", "name", "issuer", "status"}
     assert out["status"].startswith("closed to new applicants since 2026-07-23")
+
+
+def test_spending_the_user_never_said_is_refused():
+    from advisor.tools import unstated_spending
+
+    said = "I spend $1,200 a year on streaming, 800 on dining and about 1.5k on everything else"
+    assert unstated_spending({"streaming": 100, "dining": 800, "everything_else": 1500}, said) == []
+    assert unstated_spending({"dining": 300, "flights": 0}, said) == ["dining"]  # 0 removes
+
+    fake = FakeApi()
+    session = session_with(fake)
+    session.said = "Which card is best for me?"
+    out = json.loads(tools(session)["rank_cards"](monthly_spending={"dining": 300}))
+    assert out["error"] == "spending_not_from_user" and "dining" in out["detail"]
+    assert not [r for r in fake.sent if r.url.path == "/me/recommendations"]  # never ranked

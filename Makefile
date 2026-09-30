@@ -1,7 +1,7 @@
 -include .env
 export
 
-.PHONY: install test lint lambda-bundle synth deploy-infra aws-smoke web-aws e2e-aws invite invites preview api web demo e2e web-build agent agent-deploy
+.PHONY: install test lint lambda-bundle synth deploy-infra aws-smoke web-aws e2e-aws invite invites preview api web demo e2e web-build agent agent-deploy site-check feedback
 
 install:
 	uv sync --all-packages
@@ -73,6 +73,11 @@ invite:
 invites:
 	uv run python scripts/invites.py list
 
+# Rated Advisor answers on the deployed stack, 👎 first, with the tools each one used (ADR 0009)
+DOWN ?=
+feedback:
+	uv run python scripts/feedback.py $(if $(DOWN),--down)
+
 # The site on :3000 against the deployed API and Cognito (real sign-up with an invite code)
 web-aws:
 	@test -d web/node_modules || (cd web && npm install)
@@ -82,6 +87,13 @@ web-aws:
 
 e2e:
 	uv run python scripts/e2e_smoke.py
+
+# Build the site against the deployed stack and load every page under CloudFront's security
+# headers (CSP) on :3100. Local only: nothing is deployed, no model is called.
+site-check:
+	@test -d web/node_modules || (cd web && npm install)
+	@env_lines="$$(./scripts/web_aws_env.sh)" && eval "$$env_lines" && \
+	(cd web && npm run build) && uv run python scripts/check_site_headers.py
 
 # Browser e2e in Cognito mode against the deployed stack (needs `make web-aws` running; ~$0)
 e2e-aws:

@@ -35,8 +35,16 @@ export interface Credit {
   conditions: string | null;
 }
 
+/** A bank's display name and the other names people search it by ("Amex"). */
+export interface Issuer {
+  name: string;
+  aliases: string[];
+}
+
 export interface CatalogCard {
   id: string;
+  /** other names people search this card by ("CSP") */
+  aliases?: string[];
   issuer_id: string;
   name: string;
   family: string | null;
@@ -78,6 +86,8 @@ export interface CatalogSnapshot {
   generated_at: string;
   preview: boolean;
   cards: CatalogCard[];
+  /** by issuer_id; absent in snapshots before v1.6 */
+  issuers?: Record<string, Issuer>;
 }
 
 export type Status = "Eligible" | "Ineligible" | "Undetermined";
@@ -184,4 +194,13 @@ export interface ChatQuota {
   used: number;
   remaining: number;
   resets_at: string;
+}
+
+export type FeedbackReason = "wrong_info" | "not_what_i_asked" | "missing_info" | "other";
+
+/** 👍 / 👎 on one Advisor answer (ADR 0009); rating keeps that exchange 90 days. */
+export interface TurnFeedback {
+  rating: "up" | "down";
+  reason?: FeedbackReason;
+  comment?: string;
 }

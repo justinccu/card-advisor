@@ -14,7 +14,7 @@ import {
   type Conversation,
 } from "@/lib/advisor";
 import { api } from "@/lib/api";
-import type { ChatQuota } from "@/lib/types";
+import type { ChatQuota, TurnFeedback } from "@/lib/types";
 
 import { useSession } from "./Providers";
 
@@ -29,6 +29,8 @@ type Advisor = {
   quota: ChatQuota | undefined;
   cards: Map<string, AdvisorCard>;
   send: (text: string) => void;
+  /** 👍 / 👎 on an answer; the control says rating keeps that exchange 90 days */
+  rate: (messageId: string, feedback: TurnFeedback) => void;
   stop: () => void;
   reset: () => void;
 };
@@ -80,6 +82,11 @@ export function AdvisorProvider({ cards, children }: { cards: AdvisorCard[]; chi
         try {
           for await (const event of ask(text, convo.sessionId, controller.signal)) {
             if (event.type === "text") update(reply.id, (m) => ({ ...m, text: m.text + event.text, tool: null }));
+            else if (event.type === "reset") update(reply.id, (m) => ({ ...m, text: "", tool: null }));
+            else if (event.type === "done" && event.turn_id) {
+              const turnId = event.turn_id;
+              update(reply.id, (m) => ({ ...m, turnId }));
+            }
             else if (event.type === "tool") update(reply.id, (m) => ({ ...m, tool: event.name }));
             else if (event.type === "quota")
               qc.setQueryData<ChatQuota>(quotaKey, {
@@ -105,6 +112,21 @@ export function AdvisorProvider({ cards, children }: { cards: AdvisorCard[]; chi
     [busy, convo, update, qc, quotaKey],
   );
 
+  const rate = useCallback(
+    (messageId: string, feedback: TurnFeedback) => {
+      const turnId = convo?.messages.find((m) => m.id === messageId)?.turnId;
+      if (!turnId) return;
+      const mark = (status: "sending" | "sent" | "error") =>
+        update(messageId, (m) => ({ ...m, feedback: { rating: feedback.rating, status } }));
+      mark("sending");
+      api.rateTurn(turnId, feedback).then(
+        () => mark("sent"),
+        () => mark("error"),
+      );
+    },
+    [convo, update],
+  );
+
   const stop = useCallback(() => abort.current?.abort(), []);
   const reset = useCallback(() => {
     abort.current?.abort();
@@ -119,10 +141,11 @@ export function AdvisorProvider({ cards, children }: { cards: AdvisorCard[]; chi
       quota,
       cards: byId,
       send,
+      rate,
       stop,
       reset,
     }),
-    [convo, busy, quota, byId, send, stop, reset],
+    [convo, busy, quota, byId, send, rate, stop, reset],
   );
   return <AdvisorCtx.Provider value={value}>{children}</AdvisorCtx.Provider>;
 }

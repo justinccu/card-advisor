@@ -11,3 +11,10 @@ def test_replies_are_english_unless_the_message_is_chinese():
 
 def test_the_language_is_stated_at_the_end_of_the_system_prompt():
     assert system_prompt_for("hi").rstrip().endswith("English")
+
+
+def test_each_message_ends_with_its_reply_language():
+    from advisor.prompt import with_language
+
+    assert with_language("Can I get the bonus?").endswith("[Reply in English.]")
+    assert "Traditional Chinese" in with_language("推薦哪張卡？").splitlines()[-1]

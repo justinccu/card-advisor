@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { CatalogBrowser } from "@/components/CatalogBrowser";
-import { openCards } from "@/lib/catalog";
+import { getCatalog, openCards } from "@/lib/catalog";
 
 export const metadata: Metadata = { title: "Cards" };
 
@@ -13,7 +13,7 @@ export default function CardsPage() {
       <p className="mb-8 mt-2 max-w-xl text-[19px] text-ink-2">
         Welcome offers, fees and rewards from {cards.length} US cards, straight from each issuer.
       </p>
-      <CatalogBrowser cards={cards} />
+      <CatalogBrowser cards={cards} issuers={getCatalog().issuers ?? {}} />
     </div>
   );
 }

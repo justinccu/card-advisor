@@ -7,7 +7,17 @@ from datetime import UTC, datetime
 
 from card_rules.catalog import CatalogSnapshot
 
-from scout import annotate, boilerplate, compare, overrides, publish, release, report, review
+from scout import (
+    annotate,
+    boilerplate,
+    compare,
+    overrides,
+    publish,
+    release,
+    report,
+    review,
+    search_names,
+)
 from scout.bedrock import DEFAULT_MODEL, PRICES, BudgetExceeded, Ledger, cost_usd
 from scout.evidence import check_card
 from scout.extract import (
@@ -381,7 +391,13 @@ def cmd_publish(args: argparse.Namespace) -> None:
         cards, valuations = annotate.annotate(cards)
     except annotate.AnnotationError as e:
         raise SystemExit(str(e)) from None
-    path = publish.publish(cards, valuations=valuations)
+    # Names people search by (banks and card aliases), on every publish path too.
+    try:
+        issuers = search_names.load_issuers()
+        cards = search_names.stamp(cards, load_seed(), issuers)
+    except search_names.SearchNamesError as e:
+        raise SystemExit(str(e)) from None
+    path = publish.publish(cards, valuations=valuations, issuers=issuers)
     open_cards = sum(c.availability == "open" for c in cards)
     if path is None:
         print(f"catalog unchanged ({len(cards)} cards); no new snapshot written")

@@ -7,18 +7,36 @@ explains), 0004 (no monetization), 0005 (the Applicant Profile is the single sou
 ## Decision
 
 The Advisor is a Strands agent on AgentCore Runtime. The model is one setting
-(`ADVISOR_MODEL_ID`). Development uses **Qwen3 235B** on Bedrock (billed by AWS, so covered by
-the account's credits), since 2026-09-29. Before that it used Nova 2 Lite, which followed the
-tool instructions poorly (see the comparison below).
+(`ADVISOR_MODEL_ID`). It uses **DeepSeek V3.2** on Bedrock (billed by AWS, so covered by the
+account's credits), chosen by the owner on 2026-09-30. It costs $0.62 / $1.85 per million input /
+output tokens, about $0.011 a message at the measured ~15k input and ~0.7k output tokens.
 
-Other options:
-- Claude Haiku 4.5, the first choice, is sold through AWS Marketplace by Anthropic. Its Marketplace
-  agreement wasn't available on this account, and promotional credits likely don't apply.
-- DeepSeek V3.1 stopped responding on this account on 2026-09-28, as did Kimi K2.5.
+History:
+- Nova 2 Lite skipped the tools and answered rule questions from memory (comparison below).
+- Qwen3 235B ($0.004 a message) followed the tool rules but sometimes wrote a tool call into its
+  reply as text, and once ranked cards on spending it made up. Both are now caught in code.
+- DeepSeek V3.2, unlike V3.1 on 2026-09-28, responds and follows the tool and rule
+  instructions. It narrates before a tool call ("Let me check...") and lets its tool-call
+  markup (`<｜DSML｜function_calls`) into the text stream. The agent clears narration when a
+  tool call starts (a `reset` event) and strips the markup. It also kept the conversation's
+  earlier language against the system prompt, so each message now ends with the reply
+  language (`[Reply in English.]`), which the site doesn't show.
 
-The production model is chosen in S8 by running the same golden set against the candidates:
-Qwen3, plus Claude and Gemini through their own APIs. Those two would bring an API key to store,
-a bill outside the AWS credits, and user data sent outside AWS, which the ADR must then record. Because a small model paraphrases loosely, tools return the "why" as data
+Model availability, checked 2026-09-30:
+- us-east-2 has more current AWS-billed models than us-east-1 or us-west-2. Only older models
+  (Llama 3, Mistral 2024) are in those regions alone.
+- AWS-billed and open to this account: gpt-oss-120b, Qwen3, MiniMax M2.5, Mistral Large 3,
+  DeepSeek V3.2, GLM-5, Grok 4.7 and Kimi K3. The last two are priced only through Bedrock's
+  OpenAI-compatible ("mantle") API.
+- Claude and OpenAI's GPT-5/6 are sold through AWS Marketplace. Their agreements show
+  `NOT_AVAILABLE` on this FREE-plan account, in every region.
+
+The production model is confirmed in S8 by running the same golden set against the candidates:
+DeepSeek V3.2, Qwen3, gpt-oss-120b, and optionally Claude through Anthropic's own API. That last
+one would bring an API key to store, a bill outside the AWS credits, and user data sent outside
+AWS, which the ADR must then record.
+
+Because a small model paraphrases loosely, tools return the "why" as data
 (rank, top earnings, the Offer's own wording, Minimum Spend and whether usual spending covers it,
 a ready-made `card:` link) so the model quotes rather than recalls.
 
@@ -161,11 +179,66 @@ can't hold them, so their holders may be told an Offer is available when it isn'
   custom header and allows the site's origin (CORS) only when ADVISOR_LOCAL=1. The browser e2e
   test scripts the agent's stream, so CI never calls a model.
 
+### Answer feedback (built with S5)
+
+Each answer has a 👍 / 👎; 👎 asks what went wrong ("wrong information", "not what I asked",
+"missing something", "other") and takes an optional comment. The goal is not fine-tuning. It is
+finding bad answers, telling whether the data, a tool, the prompt or the model caused them, and
+turning them into golden-set cases (S8) and A/B metrics (S10).
+
+- **Every answer**: the agent saves a turn record through the API with the user's own token
+  (`POST /me/chat/turns`). It holds the question as typed, the answer the page showed, each tool
+  call with its (truncated) result, the model id, a hash of the system prompt, and the catalog
+  version. It is stored under `USER#<id>` / `TURN#<id>` with a 7-day TTL, like Memory. The
+  `done` event carries its `turn_id`; if saving fails, the answer still arrives, without buttons.
+- **A rated answer** (`PUT /me/chat/turns/{id}/feedback`, owner only) is kept 90 days. The
+  control says so before anything is sent: rating shares that exchange to improve answers.
+- **Deleting the account** deletes every turn, rated or not (same partition).
+- **Review**: `make feedback` (`make feedback DOWN=1` for 👎 only) lists rated answers with their
+  tool calls, 👎 first. Users appear as a short hash, not an email.
+- **Why this design**: content survives only where a user chose to share it, and logs never
+  carry it (above). The tool results are what tell a data mistake from a model mistake.
+
+### Finding a card by what people call it
+
+The site's search boxes (`web/src/lib/search.ts`) and the Advisor's `get_card_details`
+(`advisor/search.py`) use the same rules and the same names. The names are stamped into the
+Catalog Snapshot at publish (v1.6):
+- bank names and aliases from `catalog/seed/issuers.yaml` ("Amex" and "American Express");
+- reviewed card aliases from the seed ("CSP", "VX", "Hilton Ascend").
+
+A query word matches exactly, as a prefix, or with a typo (one letter in 4+ letters, two in
+8+). Filler words and card networks are ignored, so "Bilt Mastercard" doesn't match the Citi
+Secured Mastercard.
+- Cards matching every word come first. If the query covers one card's whole name, that card
+  is the one meant.
+- With no full match, a card counts as meant only with two thirds of the words and its whole
+  name. Otherwise the Advisor asks "did you mean..." rather than saying we don't cover the card.
+- "Not in the catalog" is said only when nothing is close.
+
+### Answers checked before they reach the page
+
+The model is treated like user input: what it produces is checked where it enters the system or
+reaches the user.
+- **Identity**: comes from the verified token.
+- **Links**: only `card:<id>`.
+- **Tool arguments**: spending amounts must appear in what the user wrote.
+- **Text format**: a tool call written as text is dropped and retried.
+- **Facts stated without a lookup**: until the model makes its first tool call, its text is
+  held back. Narration before a call is never shown. An answer with no call at all is shown
+  only if every amount in it ("$250", "75,000") came from a tool result or the user. Otherwise
+  it is dropped and retried, with the instruction at the end of the message, where DeepSeek
+  heeds it.
+
+This came from DeepSeek V3.2 answering "The Amex Gold has a $250 annual fee" without calling a
+tool (the catalog says $325). A second failure shows "I couldn't check that against our card
+data" rather than an unchecked fact.
+
 ### Cost control
 
 Each user gets **30 messages per day** (raised from 10 on 2026-09-30), reset at midnight US Eastern, enforced by the API
 (`POST /me/chat/turn`, an atomic DynamoDB counter) before the model is called; the UI shows what
-is left. Estimated cost is about $0.02 per turn with Haiku 4.5. Deploying the Runtime needs the
+is left. Estimated cost with DeepSeek V3.2 is about $0.015 a message including Runtime and Memory, so at most about $14 per user a month. Deploying the Runtime needs the
 owner's approval with a cost estimate.
 
 ## Considered options
@@ -186,23 +259,6 @@ owner's approval with a cost estimate.
   offers, ranking, eligibility). Retrieval returns text, not computed values, and the model then
   reads and does the math itself, the failure the no-null rule exists to stop. Retrieval is
   planned only for fine print (below).
-
-## Planned: answer feedback (with S5, the public site)
-
-Each Advisor answer gets a 👍 / 👎, with an optional reason ("wrong information", "not what I
-asked", "missing something"). The goal is not fine-tuning. It is finding bad answers, telling
-whether the data, a tool, the prompt or the model caused them, and turning them into golden-set
-cases (S8) and A/B metrics (S10).
-
-- **Every turn**: the agent writes a turn record through the API, with the user's own token:
-  question, answer, tools called and their results, model id, prompt and catalog versions, and
-  trace id. It is stored under `USER#<id>` / `TURN#<time>#<id>` with a 7-day TTL, like Memory.
-- **A rated turn** (`PUT /me/chat/turns/{id}/feedback`) is kept 90 days. The feedback control
-  says so: sending feedback shares that conversation to improve the Advisor.
-- **Unrated turns** expire after 7 days. Deleting the account deletes all of them.
-- **Why this design**: content survives only where a user chose to share it. Logs never carry
-  it (above). The tool results are what show whether a bad answer came from the data or the
-  model.
 
 ## Planned: fine-print lookup (after the S8 golden set)
 

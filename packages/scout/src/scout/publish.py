@@ -353,11 +353,18 @@ def promote_preview(
     return cards, notes
 
 
-def _digest(cards: list[CatalogCard], valuations: dict | None = None) -> str:
+def _digest(
+    cards: list[CatalogCard], valuations: dict | None = None, issuers: dict | None = None
+) -> str:
     payload = json.dumps(
         {
             "cards": [c.model_dump(mode="json") for c in cards],
             "valuations": {k: v.model_dump(mode="json") for k, v in (valuations or {}).items()},
+            **(
+                {"issuers": {k: v.model_dump(mode="json") for k, v in issuers.items()}}
+                if issuers
+                else {}  # snapshots from before issuers keep their digest
+            ),
         },
         sort_keys=True,
     )
@@ -389,14 +396,17 @@ def next_version(current: str | None) -> str:
 
 
 def publish(
-    cards: list[CatalogCard], catalog_dir: Path = CATALOG_DIR, valuations: dict | None = None
+    cards: list[CatalogCard],
+    catalog_dir: Path = CATALOG_DIR,
+    valuations: dict | None = None,
+    issuers: dict | None = None,
 ) -> Path | None:
-    """Write the next vMAJOR.MINOR.json if the catalog (cards or valuations) changed; return its
-    path, or None."""
+    """Write the next vMAJOR.MINOR.json if the catalog (cards, valuations or issuers) changed;
+    return its path, or None."""
     version, previous = latest(catalog_dir)
-    if previous is not None and _digest(previous.cards, previous.valuations) == _digest(
-        cards, valuations
-    ):
+    if previous is not None and _digest(
+        previous.cards, previous.valuations, previous.issuers
+    ) == _digest(cards, valuations, issuers):
         return None
     snapshot = CatalogSnapshot(
         version=next_version(version),
@@ -404,6 +414,7 @@ def publish(
         generated_at=datetime.now(UTC),
         cards=cards,
         valuations=valuations or {},
+        issuers=issuers or {},
     )
     catalog_dir.mkdir(parents=True, exist_ok=True)
     path = catalog_dir / f"v{snapshot.version}.json"
