@@ -41,6 +41,17 @@ def card(product, opened):
     return HeldCardIn(card_product_id=product, opened_on=opened)
 
 
+def redeem_all(repo, code, users, workers=8):
+    """Concurrently for the in-memory repo, whose atomicity is our own lock. moto doesn't isolate
+    concurrent transactions the way DynamoDB does (it once let 3 of 20 threads through a 2-use
+    code), so there the attempts run one after another: that still checks our condition
+    expressions, which is what a test can say about our code."""
+    if isinstance(repo, InMemoryRepository):
+        with ThreadPoolExecutor(workers) as pool:
+            return list(pool.map(lambda u: repo.redeem_invite(code, u), users))
+    return [repo.redeem_invite(code, u) for u in users]
+
+
 def test_cards_are_listed_in_open_date_order(repo):
     repo.add_card("u", card("b", date(2025, 6, 1)))
     repo.add_card("u", card("a", date(2024, 1, 1)))
@@ -77,8 +88,7 @@ def test_profile_and_attestation_default_then_roundtrip(repo):
 
 def test_invite_redemption_is_atomic(repo):
     repo.create_invite("CODE", 2)
-    with ThreadPoolExecutor(8) as pool:
-        results = list(pool.map(lambda i: repo.redeem_invite("CODE", f"user-{i}"), range(20)))
+    results = redeem_all(repo, "CODE", [f"user-{i}" for i in range(20)])
     assert results.count(True) == 2
     assert repo.redeem_invite("MISSING", "someone") is False
     # remaining + recorded uses always equals what the code was created with
@@ -88,8 +98,7 @@ def test_invite_redemption_is_atomic(repo):
 
 def test_last_use_race_has_exactly_one_winner(repo):
     repo.create_invite("LAST", 1)
-    with ThreadPoolExecutor(2) as pool:
-        results = list(pool.map(lambda u: repo.redeem_invite("LAST", u), ["ann", "bob"]))
+    results = redeem_all(repo, "LAST", ["ann", "bob"], workers=2)
     assert sorted(results) == [False, True]
     [invite] = repo.list_invites()
     assert [u.user for u in invite.uses] == [["ann", "bob"][results.index(True)]]
