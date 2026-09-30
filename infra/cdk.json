@@ -11,7 +11,7 @@
     "github_oidc_subject_prefix": "repo:justinccu@90822649/card-advisor@1386322676",
     "monthly_budget_usd": 50,
     "cors_origins": ["http://localhost:3000"],
-    "advisor_memory_id": "",
+    "advisor_memory_id": "CardAdvisor_AdvisorMemory-4KzKH387RK",
     "@aws-cdk/core:defaultCrossStackReferences": "strong"
   }
 }

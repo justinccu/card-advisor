@@ -1,3 +1,23 @@
 {
-  "targets": {}
+  "targets": {
+    "default": {
+      "resources": {
+        "runtimes": {
+          "Advisor": {
+            "runtimeId": "CardAdvisor_Advisor-V2ESiT3Pcv",
+            "runtimeArn": "arn:aws:bedrock-agentcore:us-east-2:631690098596:runtime/CardAdvisor_Advisor-V2ESiT3Pcv",
+            "roleArn": "arn:aws:iam::631690098596:role/AgentCore-CardAdvisor-def-ApplicationAgentAdvisorRu-damDrCTHshdn"
+          }
+        },
+        "memories": {
+          "AdvisorMemory": {
+            "memoryId": "CardAdvisor_AdvisorMemory-4KzKH387RK",
+            "memoryArn": "arn:aws:bedrock-agentcore:us-east-2:631690098596:memory/CardAdvisor_AdvisorMemory-4KzKH387RK"
+          }
+        },
+        "stackName": "AgentCore-CardAdvisor-default",
+        "deployHash": "099c59b52d8b6a94"
+      }
+    }
+  }
 }
