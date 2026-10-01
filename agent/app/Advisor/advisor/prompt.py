@@ -92,29 +92,53 @@ Style
 """
 
 
+TRADITIONAL_CHINESE = "Traditional Chinese (zh-TW, never Simplified)"
+USERS_LANGUAGE = "the language the user's message is written in"
+
+
+def _is_han(c: str) -> bool:
+    return "\u4e00" <= c <= "\u9fff" or "\u3400" <= c <= "\u4dbf"
+
+
 def reply_language(message: str) -> str:
-    """English by default; Traditional Chinese when the message is written in Chinese. Decided in
-    code, not by the model: a model left to guess drifted into Simplified Chinese after earlier
-    Chinese turns. Two or more Han characters count as Chinese, so a Chinese sentence that names
-    an English card ("推薦 Sapphire Preferred 嗎") still gets a Chinese reply."""
+    """English and Traditional Chinese are decided in code, not by the model: a model left to
+    guess drifted into Simplified Chinese after earlier Chinese turns. Two or more Han
+    characters count as Chinese, so a Chinese sentence that names an English card ("推薦
+    Sapphire Preferred 嗎") still gets a Chinese reply; plain ASCII is English. Any other
+    language (letters outside ASCII and Han: "¿Qué tarjeta...?", Japanese kana) is left to the
+    model, which answers in the user's language (the owner's choice, 2026-10-01)."""
     lowered = message.lower()
     if any(ask in lowered for ask in ("用英文", "英文回答", "in english", "answer in english")):
         return "English"  # asked for outright, whatever language the question is in
     if any(ask in lowered for ask in ("用中文", "中文回答", "in chinese")):
-        return "Traditional Chinese (zh-TW, never Simplified)"
-    han = sum(1 for c in message if "\u4e00" <= c <= "\u9fff" or "\u3400" <= c <= "\u4dbf")
-    return "Traditional Chinese (zh-TW, never Simplified)" if han >= 2 else "English"
+        return TRADITIONAL_CHINESE
+    if any("\u3040" <= c <= "\u30ff" for c in message):
+        return USERS_LANGUAGE  # Japanese: kana, though it shares Han characters with Chinese
+    if sum(1 for c in message if _is_han(c)) >= 2:
+        return TRADITIONAL_CHINESE
+    if any(c.isalpha() and not c.isascii() and not _is_han(c) for c in message):
+        return USERS_LANGUAGE
+    return "English"
 
 
 def system_prompt_for(message: str) -> str:
     return f"{SYSTEM_PROMPT}\nReply language\n- {reply_language(message)}\n"
 
 
+LANGUAGE_NOTE = "\n\n[Reply in "
+
+
 def with_language(message: str) -> str:
     """The user's message as the model sees it, ending with the reply language. DeepSeek V3.2
     kept answering in the conversation's earlier language despite the system prompt; the last
     line of the latest message wins. The site shows only what the user typed."""
-    return f"{message}\n\n[Reply in {reply_language(message)}.]"
+    return f"{message}{LANGUAGE_NOTE}{reply_language(message)}.]"
+
+
+def typed(text: str) -> str:
+    """What the user typed, without the notes we append to their message (the reply language,
+    a retry's instruction): a retry that names "$550" must not make $550 the user's word."""
+    return text.split(LANGUAGE_NOTE, 1)[0]
 
 
 # Recorded with each answer, so feedback can be grouped by prompt version (A/B, S10).

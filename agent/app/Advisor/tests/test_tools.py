@@ -307,7 +307,8 @@ def test_eligibility_findings_carry_how_each_rule_works():
         tools(session_with(FakeApi()))["check_eligibility"](card_ids=["chase_sapphire_preferred"])
     )
     [because] = out[0]["offer_because"]  # the Eligible reason is left out of the reasons...
-    assert out[0]["rules_met_for_offer"] == ["chase_5_24"]  # ...but its id can still be cited
+    # ...but a rule met can still be cited, and says what it is
+    assert out[0]["rules_met_for_offer"] == [{"rule": "chase_5_24", "says": "Chase 5/24"}]
     assert because["rule"] == "chase_5_24" and because["status"] == "Undetermined"
     assert because["how_the_rule_works"] == ["Counts new cards opened from any bank"]
     assert "retry_after" not in because  # nulls are dropped

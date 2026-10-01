@@ -160,12 +160,13 @@ cases:
       not_contains: ["48 個月後就能", "已經超過 48 個月", "可以拿到開卡禮"]
       cites: [citi_strata_premier_once]
 
-  # fact_006 (owner): since 2026-01-22 the Preferred's and Reserve's bonuses count separately.
+  # fact_006 (owner, Chase's terms copied 2026-10-01): both Sapphires can be held, but the
+  # bonus "may not be available" while the other personal Sapphire is open (a warning, not a
+  # verdict: the application's pop-up decides).
   - id: sapphire-both-cards-zh
     category: eligibility
     critical: true
-    # The wallet really holds the Preferred, so a stale "another Sapphire is open" rule
-    # would fire here.
+    # The wallet really holds the Preferred, so chase_sapphire_other_open warns here.
     user: fresh
     profile: demo
     cards: [[chase_sapphire_preferred, 18]]
@@ -173,8 +174,8 @@ cases:
     turns: ["我已經有 Chase Sapphire Preferred，還能申請 Sapphire Reserve 拿開卡禮嗎？"]
     expect:
       tools: [check_eligibility]
-      contains_any: ["可以", "各自", "分別", "不影響"]
-      not_contains: ["不能同時持有", "只能持有一張", "持有其他 Sapphire 就不能", "48 個月後就能", "等 48 個月"]
+      contains_any: ["可能", "不一定", "未必", "may"]
+      not_contains: ["不能同時持有", "只能持有一張", "持有其他 Sapphire 就不能", "一定拿得到", "不影響", "48 個月後就能", "等 48 個月"]
 
   - id: amex-gold-offer-ladder
     category: eligibility
@@ -194,7 +195,9 @@ cases:
     category: eligibility
     turns: ["Will I definitely be approved for the Venture X?"]
     expect:
-      not_contains: ["you will be approved", "definitely be approved", "guaranteed approval"]
+      # Says approval can't be promised. No "doesn't say" list: a substring can't tell "you'll
+      # definitely be approved" from "not that you'll definitely be approved" (a judge could).
+      contains_any: ["guarantee", "can't promise", "cannot promise", "not promise", "no one can"]
 
   - id: ladder-zh
     category: eligibility
@@ -212,11 +215,12 @@ cases:
       contains_any: ["can't determine", "cannot determine", "confirm", "don't know", "not sure", "complete"]
 
   # The bug fixed in S6a: chase_24_month_bonus is about the same card (conditional form, so
-  # no wallet fixture is needed).
+  # no wallet fixture is needed). Two Freedom cards: Sapphire has no 24-month rule since
+  # 2026-10-01 (its own terms say "ever").
   - id: chase-24-month-scope-zh
     category: eligibility
     critical: true
-    turns: ["如果我 12 個月前拿過 Chase Freedom 的開卡禮，現在辦 Sapphire Preferred 拿得到開卡禮嗎？"]
+    turns: ["如果我 12 個月前拿過 Chase Freedom Flex 的開卡禮，現在辦 Freedom Unlimited 拿得到開卡禮嗎？"]
     expect:
       contains_any: ["拿得到", "不同", "同一張", "不影響", "same card"]
       not_contains: ["都拿不到", "任何 Chase 卡"]
@@ -226,7 +230,8 @@ cases:
     critical: true
     turns: ["如果我 5 年前拿過 Sapphire Preferred 的開卡禮，現在重辦還拿得到嗎？"]
     expect:
-      contains_any: ["終身", "lifetime", "一次"]
+      # The point: no bonus again, however long ago ("無法再次獲得這張卡的開卡禮" says it too).
+      contains_any: ["終身", "lifetime", "一次", "無法再次", "不能再", "不會再"]
       not_contains: ["48 個月後就能", "可以再拿"]
 
   - id: amex-once-per-lifetime-zh

@@ -11,6 +11,7 @@ from card_rules.models import (
     FamilyOpenRule,
     MaxOpenRule,
     OfferHistoryRule,
+    ProductOpenRule,
     VelocityRule,
 )
 
@@ -52,9 +53,21 @@ def how_it_counts(rule: EligibilityRule, names: dict[str, str] | None = None) ->
             _counts("Business cards", rule.counts_business),
             _counts("Charge cards", rule.counts_charge_cards),
         ]
-    if isinstance(rule, FamilyOpenRule):
+    if isinstance(rule, ProductOpenRule):
         return [
-            f"No welcome offer while another personal {rule.family} card from {issuer} is open.",
+            "You can't open this card while you already have it open; "
+            "having had it before doesn't stop the application.",
+            "Authorized-user cards do not count.",
+        ]
+    if isinstance(rule, FamilyOpenRule):
+        # A soft rule is the bank's "may": say so, or the model states it as certain.
+        offer = (
+            "No welcome offer"
+            if rule.strength == "strict"
+            else "The welcome offer may not be given"
+        )
+        return [
+            f"{offer} while another personal {rule.family} card from {issuer} is open.",
             "Closed cards and authorized-user cards do not count.",
         ]
     if isinstance(rule, OfferHistoryRule):
@@ -93,12 +106,16 @@ def how_it_counts(rule: EligibilityRule, names: dict[str, str] | None = None) ->
 def _exceptions(rule: EligibilityRule, names: dict[str, str]) -> list[str]:
     if not rule.not_for_products:
         return []
-    cards = ", ".join(names.get(p, p) for p in rule.not_for_products)
-    return [f"Doesn't apply to {cards}, which has a stricter rule of its own."]
+    cards = [names.get(p, p) for p in rule.not_for_products]
+    if len(cards) == 1:
+        return [f"Doesn't apply to {cards[0]}, which has a stricter rule of its own."]
+    listed = ", ".join(cards[:-1]) + f" and {cards[-1]}"
+    return [f"Doesn't apply to {listed}, which have stricter rules of their own."]
 
 
 def explain(rule: EligibilityRule, names: dict[str, str] | None = None) -> dict:
-    decides = "approval" if isinstance(rule, VelocityRule | MaxOpenRule) else "welcome offer"
+    approval = VelocityRule | MaxOpenRule | ProductOpenRule
+    decides = "approval" if isinstance(rule, approval) else "welcome offer"
     return {
         "rule_id": rule.id,
         "issuer_id": rule.issuer_id,

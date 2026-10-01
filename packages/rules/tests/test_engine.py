@@ -103,16 +103,46 @@ def test_incomplete_wallet_already_over_limit_is_still_ineligible():
 # --- Sapphire (2026 rules) --------------------------------------------------------
 
 
-def test_holding_the_other_sapphire_no_longer_blocks_the_offer():
-    # Chase dropped "no bonus while another Sapphire is open" on 2026-01-22: the Preferred's
-    # and the Reserve's bonuses count separately.
+CSR = CardProduct(
+    id="chase_sapphire_reserve", issuer_id="chase", name="Sapphire Reserve", family="sapphire"
+)
+
+
+def test_holding_the_other_sapphire_lets_you_apply_but_warns_about_the_bonus():
+    # Chase's terms: the bonus "may not be available" while another personal Sapphire is open.
     wallet = complete(
-        card("chase", 30, card_product_id="chase_sapphire_reserve", family="sapphire"),
+        card("chase", 30, card_product_id=CSR.id, family="sapphire"),
         issuers=frozenset({"chase"}),
     )
     result = evaluate(CSP, SSN, wallet, RULES, AS_OF)
-    assert result.offer.status is Status.ELIGIBLE
-    assert not any(r.rule_id == "chase_sapphire_open" for r in result.offer.reasons)
+    assert result.application.status is Status.ELIGIBLE  # both Sapphires can be held
+    assert result.offer.status is Status.ELIGIBLE  # "may": a warning, not a verdict
+    assert [w.rule_id for w in result.offer.warnings] == ["chase_sapphire_other_open"]
+
+
+def test_a_sapphire_card_cannot_be_opened_while_the_same_card_is_open():
+    holds_csp = complete(card("chase", 30, card_product_id=CSP.id, family="sapphire"))
+    r = reason(evaluate(CSP, SSN, holds_csp, RULES, AS_OF).application, "chase_sapphire_one_open")
+    assert r.status is Status.INELIGIBLE
+    closed = card("chase", 50, card_product_id=CSP.id, family="sapphire", closed_on=AS_OF)
+    after_closing = evaluate(CSP, SSN, complete(closed), RULES, AS_OF).application
+    assert reason(after_closing, "chase_sapphire_one_open").status is Status.ELIGIBLE
+    unconfirmed = Wallet(complete_since=add_months(AS_OF, -60))  # open cards not confirmed
+    r = reason(evaluate(CSP, SSN, unconfirmed, RULES, AS_OF).application, "chase_sapphire_one_open")
+    assert r.status is Status.UNDETERMINED
+    # Other Chase cards have no such rule
+    assert not any(
+        x.rule_id == "chase_sapphire_one_open"
+        for x in evaluate(FREEDOM, SSN, holds_csp, RULES, AS_OF).application.reasons
+    )
+
+
+def test_sapphire_has_no_24_month_rule_other_chase_cards_do():
+    # Sapphire's terms say "ever received" the bonus; the 24-month rule would only suggest
+    # a bonus earned long ago no longer counts.
+    for product, expected in [(CSP, False), (CSR, False), (FREEDOM, True)]:
+        reasons = evaluate(product, SSN, complete(), RULES, AS_OF).offer.reasons
+        assert any(r.rule_id == "chase_24_month_bonus" for r in reasons) is expected
 
 
 def test_family_open_rules_still_work_for_any_issuer_that_has_one():

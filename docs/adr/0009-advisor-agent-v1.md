@@ -227,7 +227,10 @@ reaches the user.
 - **Internal names**: a reply that names a tool, a field, an id outside a link, an API path or
   a heading of the system prompt is cut off as it streams and retried, with the instruction to
   answer in plain words. The check is a pattern match, so it doesn't depend on the model
-  obeying the "no tool names" rule.
+  obeying the "no tool names" rule. It looks only at what the page will show: narration
+  before a tool call is held back and dropped, so naming a rule there costs no retry. If the
+  user asked how the Advisor works and the retry names its insides again, the reply is a
+  short refusal ("I can't share how the Advisor works inside...") rather than an error.
 - **Rule citations**: when the Advisor states an issuer rule, it cites it as
   `[Chase 5/24](rule:chase_5_24)`. The site shows the citation as the rule's source (issuer
   terms or applicants' reports, with the date checked). The eval fails any citation of a rule
@@ -238,10 +241,23 @@ reaches the user.
   only if every amount in it ("$250", "75,000") came from a tool result or the user. Otherwise
   it is dropped and retried, with the instruction at the end of the message, where DeepSeek
   heeds it.
+- **Amounts no lookup returned**: an answer that did look things up but states an amount no
+  tool or the user gave is retried once, naming those amounts and asking the model to look up
+  every card it mentions; a second such answer is given up like one with no lookup. Every case
+  seen was a recalled fee (the Reserve's old $550), never a worked-out one; the sum or
+  difference of two sourced amounts in the answer ("$795 less the $300 credit is $495")
+  counts as sourced. Notes we append to the user's message (the reply language, a retry's
+  instruction) never count as the user's words.
+- **Language**: English and Traditional Chinese are decided in code (see the prompt); any other
+  language (letters outside ASCII and Han, Japanese kana) is left to the model, which replies
+  in the user's language (owner's choice, 2026-10-01). The Advisor's own messages (giving up,
+  errors, the refusal) are in Traditional Chinese for a Chinese reply, otherwise English.
 
 This came from DeepSeek V3.2 answering "The Amex Gold has a $250 annual fee" without calling a
 tool (the catalog says $325). A second failure shows "I couldn't check that against our card
-data" rather than an unchecked fact.
+data" rather than an unchecked fact. The retry after a lookup came from a failed deploy gate
+(2026-10-01): DeepSeek checked eligibility, then gave the Sapphire Reserve's old $550 fee
+($795 in the catalog) without looking the card up.
 
 ### Cost control
 

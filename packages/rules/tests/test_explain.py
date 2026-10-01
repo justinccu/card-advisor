@@ -33,3 +33,20 @@ def test_bonus_windows_say_when_they_start():
     # count from the bonus.
     facts = " ".join(explain(by_id()["citi_48_month_bonus"])["how_it_counts"])
     assert "count from when that bonus was earned, not from when a card was opened" in facts
+
+
+def test_sapphire_rules_say_may_where_the_terms_do_and_name_the_exceptions():
+    rules = by_id()
+    names = {
+        "chase_sapphire_preferred": "Chase Sapphire Preferred",
+        "chase_sapphire_reserve": "Chase Sapphire Reserve",
+    }
+    other = explain(rules["chase_sapphire_other_open"])
+    assert other["how_it_counts"][0].startswith("The welcome offer may not be given")
+    assert other["enforcement"].startswith("soft")
+    assert explain(rules["chase_sapphire_one_open"])["decides"] == "approval"
+    months = explain(rules["chase_24_month_bonus"], names)["how_it_counts"][-1]
+    assert months == (
+        "Doesn't apply to Chase Sapphire Preferred and Chase Sapphire Reserve, "
+        "which have stricter rules of their own."
+    )

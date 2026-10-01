@@ -33,10 +33,36 @@
   source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
   verified_on: 2026-09-24
 
-# Retired 2026-10-01 (owner review): chase_sapphire_open, "no bonus while another personal
-# Sapphire card is open". Chase dropped it on 2026-01-22, after dropping the 48-month rule and
-# the one-Sapphire limit in June 2025. The Preferred's and the Reserve's bonuses now count
-# separately: both cards can be held, and each bonus earned once.
+# Chase's Sapphire terms (owner copied them 2026-10-01): "This credit card is unavailable to
+# you if you currently have one open. The new cardmember bonus may not be available to you if
+# you currently have any other personal Sapphire cards open, previously held this card or
+# received a new cardmember bonus for this card." Owner's reading:
+# - both Sapphires can be held (the old one-Sapphire limit is gone), but not two of the same;
+# - holding the other Sapphire may cost the bonus: soft, a warning ("may"; the application's
+#   pop-up decides). This replaces chase_sapphire_open, retired earlier the same day as
+#   "holding another Sapphire doesn't matter", which the terms contradict;
+# - having held this card (or earned its bonus) costs it: strict, as before;
+# - there is no 24-month clause for Sapphire (chase_24_month_bonus skips both cards).
+
+- kind: product_open
+  id: chase_sapphire_one_open
+  issuer_id: chase
+  family: sapphire
+  description: "Chase Sapphire: can't be opened while you have this same card open"
+  strength: strict
+  confidence: official
+  source_url: https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred
+  verified_on: 2026-10-01
+
+- kind: family_open
+  id: chase_sapphire_other_open
+  issuer_id: chase
+  family: sapphire
+  description: "Chase Sapphire: the bonus may not be given while another personal Sapphire card is open (you can still apply)"
+  strength: soft
+  confidence: official
+  source_url: https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred
+  verified_on: 2026-10-01
 
 - kind: offer_history
   id: chase_sapphire_once_per_card
@@ -45,10 +71,10 @@
   target: product
   basis: held
   lookback_months: null
-  description: "Chase Sapphire (since 2026-01-22): each Sapphire card's bonus once per lifetime; holding another Sapphire doesn't matter"
+  description: "Chase Sapphire: no bonus if you ever held this card or earned its bonus"
   strength: strict
   confidence: official
-  source_url: https://www.thepointsguy.com/news/chase-sapphire-bonus-eligibility-changes-2026/
+  source_url: https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred
   verified_on: 2026-10-01
 
 - kind: offer_history
@@ -58,6 +84,7 @@
   basis: bonus
   lookback_months: 24
   description: "Chase: no bonus on a card whose bonus was earned in the past 24 months"
+  not_for_products: [chase_sapphire_preferred, chase_sapphire_reserve]
   strength: strict
   confidence: official
   source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/

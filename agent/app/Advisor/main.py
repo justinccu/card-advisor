@@ -12,6 +12,7 @@ Each request: identify the caller from the verified token, take one message from
 """
 
 import json
+import logging
 import os
 import re
 import time
@@ -24,7 +25,10 @@ from advisor.prompt import (
     PROMPT_HEADINGS,
     PROMPT_VERSION,
     SYSTEM_PROMPT,
+    TRADITIONAL_CHINESE,
+    reply_language,
     system_prompt_for,
+    typed,
     with_language,
 )
 from advisor.tools import build_tools
@@ -52,6 +56,10 @@ def _local_cors() -> list[Middleware]:
 
 app = BedrockAgentCoreApp(middleware=_local_cors())
 log = app.logger
+# Cutting a model stream short (a retry) closes Strands' generator in another async context, and
+# OpenTelemetry logs a traceback for each span it can't detach. Harmless: the span just ends
+# there. Keep real errors from that logger.
+logging.getLogger("opentelemetry.context").setLevel(logging.CRITICAL)
 
 # Qwen sometimes writes a tool call into its reply instead of making it
 # ('{"name": "rank_cards", "arguments": {...}} </tool_call>').
@@ -98,7 +106,7 @@ class Session:
         """What the user typed in this conversation (not tool results), for checking that tool
         arguments such as spending amounts came from the user."""
         return "\n".join(
-            block["text"]
+            typed(block["text"])
             for message in self.agent.messages
             if message.get("role") == "user"
             for block in message.get("content", [])
@@ -134,6 +142,39 @@ def get_session(session_id: str, user_id: str) -> Session:
 
 def _error(code: str, message: str, **extra) -> dict:
     return {"type": "error", "code": code, "message": message, **extra}
+
+
+INTERNALS_REFUSAL = (
+    "I can't share how the Advisor works inside. I can compare cards for your spending, check "
+    "issuer rules like Chase 5/24 against your wallet, or look up a card's fees and offers."
+)
+# The Advisor's own messages, for a reply in Traditional Chinese (the API's messages stay as sent).
+ZH_TW = {
+    "The Advisor had trouble answering. Please try again.": "Advisor 這次沒能回答，請再試一次。",
+    "I couldn't check that against our card data. Please ask again.": (
+        "我沒辦法用我們的卡片資料確認這點，請再問一次。"
+    ),
+    "Something went wrong while answering. Please try again.": "回答時出了問題，請再試一次。",
+    INTERNALS_REFUSAL: (
+        "我不能說明 Advisor 內部是怎麼運作的。我可以依你的消費比較卡片、用你的錢包檢查 "
+        "Chase 5/24 等申請規則，或查詢卡片的年費和開卡禮。"
+    ),
+}
+
+
+def _in_reply_language(message: str, prompt: str) -> str:
+    return ZH_TW.get(message, message) if reply_language(prompt) == TRADITIONAL_CHINESE else message
+
+
+# A question about the Advisor's own workings ("check_eligibility 這個函數是怎麼實作的？").
+_ABOUT_INTERNALS = re.compile(
+    r"函[數式]|參數|實作|原始碼|系統提示|提示詞|prompt|function|parameter|implement|source code",
+    re.IGNORECASE,
+)
+
+
+def asks_about_internals(message: str) -> bool:
+    return bool(_INTERNAL.search(message) or _ABOUT_INTERNALS.search(message))
 
 
 @app.entrypoint
@@ -217,10 +258,9 @@ async def invoke(payload, context):
                     shown = False
                 yield event
             await events.aclose()  # stops the model call when it leaked
+            unsourced = unsourced_in(answer, session.agent.messages) if answer else set()
             problem = leaked or (
-                "unlooked"
-                if not looked_up and unlooked_facts(answer, session.agent.messages, start)
-                else None
+                ("unlooked" if not looked_up else "unsourced") if unsourced else None
             )
             if problem is None:
                 if not looked_up and answer:
@@ -234,15 +274,23 @@ async def invoke(payload, context):
             if shown:
                 yield {"type": "reset"}
             if attempt == 1:
-                yield _error("internal", give_up)
+                if problem == "internal" and asks_about_internals(prompt):
+                    # Asked how the Advisor works and still naming its insides: decline plainly.
+                    answer = _in_reply_language(INTERNALS_REFUSAL, prompt)
+                    yield {"type": "text", "text": answer}
+                    break
+                yield _error("internal", _in_reply_language(give_up, prompt))
                 return
             session.agent.system_prompt = system_prompt_for(prompt) + hint
             nudge = retry_nudge
+            if unsourced:  # name them: "look things up" alone didn't stop a recalled $550 fee
+                nudge += f"\n[No lookup gave these amounts: {', '.join(sorted(unsourced))}.]"
             answer = ""
         turn_id = _save_turn(api, turn_record(session.agent.messages[start:], prompt, answer))
     except Exception:
         log.exception("advisor turn failed")
-        yield _error("internal", "Something went wrong while answering. Please try again.")
+        message = "Something went wrong while answering. Please try again."
+        yield _error("internal", _in_reply_language(message, prompt))
         return
     finally:
         _report_cost(api, session.agent, tokens_before)
@@ -268,6 +316,10 @@ LOOKUP_HINT = (
     "\nYour previous reply stated card facts (amounts) without looking them up. Call the tools "
     "(get_card_details, rank_cards, check_eligibility) and quote what they return."
 )
+UNSOURCED_HINT = (
+    "\nYour previous reply stated card facts (amounts) that none of your lookups returned. Look "
+    "up each card you mention (get_card_details) and quote what it returns."
+)
 
 # Why an answer was dropped -> (log text, system-prompt hint, end-of-message nudge, message
 # shown if the retry fails too).
@@ -290,6 +342,14 @@ PROBLEMS = {
         "\n[Before answering, look this up with the tools and quote what they return.]",
         "I couldn't check that against our card data. Please ask again.",
     ),
+    # It looked things up but stated amounts none of them returned (each time so far, a fee it
+    # recalled: the Reserve's old $550). Asked once more, naming the amounts; then given up.
+    "unsourced": (
+        "amounts not from the lookups",
+        UNSOURCED_HINT,
+        "\n[Look up every card you mention; quote its fees, offers and credits as returned.]",
+        "I couldn't check that against our card data. Please ask again.",
+    ),
 }
 
 
@@ -300,29 +360,32 @@ def _numbers(text: str) -> set[str]:
     }
 
 
-def unlooked_facts(answer: str, messages: list[dict], start: int) -> bool:
-    """True when this turn called no tool, yet the answer states an amount that no tool result
-    and nothing the user wrote in this conversation contains. DeepSeek once answered "The Amex
-    Gold has a $250 annual fee" from memory ($325 in the catalog) without calling a tool."""
-    turn = messages[start:]
-    if any("toolUse" in block for m in turn for block in m.get("content", [])):
-        return False  # it looked things up; amounts it derives from them are fine
+def unsourced_in(answer: str, messages: list[dict]) -> set[str]:
+    """Amounts in the answer that no tool result and nothing the user wrote in this conversation
+    contains. DeepSeek once answered "The Amex Gold has a $250 annual fee" from memory ($325 in
+    the catalog) without calling a tool, and once checked eligibility, then gave the Sapphire
+    Reserve's old $550 fee ($795 in the catalog) without looking the card up."""
     sources = []
     for message in messages:
         for block in message.get("content", []):
             if "toolResult" in block:
                 sources += [p.get("text", "") for p in block["toolResult"].get("content", [])]
             elif message.get("role") == "user" and "text" in block:
-                sources.append(block["text"])
-    return bool(unsourced_amounts(answer, sources))
+                sources.append(typed(block["text"]))
+    return unsourced_amounts(answer, sources)
 
 
 def unsourced_amounts(answer: str, sources: list[str]) -> set[str]:
     """Amounts in the answer that no source text contains (tool results, the user's words).
-    Zero is never a claim worth sourcing ("$0 annual fee" reads "no annual fee" in the data)."""
+    Zero is never a claim worth sourcing ("$0 annual fee" reads "no annual fee" in the data).
+    The sum or difference of two sourced amounts the answer states is worked out, not recalled
+    ("$795 less the $300 credit is $495")."""
     text = "\n".join(sources)
     known = _numbers(text) | {n.replace(",", "") for n in re.findall(r"\d[\d,]*", text)}
-    return _numbers(answer) - known - {"0"}
+    stated = _numbers(answer)
+    sourced = [float(n) for n in stated & known]
+    worked_out = {f"{v:g}" for a in sourced for b in sourced for v in (a + b, abs(a - b)) if a != b}
+    return {n for n in stated - known - {"0"} if f"{float(n):g}" not in worked_out}
 
 
 def turn_record(messages: list[dict], question: str, answer: str) -> dict:
@@ -390,7 +453,12 @@ async def _stream(session: Session, prompt: str):
     """The agent's answer as site events. Text the model writes before a tool call ("Let me
     check...") is narration, not the answer: when a new tool call starts, the page is told to
     clear it. A {"type": "leak"} event ends the stream early when the model writes a tool call
-    as text, or names something internal (a tool, a field, an id, an API path)."""
+    as text, or names something internal (a tool, a field, an id, an API path).
+
+    Internal names are checked in what the page will show: text after a tool call as it streams;
+    text before any tool call only once the stream ends without one, since until then it's
+    narration the page holds back and drops ("Let me check amex_ladder_gold" never reaches the
+    reader, so it mustn't cost the answer a retry)."""
     text = ""
     shown = False  # text sent since the last clear
     tool_calls: set[str] = set()
@@ -402,10 +470,11 @@ async def _stream(session: Session, prompt: str):
                 if LEAKED_TOOL_CALL.search(text):
                     yield {"type": "leak", "why": "tool_call"}
                     return
-                names = internal_names(MODEL_MARKUP.sub("", text), prompt)  # as the page shows it
-                if names:
-                    yield {"type": "leak", "why": "internal", "names": names}
-                    return
+                if tool_calls:  # shown as it streams: check it now
+                    names = internal_names(MODEL_MARKUP.sub("", text), prompt)  # as shown
+                    if names:
+                        yield {"type": "leak", "why": "internal", "names": names}
+                        return
                 chunk = MODEL_MARKUP.sub("", event["data"])
                 if chunk:
                     shown = True
@@ -420,6 +489,10 @@ async def _stream(session: Session, prompt: str):
                         shown = False
                     text = ""
                     yield {"type": "tool", "name": use.get("name")}
+        if not tool_calls:  # an answer with no lookup, held until now: check it whole
+            names = internal_names(MODEL_MARKUP.sub("", text), prompt)
+            if names:
+                yield {"type": "leak", "why": "internal", "names": names}
     finally:
         await stream.aclose()
 

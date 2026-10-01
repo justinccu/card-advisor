@@ -108,6 +108,15 @@ class MaxOpenRule(_RuleBase):
     counts_charge_cards: bool = True
 
 
+class ProductOpenRule(_RuleBase):
+    """Application Rule: the card can't be opened while you already have it open (Chase
+    Sapphire: "unavailable to you if you currently have one open"). `family` limits the rule to
+    that family's cards."""
+
+    kind: Literal["product_open"] = "product_open"
+    family: str | None = None
+
+
 class FamilyOpenRule(_RuleBase):
     """Offer Rule: no Offer while another card of the same family is open."""
 
@@ -138,10 +147,11 @@ class OfferHistoryRule(_RuleBase):
         return self
 
 
-ApplicationRule = VelocityRule | MaxOpenRule
+ApplicationRule = VelocityRule | MaxOpenRule | ProductOpenRule
 OfferRule = FamilyOpenRule | OfferHistoryRule
 EligibilityRule = Annotated[
-    VelocityRule | MaxOpenRule | FamilyOpenRule | OfferHistoryRule, Field(discriminator="kind")
+    VelocityRule | MaxOpenRule | ProductOpenRule | FamilyOpenRule | OfferHistoryRule,
+    Field(discriminator="kind"),
 ]
 
 

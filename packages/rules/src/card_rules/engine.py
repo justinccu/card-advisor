@@ -17,6 +17,7 @@ from card_rules.models import (
     HeldCard,
     MaxOpenRule,
     OfferHistoryRule,
+    ProductOpenRule,
     Reason,
     Status,
     VelocityRule,
@@ -47,6 +48,8 @@ def evaluate(
                 application.append((rule, _velocity(rule, wallet, as_of)))
             case MaxOpenRule():
                 application.append((rule, _max_open(rule, wallet)))
+            case ProductOpenRule():
+                application.append((rule, _product_open(rule, product, wallet)))
             case FamilyOpenRule():
                 offer.append((rule, _family_open(rule, wallet)))
             case OfferHistoryRule():
@@ -73,7 +76,7 @@ def _applies(rule: EligibilityRule, product: CardProduct) -> bool:
         return False
     if isinstance(rule, OfferHistoryRule) and rule.for_product:
         return product.id == rule.for_product
-    if isinstance(rule, FamilyOpenRule | OfferHistoryRule) and rule.family:
+    if isinstance(rule, ProductOpenRule | FamilyOpenRule | OfferHistoryRule) and rule.family:
         return product.family == rule.family
     return True
 
@@ -183,6 +186,17 @@ def _max_open(rule: MaxOpenRule, wallet: Wallet) -> Reason:
             rule, Status.UNDETERMINED, f"{rule.description}: {tally}; open cards not confirmed."
         )
     return _reason(rule, Status.ELIGIBLE, f"{rule.description}: {tally}.")
+
+
+def _product_open(rule: ProductOpenRule, product: CardProduct, wallet: Wallet) -> Reason:
+    if any(
+        c.is_open and c.card_product_id == product.id and not c.is_authorized_user
+        for c in wallet.cards
+    ):
+        return _reason(rule, Status.INELIGIBLE, f"{rule.description}: this card is already open.")
+    if not wallet.includes_all_open_cards:
+        return _reason(rule, Status.UNDETERMINED, f"{rule.description}: open cards not confirmed.")
+    return _reason(rule, Status.ELIGIBLE, f"{rule.description}: this card isn't open.")
 
 
 def _family_open(rule: FamilyOpenRule, wallet: Wallet) -> Reason:

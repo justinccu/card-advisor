@@ -241,9 +241,16 @@ def compact_eligibility(body: dict, rules: dict[str, dict] | None = None) -> lis
             for r, status in found
         ]
 
-    def passed(verdict: dict) -> list[str]:
-        # Ids only: enough to cite a rule the user meets ("under Chase 5/24"), little to read.
-        return [r["rule_id"] for r in verdict.get("reasons", []) if r["status"] == "Eligible"]
+    def passed(verdict: dict) -> list[dict]:
+        # The id to cite and the rule's one-line summary: given the id alone, DeepSeek explained
+        # chase_sapphire_once_per_card from memory as "you can't hold two Sapphires".
+        # Only rules the model can cite: not internal checks such as the tax id (the model
+        # cited a "rule:tax_id" that GET /rules doesn't have).
+        return [
+            drop_nulls({"rule": r["rule_id"], "says": rules.get(r["rule_id"], {}).get("summary")})
+            for r in verdict.get("reasons", [])
+            if r["status"] == "Eligible" and (not rules or r["rule_id"] in rules)
+        ]
 
     return [
         {

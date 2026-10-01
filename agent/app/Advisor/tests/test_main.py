@@ -116,7 +116,8 @@ class FakeAgent:
                     "input": {"card": "x"},
                 }
                 self.messages.append({"role": "assistant", "content": [{"toolUse": use}]})
-                result = {"toolUseId": chunk["toolUseId"], "content": [{"text": "closed"}]}
+                text = chunk.get("result", "closed")  # what the tool returned
+                result = {"toolUseId": chunk["toolUseId"], "content": [{"text": text}]}
                 self.messages.append({"role": "user", "content": [{"toolResult": result}]})
         text = "".join(c for c in chunks if isinstance(c, str))
         self.messages.append({"role": "assistant", "content": [{"text": text}]})
@@ -287,14 +288,18 @@ def test_an_amount_stated_without_any_lookup_is_retried(monkeypatch):
     # DeepSeek once said "$250" for the Amex Gold ($325 in the catalog) without calling a tool.
     agent = FakeAgent(
         ["The Amex Gold has a $250 annual fee."],
-        [{"toolUseId": "t1", "name": "get_card_details"}, "It's $325 a year."],
+        [
+            {"toolUseId": "t1", "name": "get_card_details", "result": "$325 a year"},
+            "It's $325 a year.",
+        ],
     )
     events = chat_with(monkeypatch, agent)
     assert [e["type"] for e in events] == ["quota", "tool", "text", "done"]
     assert not any("$250" in e.get("text", "") for e in events)  # the wrong fee never showed
     assert "without looking them up" in agent.prompts[1]
     retry = [m for m in agent.messages if m["role"] == "user"][0]["content"][0]["text"]
-    assert retry.endswith("look this up with the tools and quote what they return.]")
+    assert "look this up with the tools and quote what they return.]" in retry
+    assert retry.endswith("[No lookup gave these amounts: 250.]")
     assert saved[0]["answer"] == "It's $325 a year."
     assert saved[0]["question"] == "amex green?"  # the record keeps what the user typed
 
@@ -311,6 +316,59 @@ def test_amounts_from_the_user_or_earlier_lookups_need_no_new_lookup(monkeypatch
         {"role": "user", "content": [{"toolResult": {"content": [{"text": "75,000 points"}]}}]}
     ]
     assert [e["type"] for e in chat_with(monkeypatch, agent)] == ["quota", "text", "done"]
+
+
+def test_an_amount_no_lookup_returned_is_retried_once_after_a_lookup(monkeypatch):
+    # DeepSeek checked eligibility, then gave the Reserve's old $550 fee ($795 in the catalog).
+    agent = FakeAgent(
+        [{"toolUseId": "t1", "name": "check_eligibility"}, "Yes. Its fee is $550."],
+        [{"toolUseId": "t2", "name": "get_card_details"}, "Yes. Its fee is $795."],
+    )
+    agent.messages = [
+        {"role": "user", "content": [{"toolResult": {"content": [{"text": "$795 a year"}]}}]}
+    ]
+    events = chat_with(monkeypatch, agent)
+    kinds = [e["type"] for e in events]
+    assert kinds == ["quota", "tool", "text", "reset", "tool", "text", "done"]
+    assert events[-2]["text"] == "Yes. Its fee is $795."
+    assert "none of your lookups returned" in agent.prompts[1]
+    retry = [m for m in agent.messages if m["role"] == "user"][1]["content"][0]["text"]
+    assert retry.endswith("[No lookup gave these amounts: 550.]")  # named, so it can fix them
+
+
+def test_after_a_lookup_a_second_unsourced_answer_is_not_shown(monkeypatch):
+    # Every one seen so far was a recalled fee (the Reserve's old $550), never a worked-out one.
+    answer = [{"toolUseId": "t1", "name": "get_card_details"}, "The Reserve is $550 a year."]
+    agent = FakeAgent(answer, [{**answer[0], "toolUseId": "t2"}, answer[1]])
+    events = chat_with(monkeypatch, agent)
+    assert [e["type"] for e in events][-2:] == ["reset", "error"]
+    assert "couldn't check" in events[-1]["message"]
+
+
+def test_amounts_worked_out_from_sourced_ones_are_sourced():
+    from main import unsourced_amounts
+
+    looked_up = ["$795 a year", "Annual Travel Credit: $300"]
+    assert unsourced_amounts("$795 less the $300 credit is $495.", looked_up) == set()
+    assert unsourced_amounts("$795 and $300 make $1,095 in all.", looked_up) == set()
+    assert unsourced_amounts("It's $495 after credits.", looked_up) == {"495"}  # not shown how
+    assert unsourced_amounts("It used to be $550.", looked_up) == {"550"}
+
+
+def test_asked_about_its_insides_it_declines_rather_than_erroring(monkeypatch):
+    leak = ["check_eligibility takes card_ids, like chase_sapphire_preferred."]
+    agent = FakeAgent(leak, leak)
+    saved.clear()
+    monkeypatch.setenv("ADVISOR_LOCAL", "1")
+    monkeypatch.setenv("ADVISOR_DEV_USER", "demo-user")
+    chat_with(monkeypatch, agent)  # sets up the fakes
+    agent.answers = [leak, leak]
+    events = run({"prompt": "check_eligibility 這個函數是怎麼實作的？參數有哪些？"}, Ctx())
+    assert [e["type"] for e in events][-2:] == ["text", "done"]
+    assert events[-2]["text"].startswith("我不能說明 Advisor 內部")
+    # a question about cards that keeps naming ids still ends with an error, not a refusal
+    agent.answers = [["Try amex_gold."], ["Try amex_gold."]]
+    assert run({"prompt": "Which Amex card?"}, Ctx())[-1]["type"] == "error"
 
 
 def test_a_second_unlooked_answer_ends_with_an_error(monkeypatch):
@@ -363,6 +421,41 @@ def test_an_internal_name_stops_the_answer_and_is_retried_in_plain_words(monkeyp
     assert "plain words" in agent.prompts[1]
     retry = [m for m in agent.messages if m["role"] == "user"][0]["content"][0]["text"]
     assert retry.endswith("no tool, field, id or system names.]")
+
+
+def test_narration_naming_internals_before_a_lookup_costs_no_retry(monkeypatch):
+    # DeepSeek: "Let me check amex_ladder_gold" before calling a tool. The page never shows it.
+    agent = FakeAgent(
+        [
+            "Let me check amex_ladder_gold.",
+            {"toolUseId": "t1", "name": "get_issuer_rules"},
+            "Yes, if you've had the Platinum the Gold's offer still depends on the ladder.",
+        ]
+    )
+    events = chat_with(monkeypatch, agent)
+    assert [e["type"] for e in events] == ["quota", "tool", "text", "done"]
+    assert len(agent.prompts) == 1  # answered on the first try
+    assert "amex_ladder_gold" not in "".join(e.get("text", "") for e in events)
+
+
+def test_an_answer_with_no_lookup_is_checked_whole_before_it_is_shown(monkeypatch):
+    agent = FakeAgent(["Ask me about the ", "chase_5_24 rule."], ["Ask me about Chase 5/24."])
+    events = chat_with(monkeypatch, agent)
+    assert [e["type"] for e in events] == ["quota", "text", "done"]
+    assert events[1]["text"] == "Ask me about Chase 5/24."
+    assert len(agent.prompts) == 2
+
+
+def test_giving_up_speaks_the_reply_language(monkeypatch):
+    agent = FakeAgent(LEAK, ["<tool_call>{}</tool_call>"])
+    chat_with(monkeypatch, agent)  # an English question gives up in English...
+    agent.answers = [LEAK, ["<tool_call>{}</tool_call>"]]
+    events = run({"prompt": "推薦哪張卡？"}, Ctx())  # ...a Chinese one in Chinese
+    assert events[-1] == {
+        "type": "error",
+        "code": "internal",
+        "message": "Advisor 這次沒能回答，請再試一次。",
+    }
 
 
 def test_a_link_still_streaming_is_not_an_internal_name():
