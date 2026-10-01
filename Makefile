@@ -1,7 +1,7 @@
 -include .env
 export
 
-.PHONY: install test lint lambda-bundle synth deploy-infra aws-smoke web-aws e2e-aws invite invites preview api web demo e2e web-build agent agent-deploy site-check feedback
+.PHONY: install test lint lambda-bundle synth deploy-infra aws-smoke web-aws e2e-aws invite invites preview api web demo e2e web-build agent agent-deploy site-check feedback eval
 
 install:
 	uv sync --all-packages
@@ -57,12 +57,21 @@ demo:
 agent:
 	cd agent && agentcore dev --skip-deploy --logs
 
-# Deploy the Advisor runtime + memory to AWS (billable per use, ADR 0009), then keep its logs
+# Deploy the Advisor runtime + memory to AWS (billable per use, ADR 0009), only after the golden
+# set passes (SKIP_EVAL=1 to override), then keep its logs
 # and traces 7 days. After a first deploy, set the Memory id as advisor_memory_id in
 # infra/cdk.json so account deletion can purge it.
 agent-deploy:
+	$(if $(SKIP_EVAL),@echo "SKIP_EVAL set: deploying without the golden set",$(MAKE) eval)
 	cd agent && agentcore deploy
 	./scripts/agent_log_retention.sh
+
+# The golden set (agent/evals/golden.yaml) against the real model and a fresh local API; fails
+# when a gate isn't met. ~$0.6 a run with DeepSeek. RUNS=3, MODEL=<bedrock id>, ONLY=<ids>.
+RUNS ?= 1
+eval:
+	cd agent/app/Advisor && uv run --frozen python ../../evals/run.py --runs $(RUNS) \
+		$(if $(MODEL),--model $(MODEL)) $(if $(ONLY),--only $(ONLY))
 
 # Invite codes on the deployed stack: `make invite` (N=1 USES=1 by default) and `make invites`
 N ?= 1

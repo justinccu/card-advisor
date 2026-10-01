@@ -13,6 +13,7 @@ from scout import (
     compare,
     overrides,
     publish,
+    referrals,
     release,
     report,
     review,
@@ -391,11 +392,12 @@ def cmd_publish(args: argparse.Namespace) -> None:
         cards, valuations = annotate.annotate(cards)
     except annotate.AnnotationError as e:
         raise SystemExit(str(e)) from None
-    # Names people search by (banks and card aliases), on every publish path too.
+    # Names people search by (banks and card aliases) and referral facts, on every publish path.
     try:
         issuers = search_names.load_issuers()
         cards = search_names.stamp(cards, load_seed(), issuers)
-    except search_names.SearchNamesError as e:
+        cards = referrals.stamp(cards)  # what a friend's referral adds (ADR 0004)
+    except (search_names.SearchNamesError, referrals.ReferralError) as e:
         raise SystemExit(str(e)) from None
     path = publish.publish(cards, valuations=valuations, issuers=issuers)
     open_cards = sum(c.availability == "open" for c in cards)

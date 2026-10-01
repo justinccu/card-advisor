@@ -4,6 +4,7 @@ import { AUTH_MODE, authHeaders, signOut } from "./auth";
 import type {
   ApplicantProfile,
   ChatQuota,
+  RuleFacts,
   EligibilityResult,
   HeldCard,
   HeldCardIn,
@@ -88,6 +89,7 @@ export const api = {
     call<ApplicantProfile>("/me/profile", { method: "PUT", body: JSON.stringify(p) }),
   deleteMe: () => call<void>("/me", { method: "DELETE" }),
   chatQuota: () => call<ChatQuota>("/me/chat/quota"),
+  rules: () => call<{ rules: RuleFacts[] }>("/rules").then((r) => r.rules),
   rateTurn: (turnId: string, feedback: TurnFeedback) =>
     call<void>(`/me/chat/turns/${encodeURIComponent(turnId)}/feedback`, {
       method: "PUT",

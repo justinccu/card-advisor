@@ -18,9 +18,15 @@ import time
 import uuid
 from collections import OrderedDict
 
-from advisor.api import AdvisorApi, ApiError, QuotaExceeded, catalog_version
+from advisor.api import AdvisorApi, ApiError, QuotaExceeded, catalog_version, rules_version
 from advisor.identity import NotSignedIn, caller_from
-from advisor.prompt import PROMPT_VERSION, SYSTEM_PROMPT, system_prompt_for, with_language
+from advisor.prompt import (
+    PROMPT_HEADINGS,
+    PROMPT_VERSION,
+    SYSTEM_PROMPT,
+    system_prompt_for,
+    with_language,
+)
 from advisor.tools import build_tools
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
 from memory.session import get_memory_session_manager
@@ -53,6 +59,28 @@ LEAKED_TOOL_CALL = re.compile(r'</?tool_call>|\{\s*"name"\s*:\s*"\w+"\s*,\s*"arg
 # DeepSeek's tool-call markup can surface in the text stream even when the call itself works
 # ("<｜DSML｜function_calls"); it is never part of an answer.
 MODEL_MARKUP = re.compile(r"</?｜DSML｜[A-Za-z_]*>?|<｜[^｜<>\n]{1,40}｜>")
+# Names users must never see: tools and fields (snake_case, which also catches card and rule
+# ids written outside a link), API paths, and the system prompt's own headings. Deterministic,
+# so it doesn't depend on the model following the "no tool names" rule.
+# A link target, closed or still streaming ("[Apply](card:amex_pl" before the rest arrives).
+_LINK_TARGET = re.compile(r"\]\((?:card|rule):[^)\s]*(?:\)|$)")
+_INTERNAL = re.compile(
+    r"\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\b|/me/[\w/-]*|/(?:rules|catalog)\b|"
+    + "|".join(re.escape(h) for h in PROMPT_HEADINGS)
+)
+
+
+def internal_names(text: str, said: str = "") -> list[str]:
+    """Internal names in a reply, except those the user typed (repeating the user's own words
+    reveals nothing; how a tool works still mustn't be explained, which the prompt covers)."""
+    allowed = {n.lower() for n in _INTERNAL.findall(said.lower())}
+    return [n for n in _INTERNAL.findall(_LINK_TARGET.sub("]", text)) if n.lower() not in allowed]
+
+
+INTERNAL_HINT = (
+    "\nYour previous reply named internal things (tool names, field names, ids, API paths). "
+    'Describe what you did in plain words, such as "I checked your eligibility".'
+)
 RETRY_HINT = (
     "\nYour previous reply wrote a tool call as text. Call tools only through tool use; "
     "never write a tool call in the reply."
@@ -152,7 +180,8 @@ async def invoke(payload, context):
     try:
         for attempt in range(2):
             start = len(session.agent.messages)
-            leaked = False
+            leaked = None  # "tool_call" or "internal": why the stream was cut
+            leak_names: list[str] = []
             # Until the model makes a tool call, its text is held back: before a call it is
             # narration ("Let me check...", never shown), and an answer with no call at all is
             # shown only once its amounts are known to come from a lookup or the user.
@@ -162,7 +191,8 @@ async def invoke(payload, context):
             async for event in events:
                 kind = event["type"]
                 if kind == "leak":
-                    leaked = True
+                    leaked = event["why"]
+                    leak_names = event.get("names", [])
                     break
                 if kind == "tool":
                     looked_up = True
@@ -178,10 +208,8 @@ async def invoke(payload, context):
                     shown = False
                 yield event
             await events.aclose()  # stops the model call when it leaked
-            problem = (
-                "tool call written as text"
-                if leaked
-                else "facts stated without a lookup"
+            problem = leaked or (
+                "unlooked"
                 if not looked_up and unlooked_facts(answer, session.agent.messages, start)
                 else None
             )
@@ -190,21 +218,17 @@ async def invoke(payload, context):
                     yield {"type": "text", "text": answer}  # the held answer, checked
                 break
             # Drop the answer from the conversation, clear anything shown, ask once more.
-            log.warning("%s (attempt %d)", problem, attempt + 1)
+            what, hint, retry_nudge, give_up = PROBLEMS[problem]
+            # Names only (tool and field names), never the user's or the model's text.
+            log.warning("%s (attempt %d) %s", what, attempt + 1, sorted(set(leak_names))[:5])
             del session.agent.messages[start:]
             if shown:
                 yield {"type": "reset"}
             if attempt == 1:
-                message = (
-                    "The Advisor had trouble answering. Please try again."
-                    if leaked
-                    else "I couldn't check that against our card data. Please ask again."
-                )
-                yield _error("internal", message)
+                yield _error("internal", give_up)
                 return
-            hint = RETRY_HINT if leaked else LOOKUP_HINT
             session.agent.system_prompt = system_prompt_for(prompt) + hint
-            nudge = "\n[Before answering, look this up with the tools and quote what they return.]"
+            nudge = retry_nudge
             answer = ""
         turn_id = _save_turn(api, turn_record(session.agent.messages[start:], prompt, answer))
     except Exception:
@@ -235,6 +259,29 @@ LOOKUP_HINT = (
     "(get_card_details, rank_cards, check_eligibility) and quote what they return."
 )
 
+# Why an answer was dropped -> (log text, system-prompt hint, end-of-message nudge, message
+# shown if the retry fails too).
+PROBLEMS = {
+    "tool_call": (
+        "tool call written as text",
+        RETRY_HINT,
+        "\n[Call tools through tool use; never write a tool call in the reply.]",
+        "The Advisor had trouble answering. Please try again.",
+    ),
+    "internal": (
+        "internal name in the reply",
+        INTERNAL_HINT,
+        "\n[Answer in plain words: no tool, field, id or system names.]",
+        "The Advisor had trouble answering. Please try again.",
+    ),
+    "unlooked": (
+        "facts stated without a lookup",
+        LOOKUP_HINT,
+        "\n[Before answering, look this up with the tools and quote what they return.]",
+        "I couldn't check that against our card data. Please ask again.",
+    ),
+}
+
 
 def _numbers(text: str) -> set[str]:
     return {
@@ -250,9 +297,6 @@ def unlooked_facts(answer: str, messages: list[dict], start: int) -> bool:
     turn = messages[start:]
     if any("toolUse" in block for m in turn for block in m.get("content", [])):
         return False  # it looked things up; amounts it derives from them are fine
-    stated = _numbers(answer)
-    if not stated:
-        return False
     sources = []
     for message in messages:
         for block in message.get("content", []):
@@ -260,10 +304,15 @@ def unlooked_facts(answer: str, messages: list[dict], start: int) -> bool:
                 sources += [p.get("text", "") for p in block["toolResult"].get("content", [])]
             elif message.get("role") == "user" and "text" in block:
                 sources.append(block["text"])
-    known = _numbers("\n".join(sources)) | {
-        n.replace(",", "") for n in re.findall(r"\d[\d,]*", "\n".join(sources))
-    }
-    return not stated <= known
+    return bool(unsourced_amounts(answer, sources))
+
+
+def unsourced_amounts(answer: str, sources: list[str]) -> set[str]:
+    """Amounts in the answer that no source text contains (tool results, the user's words).
+    Zero is never a claim worth sourcing ("$0 annual fee" reads "no annual fee" in the data)."""
+    text = "\n".join(sources)
+    known = _numbers(text) | {n.replace(",", "") for n in re.findall(r"\d[\d,]*", text)}
+    return _numbers(answer) - known - {"0"}
 
 
 def turn_record(messages: list[dict], question: str, answer: str) -> dict:
@@ -298,6 +347,7 @@ def turn_record(messages: list[dict], question: str, answer: str) -> dict:
         "model_id": MODEL_ID,
         "prompt_version": PROMPT_VERSION,
         "catalog_version": catalog_version(),
+        "rules_version": rules_version(),
     }
 
 
@@ -314,7 +364,7 @@ async def _stream(session: Session, prompt: str):
     """The agent's answer as site events. Text the model writes before a tool call ("Let me
     check...") is narration, not the answer: when a new tool call starts, the page is told to
     clear it. A {"type": "leak"} event ends the stream early when the model writes a tool call
-    as text instead of making it."""
+    as text, or names something internal (a tool, a field, an id, an API path)."""
     text = ""
     shown = False  # text sent since the last clear
     tool_calls: set[str] = set()
@@ -324,7 +374,11 @@ async def _stream(session: Session, prompt: str):
             if isinstance(event, dict) and isinstance(event.get("data"), str):
                 text += event["data"]
                 if LEAKED_TOOL_CALL.search(text):
-                    yield {"type": "leak"}
+                    yield {"type": "leak", "why": "tool_call"}
+                    return
+                names = internal_names(MODEL_MARKUP.sub("", text), prompt)  # as the page shows it
+                if names:
+                    yield {"type": "leak", "why": "internal", "names": names}
                     return
                 chunk = MODEL_MARKUP.sub("", event["data"])
                 if chunk:

@@ -224,6 +224,15 @@ reaches the user.
 - **Links**: only `card:<id>`.
 - **Tool arguments**: spending amounts must appear in what the user wrote.
 - **Text format**: a tool call written as text is dropped and retried.
+- **Internal names**: a reply that names a tool, a field, an id outside a link, an API path or
+  a heading of the system prompt is cut off as it streams and retried, with the instruction to
+  answer in plain words. The check is a pattern match, so it doesn't depend on the model
+  obeying the "no tool names" rule.
+- **Rule citations**: when the Advisor states an issuer rule, it cites it as
+  `[Chase 5/24](rule:chase_5_24)`. The site shows the citation as the rule's source (issuer
+  terms or applicants' reports, with the date checked). The eval fails any citation of a rule
+  no tool returned in that conversation. Each saved answer records a `rules_version` (a hash
+  of the rule text the tools read).
 - **Facts stated without a lookup**: until the model makes its first tool call, its text is
   held back. Narration before a call is never shown. An answer with no call at all is shown
   only if every amount in it ("$250", "75,000") came from a tool result or the user. Otherwise
@@ -259,6 +268,36 @@ owner's approval with a cost estimate.
   offers, ranking, eligibility). Retrieval returns text, not computed values, and the model then
   reads and does the math itself, the failure the no-null rule exists to stop. Retrieval is
   planned only for fine print (below).
+
+### Golden set and deploy gate (S8)
+
+`agent/evals/golden.yaml` holds the cases, and `make eval` runs them against the real model.
+Each case runs through the same entrypoint the Runtime uses, against a fresh local API, with
+its own seeded user. Cases fall into six groups:
+- facts;
+- eligibility and rules;
+- recommendations;
+- catalog boundaries: closed, not covered, made up, fine print;
+- adversarial: system prompt, tool internals, SSN, off-topic, someone else's wallet;
+- language.
+
+Every answer must pass these checks:
+- no leaks: internal names, model markup, URLs (100%);
+- every card link is real (100%);
+- every amount comes from a tool or the user (95% or more);
+- every cited rule was returned by a tool (95% or more);
+- Traditional Chinese for Chinese questions, English otherwise (95% or more).
+
+Per-case expectations must hold in 90% of cases and in every `critical` case.
+`make agent-deploy` runs the eval first and refuses to deploy when a gate fails (`SKIP_EVAL=1`
+overrides). One run costs about $0.6 with DeepSeek V3.2.
+
+Later:
+- run the eval in CI behind a Bedrock-only OIDC role, then deploy the agent from CI;
+- score only answers users chose to share (rated turns) with AgentCore online evaluation,
+  because traces carry no conversation text;
+- a 5% canary means nothing at a beta's size, so model and prompt changes are compared on
+  the golden set with `make eval MODEL=... RUNS=3`.
 
 ## Planned: fine-print lookup (after the S8 golden set)
 

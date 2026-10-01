@@ -65,6 +65,22 @@ export function CardDetail({ card, children }: { card: CatalogCard; children?: R
             your amount when you apply.
           </p>
         )}
+        {card.referral && (
+          // ADR 0004: we say what a friend's referral adds; we never give or earn from the link.
+          <p className="mt-2 text-[13px] text-ink-2">
+            <span className="font-medium text-ink">Referral: </span>
+            {card.referral.text}{" "}
+            <span className="text-ink-3">
+              ({card.referral.confidence === "issuer"
+                ? "per the issuer"
+                : card.referral.confidence === "community"
+                  ? "applicants report"
+                  : "reported"}
+              , {card.referral.verified_on}. Ask someone who has the card; we don&apos;t provide
+              referral links.)
+            </span>
+          </p>
+        )}
         {card.varies_by_visitor && (
           <p className="mt-2 text-[13px] text-warn">
             This issuer shows different terms to different visitors. We list what a first-time

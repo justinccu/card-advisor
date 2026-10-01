@@ -103,13 +103,35 @@ def test_incomplete_wallet_already_over_limit_is_still_ineligible():
 # --- Sapphire (2026 rules) --------------------------------------------------------
 
 
-def test_sapphire_offer_blocked_while_another_sapphire_is_open():
+def test_holding_the_other_sapphire_no_longer_blocks_the_offer():
+    # Chase dropped "no bonus while another Sapphire is open" on 2026-01-22: the Preferred's
+    # and the Reserve's bonuses count separately.
+    wallet = complete(
+        card("chase", 30, card_product_id="chase_sapphire_reserve", family="sapphire"),
+        issuers=frozenset({"chase"}),
+    )
+    result = evaluate(CSP, SSN, wallet, RULES, AS_OF)
+    assert result.offer.status is Status.ELIGIBLE
+    assert not any(r.rule_id == "chase_sapphire_open" for r in result.offer.reasons)
+
+
+def test_family_open_rules_still_work_for_any_issuer_that_has_one():
+    from card_rules.models import FamilyOpenRule
+
+    rule = FamilyOpenRule(
+        id="x_family_open",
+        issuer_id="chase",
+        family="sapphire",
+        description="no bonus while another family card is open",
+        confidence="official",
+        source_url="https://example.com",
+        verified_on=AS_OF,
+    )
     wallet = complete(
         card("chase", 30, card_product_id="chase_sapphire_reserve", family="sapphire")
     )
-    result = evaluate(CSP, SSN, wallet, RULES, AS_OF)
-    assert result.offer.status is Status.INELIGIBLE
-    assert reason(result.offer, "chase_sapphire_open").status is Status.INELIGIBLE
+    result = evaluate(CSP, SSN, wallet, [rule], AS_OF)
+    assert reason(result.offer, "x_family_open").status is Status.INELIGIBLE
 
 
 def test_sapphire_offer_is_once_per_card_even_after_closing():
@@ -297,6 +319,51 @@ def test_ladder_rules_match_the_issuer_terms_verbatim_file():
     }
     expected = {card: ids for card, ids in expected.items() if ids}
     ladders = {
-        r.for_product: set(r.products) for r in RULES if getattr(r, "target", "") == "products"
+        r.for_product: set(r.products)
+        for r in RULES
+        if r.issuer_id == "amex" and getattr(r, "target", "") == "products"
     }
     assert ladders == expected
+
+
+# --- Citi -------------------------------------------------------------------------------
+
+CITI_DC = CardProduct(id="citi_double_cash", issuer_id="citi", name="Double Cash")
+STRATA_PREMIER = CardProduct(
+    id="citi_strata_premier", issuer_id="citi", name="Strata Premier", family="strata"
+)
+
+
+def test_citi_application_limits_count_personal_cards_only():
+    from datetime import timedelta
+
+    business = HeldCard(
+        issuer_id="citi", opened_on=AS_OF - timedelta(days=3), is_business=True
+    )  # a business card opened 3 days ago doesn't trigger 1/8
+    result = evaluate(CITI_DC, SSN, complete(business, issuers=frozenset({"citi"})), RULES, AS_OF)
+    assert reason(result.application, "citi_1_8").status is Status.ELIGIBLE
+
+
+def test_strata_premier_bonus_is_once_ever_by_holding():
+    # Terms: not available if you currently have or previously had a Strata Premier or a
+    # Citi Premier, however long ago, bonus or not.
+    old = card(
+        "citi", 60, card_product_id="citi_strata_premier", family="strata",
+        closed_on=date(2023, 1, 1),
+    )  # fmt: skip
+    result = evaluate(STRATA_PREMIER, SSN, complete(old, issuers=frozenset({"citi"})), RULES, AS_OF)
+    r = reason(result.offer, "citi_strata_premier_once")
+    assert r.status is Status.INELIGIBLE and r.retry_after is None  # never
+    # its own rule replaces the 48-month one, so the explanation can't contradict itself
+    assert not any(x.rule_id == "citi_48_month_bonus" for x in result.offer.reasons)
+
+
+def test_a_strata_elite_bonus_does_not_touch_the_strata_premier():
+    elite = card(
+        "citi", 12, card_product_id="citi_strata_elite", family="strata",
+        bonus_received_on=date(2025, 12, 1),
+    )  # fmt: skip
+    result = evaluate(
+        STRATA_PREMIER, SSN, complete(elite, issuers=frozenset({"citi"})), RULES, AS_OF
+    )
+    assert result.offer.status is Status.ELIGIBLE and not result.offer.warnings

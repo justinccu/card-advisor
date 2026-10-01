@@ -306,7 +306,8 @@ def test_eligibility_findings_carry_how_each_rule_works():
     out = json.loads(
         tools(session_with(FakeApi()))["check_eligibility"](card_ids=["chase_sapphire_preferred"])
     )
-    [because] = out[0]["offer_because"]  # the Eligible reason is left out
+    [because] = out[0]["offer_because"]  # the Eligible reason is left out of the reasons...
+    assert out[0]["rules_met_for_offer"] == ["chase_5_24"]  # ...but its id can still be cited
     assert because["rule"] == "chase_5_24" and because["status"] == "Undetermined"
     assert because["how_the_rule_works"] == ["Counts new cards opened from any bank"]
     assert "retry_after" not in because  # nulls are dropped
@@ -351,3 +352,40 @@ def test_spending_the_user_never_said_is_refused():
     out = json.loads(tools(session)["rank_cards"](monthly_spending={"dining": 300}))
     assert out["error"] == "spending_not_from_user" and "dining" in out["detail"]
     assert not [r for r in fake.sent if r.url.path == "/me/recommendations"]  # never ranked
+
+
+def test_referral_tips_say_how_sure_they_are_and_carry_no_link():
+    from advisor.tools import compact_card, referral_tip
+
+    card = CARD | {
+        "referral": {
+            "text": "Amex referral links more often show the full offer.",
+            "confidence": "community",
+            "source": "applicants",
+            "verified_on": "2026-10-01",
+        }
+    }
+    tip = compact_card(card)["referral_tip"]
+    assert tip.startswith("Amex referral links") and "applicants report" in tip
+    assert "not counted" in tip and "http" not in tip
+    assert referral_tip({"id": "x"}) is None
+
+
+def test_earning_rates_carry_their_caps():
+    from advisor.tools import earning_text
+
+    rate = {"rate": 3, "unit": "percent_cash_back", "category": "U.S. supermarkets",
+            "cap_usd": 6000, "cap_period": "calendar_year"}  # fmt: skip
+    assert earning_text(rate) == (
+        "3% on U.S. supermarkets (up to $6,000 a calendar year, then the base rate)"
+    )
+
+
+def test_an_unconfirmed_wallet_says_5_24_cant_be_determined():
+    from advisor.tools import compact_wallet
+
+    empty = compact_wallet({"cards": []}, {"count_24m": 0, "complete": False})
+    assert empty["five_24_status"].startswith("can't be determined")
+    assert compact_wallet({"cards": []}, {"count_24m": 4, "complete": True})["five_24_status"] == (
+        "4 of 5"
+    )

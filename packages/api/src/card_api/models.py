@@ -133,6 +133,7 @@ class ChatTurnIn(BaseModel):
     model_id: str = Field(max_length=100)
     prompt_version: str = Field(max_length=40)
     catalog_version: str | None = Field(None, max_length=20)
+    rules_version: str | None = Field(None, max_length=20)
 
 
 FeedbackReason = Literal["wrong_info", "not_what_i_asked", "missing_info", "other"]

@@ -190,6 +190,15 @@ with sync_playwright() as p:
     check("a card we don't list finds nothing", page.get_by_text("No cards match").is_visible())
     box.fill("")
 
+    # referral facts are stated, never linked (ADR 0004)
+    page.goto(BASE + "/cards/discover_it_student_cash_back/", wait_until="networkidle")
+    tip = page.get_by_text("we don't provide referral links").first
+    check(
+        "a card page states what a referral adds, without any referral link",
+        tip.is_visible() and page.get_by_text("$100 statement credit").first.is_visible(),
+    )
+    page.goto(BASE + "/cards/", wait_until="networkidle")
+
     # compare tray
     for name in ["Chase Sapphire Preferred", "Capital One Venture X"]:
         page.locator(f"div:has(> button[aria-label='Open {name}'])").get_by_role(
@@ -349,7 +358,8 @@ with sync_playwright() as p:
             {
                 "type": "text",
                 "text": "Also see [this](https://evil.example/x) or https://evil.example/y. "
-                "[Amex Green](card:amex_green) is closed to new applicants.",
+                "[Amex Green](card:amex_green) is closed to new applicants. "
+                "Per [Chase 5/24](rule:chase_5_24) you can apply.",
             },
             {"type": "done", "turn_id": turn_id},
         ]
@@ -364,7 +374,7 @@ with sync_playwright() as p:
     page.get_by_label("Message the Advisor").press("Enter")
     page.wait_for_timeout(800)
     log = page.get_by_role("log")
-    hrefs = [a.get_attribute("href") or "" for a in log.locator("a").all()]
+    hrefs = [a.get_attribute("href") or "" for a in log.locator("a:not([data-rule])").all()]
     official = [h for h in hrefs if h.startswith("https://")]
     check(
         f"card: links become the official page, nothing else links out ({hrefs})",
@@ -373,6 +383,13 @@ with sync_playwright() as p:
         and not any("evil" in h for h in hrefs),
     )
     check("bare URLs are removed from the reply", "evil.example" not in log.inner_text())
+    source = log.locator("a[data-rule='chase_5_24']")
+    check(
+        "a cited rule (rule:ID) shows as its source, with the rule on hover",
+        source.count() == 1
+        and source.get_attribute("href").startswith("https://")
+        and "5/24" in (source.get_attribute("title") or ""),
+    )
     check(
         "a reset clears the discarded text (a leaked tool call never stays on screen)",
         '"arguments"' not in log.inner_text() and "Checking." not in log.inner_text(),

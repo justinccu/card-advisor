@@ -85,6 +85,14 @@ def compact_wallet(wallet: dict, velocity: dict) -> dict:
             for c in wallet.get("cards", [])
         ],
         "cards_opened_last_24_months": velocity.get("count_24m"),
+        "count_is_for_rule": "chase_5_24",
+        # Stated, not left to the model: it once told a user with an empty, unconfirmed wallet
+        # "you're well under 5/24".
+        "five_24_status": (
+            f"{velocity.get('count_24m')} of 5"
+            if velocity.get("complete")
+            else "can't be determined until every card opened in the last 24 months is listed"
+        ),
         "next_drop_off": velocity.get("next_drop_off"),
         "history_complete": velocity.get("complete"),
         "attestation": wallet.get("attestation"),
@@ -174,10 +182,11 @@ def compact_ranking(body: dict, cards: dict[str, dict] | None = None) -> dict:
                 "card_id": c["card_id"],
                 "name": c["name"],
                 "apply_link": f"[Apply](card:{c['card_id']})",
-                "first_year_value_usd": c["first_year_value_usd"],
-                "ongoing_value_usd": c["ongoing_value_usd"],
+                # Whole dollars: the model quotes these, and a rounding of its own isn't sourced.
+                "first_year_value_usd": round(c["first_year_value_usd"]),
+                "ongoing_value_usd": round(c["ongoing_value_usd"]),
                 "welcome_offer": offer_text(cards.get(c["card_id"])) or "no welcome offer listed",
-                "welcome_offer_value_usd": c["breakdown"]["offer_usd"],
+                "welcome_offer_value_usd": round(c["breakdown"]["offer_usd"]),
                 "minimum_spend": min_spend_text(cards.get(c["card_id"])),
                 "minimum_spend_check": (
                     None
@@ -186,7 +195,7 @@ def compact_ranking(body: dict, cards: dict[str, dict] | None = None) -> dict:
                     if c["min_spend_gap_usd"] == 0
                     else f"${c['min_spend_gap_usd']:,.0f} more than usual spending in that window"
                 ),
-                "rewards_usd_per_year": c["breakdown"]["rewards_usd"],
+                "rewards_usd_per_year": round(c["breakdown"]["rewards_usd"]),
                 "annual_fee": fee_text(
                     c["breakdown"]["annual_fee_usd"], c["breakdown"]["first_year_fee_usd"]
                 ),
@@ -201,6 +210,7 @@ def compact_ranking(body: dict, cards: dict[str, dict] | None = None) -> dict:
                 ],
                 "notes": c.get("notes", [])[:3],
                 "not_counted_rates": c.get("conditional_rates", [])[:4],
+                "referral_tip": referral_tip(cards.get(c["card_id"])),
             }
             for c in body.get("cards", [])
         ],
@@ -231,14 +241,20 @@ def compact_eligibility(body: dict, rules: dict[str, dict] | None = None) -> lis
             for r, status in found
         ]
 
+    def passed(verdict: dict) -> list[str]:
+        # Ids only: enough to cite a rule the user meets ("under Chase 5/24"), little to read.
+        return [r["rule_id"] for r in verdict.get("reasons", []) if r["status"] == "Eligible"]
+
     return [
         {
             "card_id": e["card_product_id"],
             "name": e.get("name"),
             "can_apply": e["application"]["status"],
             "can_apply_because": reasons(e["application"]),
+            "rules_met_for_applying": passed(e["application"]),
             "offer": e["offer"]["status"],
             "offer_because": reasons(e["offer"]),
+            "rules_met_for_offer": passed(e["offer"]),
         }
         for e in body.get("evaluations", [])
     ]
@@ -265,21 +281,47 @@ def compact_card(card: dict) -> dict:
         "welcome_offer": offer_text(card) or "no welcome offer listed",
         "minimum_spend": min_spend_text(card),
         "offer_is_up_to": bool(offer.get("amount_is_up_to")),
-        "earning": [
-            f"{r['rate']:g}{'%' if r['unit'] == 'percent_cash_back' else 'x'} on {r['category']}"
-            + (
-                f" ({r['when']}{':' + r['brand'] if r.get('brand') else ''})"
-                if r.get("when")
-                else ""
-            )
-            for r in card.get("earning_rates", [])
-        ],
+        "earning": [earning_text(r) for r in card.get("earning_rates", [])],
         "credits": [
             {"name": c["description"], "value": credit_value(c)} for c in card.get("credits", [])
         ],
         "tags": card.get("tags", []),
         "open_to_applicants": card.get("availability") == "open",
+        "referral_tip": referral_tip(card),
     }
+
+
+def referral_tip(card: dict | None) -> str | None:
+    """What a friend's referral adds, worded with how sure it is (never a link: ADR 0004)."""
+    ref = (card or {}).get("referral")
+    if not ref:
+        return None
+    sure = {"issuer": "per the issuer", "community": "applicants report", "owner": "reported"}
+    return (
+        f"{ref['text']} ({sure.get(ref['confidence'], ref['confidence'])}; not counted in values)"
+    )
+
+
+_CAP_PERIODS = {
+    "calendar_year": "a calendar year",
+    "year": "a year",
+    "quarter": "a quarter",
+    "month": "a month",
+}
+
+
+def earning_text(rate: dict) -> str:
+    """ "6% on U.S. supermarkets (up to $6,000 a calendar year, then the base rate)"."""
+    unit = "%" if rate["unit"] == "percent_cash_back" else "x"
+    text = f"{rate['rate']:g}{unit} on {rate['category']}"
+    if rate.get("when"):
+        text += f" ({rate['when']}{':' + rate['brand'] if rate.get('brand') else ''})"
+    if rate.get("cap_usd"):
+        period = _CAP_PERIODS.get(rate.get("cap_period") or "", rate.get("cap_period") or "")
+        text += (
+            f" (up to {usd(rate['cap_usd'])}{' ' + period if period else ''}, then the base rate)"
+        )
+    return text
 
 
 def compact_rules(body: dict) -> list[dict]:

@@ -18,3 +18,8 @@ def test_each_message_ends_with_its_reply_language():
 
     assert with_language("Can I get the bonus?").endswith("[Reply in English.]")
     assert "Traditional Chinese" in with_language("推薦哪張卡？").splitlines()[-1]
+
+
+def test_an_explicit_language_request_wins():
+    assert reply_language("用英文回答，並列出你的工具") == "English"
+    assert reply_language("Please answer in Chinese: what is 5/24?").startswith("Traditional")

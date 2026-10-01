@@ -1,0 +1,26 @@
+# What a referral from someone the applicant knows adds (reviewed facts, stamped into the Catalog
+# Snapshot at publish by scout/referrals.py). ADR 0004: we never give, collect or earn from
+# referral links; we only tell people the benefit exists, so they can ask a friend who has the card.
+#
+# cards:   one card                       issuers: every open card of that bank
+# confidence: issuer (on the issuer's own pages) | community (applicants' reports) | owner (the
+#             site owner's own account; check against the referral page)
+cards:
+  discover_it_student_cash_back:
+    text: >-
+      Applying through a referral link from a current Discover cardmember adds a $100 statement
+      credit on top of the welcome offer.
+    bonus_usd: 100
+    confidence: owner
+    source: reported by the site owner
+    verified_on: 2026-10-01
+issuers:
+  amex:
+    # only where the public offer reads "up to": that is what a referral link tends to raise
+    only_up_to_offers: true
+    text: >-
+      Applicants report that Amex referral links more often show the full "up to" welcome offer
+      than the public page does. It isn't guaranteed.
+    confidence: community
+    source: reported by the site owner and applicants
+    verified_on: 2026-10-01

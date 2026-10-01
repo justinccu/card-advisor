@@ -33,15 +33,10 @@
   source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
   verified_on: 2026-09-24
 
-- kind: family_open
-  id: chase_sapphire_open
-  issuer_id: chase
-  family: sapphire
-  description: "Chase Sapphire: no bonus while another personal Sapphire card is open"
-  strength: strict
-  confidence: official
-  source_url: https://www.thepointsguy.com/news/chase-sapphire-bonus-eligibility-changes-2026/
-  verified_on: 2026-09-24
+# Retired 2026-10-01 (owner review): chase_sapphire_open, "no bonus while another personal
+# Sapphire card is open". Chase dropped it on 2026-01-22, after dropping the 48-month rule and
+# the one-Sapphire limit in June 2025. The Preferred's and the Reserve's bonuses now count
+# separately: both cards can be held, and each bonus earned once.
 
 - kind: offer_history
   id: chase_sapphire_once_per_card
@@ -50,11 +45,11 @@
   target: product
   basis: held
   lookback_months: null
-  description: "Chase Sapphire (since 2026-01-22): one bonus per Sapphire card per lifetime"
+  description: "Chase Sapphire (since 2026-01-22): each Sapphire card's bonus once per lifetime; holding another Sapphire doesn't matter"
   strength: strict
   confidence: official
   source_url: https://www.thepointsguy.com/news/chase-sapphire-bonus-eligibility-changes-2026/
-  verified_on: 2026-09-24
+  verified_on: 2026-10-01
 
 - kind: offer_history
   id: chase_24_month_bonus
@@ -181,30 +176,30 @@
 - kind: velocity
   id: citi_1_8
   issuer_id: citi
-  description: "Citi: at most 1 new Citi card per 8 days"
+  description: "Citi: at most 1 new Citi personal card per 8 days"
   scope: same_issuer
   limit: 1
   window_days: 8
-  counts_business: true
-  applies_to_products: all
+  counts_business: false
+  applies_to_products: personal
   strength: strict
   confidence: community
   source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
-  verified_on: 2026-09-24
+  verified_on: 2026-10-01
 
 - kind: velocity
   id: citi_2_65
   issuer_id: citi
-  description: "Citi: at most 2 new Citi cards per 65 days"
+  description: "Citi: at most 2 new Citi personal cards per 65 days"
   scope: same_issuer
   limit: 2
   window_days: 65
-  counts_business: true
-  applies_to_products: all
+  counts_business: false
+  applies_to_products: personal
   strength: strict
   confidence: community
   source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
-  verified_on: 2026-09-24
+  verified_on: 2026-10-01
 
 - kind: offer_history
   id: citi_48_month_bonus
@@ -212,11 +207,30 @@
   target: product
   basis: bonus
   lookback_months: 48
-  description: "Citi: one welcome offer per card every 48 months"
+  description: "Citi: one welcome offer per card every 48 months, counted from when the last bonus was earned (closing the card doesn't reset it)"
+  not_for_products: [citi_strata_premier]
   strength: strict
   confidence: official
   source_url: https://frequentmiler.com/complete-guide-to-credit-card-application-rules-by-bank/
-  verified_on: 2026-09-24
+  verified_on: 2026-10-01
+
+# The card's own terms (owner copied them 2026-10-01): "New account bonus offer is not available
+# if you currently have or previously had a Citi Strata Premier or a Citi Premier account."
+# Citi Premier is the same card before its rename. This replaces citi_strata_family_48_month
+# (a soft guess at a ThankYou-family rule, retired the same day): the terms name only this card.
+- kind: offer_history
+  id: citi_strata_premier_once
+  issuer_id: citi
+  target: products
+  products: [citi_strata_premier]
+  for_product: citi_strata_premier
+  basis: held
+  lookback_months: null
+  description: "Citi Strata Premier: no bonus if you have or ever had a Strata Premier or a Citi Premier (the same card, renamed)"
+  strength: strict
+  confidence: official
+  source_url: https://www.citi.com/credit-cards/citi-strata-premier-credit-card
+  verified_on: 2026-10-01
 
 # --- Capital One ---------------------------------------------------------------
 - kind: velocity

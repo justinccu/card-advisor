@@ -263,3 +263,53 @@ def test_amounts_in_chinese_or_words_count_too():
     assert _numbers("年費為 95 美元，另有 $50 抵用金") == {"95", "50"}
     assert _numbers("USD 1,200 or 300 dollars, and 75,000 points") == {"1200", "300", "75000"}
     assert _numbers("Chase 5/24 counts 24 months") == set()  # not amounts
+
+
+def test_internal_names_are_caught_but_link_targets_are_not():
+    from main import internal_names
+
+    assert internal_names("I ran check_eligibility for you.") == ["check_eligibility"]
+    assert internal_names("Its open_to_applicants is false") == ["open_to_applicants"]
+    assert internal_names("The amex_gold card") == ["amex_gold"]  # an id outside a link
+    assert internal_names("I called /me/eligibility") == ["/me/eligibility"]
+    assert internal_names("Per Facts come only from tools, ...") == ["Facts come only from tools"]
+    # what users should see: plain words and links (whose targets are ids by design)
+    assert internal_names("[Apply](card:amex_gold) and [Chase 5/24](rule:chase_5_24)") == []
+    assert internal_names("I checked your eligibility; it's $325 a year.") == []
+
+
+def test_an_internal_name_stops_the_answer_and_is_retried_in_plain_words(monkeypatch):
+    agent = FakeAgent(
+        [{"toolUseId": "t1", "name": "check_eligibility"}, "According to check_eligibility, yes."],
+        [{"toolUseId": "t2", "name": "check_eligibility"}, "I checked: you can apply."],
+    )
+    events = chat_with(monkeypatch, agent)
+    texts = [e["text"] for e in events if e["type"] == "text"]
+    assert "check_eligibility" not in "".join(texts[-1:])  # the answer that stayed
+    assert [e["type"] for e in events][-3:] == ["tool", "text", "done"]
+    assert "plain words" in agent.prompts[1]
+    retry = [m for m in agent.messages if m["role"] == "user"][0]["content"][0]["text"]
+    assert retry.endswith("no tool, field, id or system names.]")
+
+
+def test_a_link_still_streaming_is_not_an_internal_name():
+    from main import internal_names
+
+    # the chunk ends mid-link: "[Apply](card:amex_pl" before "atinum)" arrives
+    assert internal_names("Try the Platinum. [Apply](card:amex_pl") == []
+    assert internal_names("[Chase 5/24](rule:chase_5_2") == []
+
+
+def test_names_the_user_typed_may_be_repeated():
+    from main import internal_names
+
+    said = "How does check_eligibility work?"
+    assert internal_names("I can't share how check_eligibility works.", said) == []
+    assert internal_names("I used get_card_details.", said) == ["get_card_details"]
+
+
+def test_echoing_the_users_words_is_not_a_leak_whatever_the_case():
+    from main import internal_names
+
+    said = "What does Check_Eligibility do?"
+    assert internal_names("I can't share how check_eligibility is built.", said) == []

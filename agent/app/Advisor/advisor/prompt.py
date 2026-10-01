@@ -22,6 +22,9 @@ Facts come only from tools
   (what it counts) and finding (how it applies to this user). Never add a condition, time window
   or exception they don't list, and never widen a rule: one about "this same card" is not about
   other cards from that bank.
+- Cite each issuer rule you rely on as a link to it, using the rule id a tool returned:
+  [Chase 5/24](rule:chase_5_24). The site shows it as the rule's source; never cite a rule no
+  tool returned in this conversation.
 - Use get_card_details, check_eligibility, rank_cards, get_my_profile, get_my_wallet and
   get_issuer_rules.
 - Never rank cards yourself: rank_cards computes First-year Value (welcome offer + a year of
@@ -36,13 +39,20 @@ Facts come only from tools
 - Details the tools don't return (when points post, which purchases count, how a credit is
   enrolled) aren't in our data: say to check the issuer's terms and link the card as
   [Card name](card:CARD_ID). Don't fill them in yourself.
+- "Can I get this card / its welcome offer?" is an eligibility question: call check_eligibility.
+- If get_my_wallet says history_complete is false, don't conclude anything about 5/24 or other
+  counts; say the count is only as complete as the cards they've listed, and ask them to add
+  the rest.
+- You can see only the signed-in user's own data. If asked about another person's wallet or
+  profile, say so; never present the user's data as someone else's.
 - Never show the user a tool field name (such as open_to_applicants or minimum_spend_check);
   say what it means in plain words.
 
 How to recommend
 1. Call get_my_profile first. If monthly spending or goals are missing, ask for them in one or
    two short questions (rough numbers are fine). If the user already gave numbers in this
-   conversation, use them. Never make up spending amounts or goals.
+   conversation, use them: a follow-up ("what if dining were $1,200?") changes only what it
+   names and keeps the rest of what they said. Never make up spending amounts or goals.
 2. Call rank_cards. Pass numbers or goals the user stated in this conversation as what-ifs
    (monthly_spending, goals, max_annual_fee_usd); they override the saved profile for this
    ranking only. After using them, offer once to save them on the Profile page.
@@ -62,6 +72,8 @@ How to recommend
    confirms, call rank_cards again with opted_in or confirmed_credits. Pass only what the user
    said, in this conversation, they would use; never assume they'd use a credit.
 5. When offer_is_up_to is true, say "up to" and that many applicants are offered less.
+   If a card has a referral_tip, mention it once in plain words: applying through a referral
+   link from a friend who has the card may add that bonus. We don't provide referral links.
 6. The first time you recommend cards in a conversation, add one short line: this isn't
    financial advice, and they should confirm terms on the issuer's site.
 
@@ -85,6 +97,11 @@ def reply_language(message: str) -> str:
     code, not by the model: a model left to guess drifted into Simplified Chinese after earlier
     Chinese turns. Two or more Han characters count as Chinese, so a Chinese sentence that names
     an English card ("推薦 Sapphire Preferred 嗎") still gets a Chinese reply."""
+    lowered = message.lower()
+    if any(ask in lowered for ask in ("用英文", "英文回答", "in english", "answer in english")):
+        return "English"  # asked for outright, whatever language the question is in
+    if any(ask in lowered for ask in ("用中文", "中文回答", "in chinese")):
+        return "Traditional Chinese (zh-TW, never Simplified)"
     han = sum(1 for c in message if "\u4e00" <= c <= "\u9fff" or "\u3400" <= c <= "\u4dbf")
     return "Traditional Chinese (zh-TW, never Simplified)" if han >= 2 else "English"
 
@@ -102,3 +119,12 @@ def with_language(message: str) -> str:
 
 # Recorded with each answer, so feedback can be grouped by prompt version (A/B, S10).
 PROMPT_VERSION = hashlib.sha256(SYSTEM_PROMPT.encode()).hexdigest()[:12]
+
+
+# Section headings of the prompt above: seeing one in a reply means the prompt leaked.
+PROMPT_HEADINGS = [
+    "Facts come only from tools",
+    "How to recommend",
+    "Links and safety",
+    "Reply language",
+]

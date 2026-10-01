@@ -4,6 +4,8 @@ The agent holds no data permissions of its own: every read goes through the API 
 it can see exactly what the user can see and nothing more.
 """
 
+import hashlib
+import json
 import os
 import time
 from typing import Any
@@ -27,7 +29,7 @@ class QuotaExceeded(ApiError):
 # The catalog is public and the same for everyone; cache it per process.
 _catalog: dict[str, Any] = {"at": 0.0, "version": None, "cards": {}, "issuers": {}}
 # So are the Eligibility Rules' plain-English facts (GET /rules), by rule id.
-_rules: dict[str, Any] = {"at": 0.0, "by_id": {}}
+_rules: dict[str, Any] = {"at": 0.0, "by_id": {}, "version": None}
 
 
 class AdvisorApi:
@@ -66,8 +68,12 @@ class AdvisorApi:
     def rule_facts(self) -> dict[str, dict]:
         if time.monotonic() - _rules["at"] > CATALOG_TTL_SECONDS or not _rules["by_id"]:
             body = self._call("GET", "/rules")
+            rules = body.get("rules", [])
             _rules.update(
-                at=time.monotonic(), by_id={r["rule_id"]: r for r in body.get("rules", [])}
+                at=time.monotonic(),
+                by_id={r["rule_id"]: r for r in rules},
+                # The rule text the model was shown, so a rated answer can be traced to it.
+                version=hashlib.sha256(json.dumps(rules, sort_keys=True).encode()).hexdigest()[:12],
             )
         return _rules["by_id"]
 
@@ -101,3 +107,8 @@ class AdvisorApi:
 def catalog_version() -> str | None:
     """The catalog version the tools last read (None before any card lookup)."""
     return _catalog["version"]
+
+
+def rules_version() -> str | None:
+    """A hash of the rule text the tools last read (None before any rule lookup)."""
+    return _rules["version"]

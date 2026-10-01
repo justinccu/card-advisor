@@ -70,6 +70,10 @@ Card search (the site's boxes and the Advisor's card lookup) takes a bank by eit
 "American Express"), card aliases ("CSP") and typos. Names live in `catalog/seed/issuers.yaml`
 and each seed card's `aliases`, and are stamped into the snapshot by `scout publish`.
 
+`make eval` runs the Advisor golden set (`agent/evals/golden.yaml`) against the real model and
+gates on leaks, unsourced amounts, uncited rules, language and each case's expectations. It
+costs about $0.6 a run. `make agent-deploy` runs it first and won't deploy if it fails.
+
 Each Advisor answer can be rated 👍 / 👎. `make feedback` (`DOWN=1` for 👎 only) lists rated
 answers on the deployed stack, with the tools each one called, so a bad answer can be traced to
 the data or to the model.

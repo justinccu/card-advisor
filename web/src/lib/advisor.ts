@@ -129,11 +129,14 @@ export async function* ask(prompt: string, sessionId: string, signal?: AbortSign
 const MD_LINK = /\[([^\]]*)\]\(\s*<?([^)\s>]*)>?(?:\s+"[^"]*")?\s*\)/g;
 const BARE_URL = /<?\b(?:https?:\/\/|www\.)[^\s<>)\]]+>?/gi;
 
-/** The model may link only `card:<id>` (the site knows each card's official page). Any other
+/** The model may link only `card:<id>` (the site knows each card's official page) and cite
+ *  `rule:<id>` (shown as the rule's source). Any other
  *  link keeps its label and loses its target; any bare URL in the text is removed. */
 export function sanitizeReply(markdown: string): string {
   return markdown
-    .replace(MD_LINK, (whole, label: string, href: string) => (href.startsWith("card:") ? whole : label))
+    .replace(MD_LINK, (whole, label: string, href: string) =>
+      href.startsWith("card:") || href.startsWith("rule:") ? whole : label,
+    )
     .replace(BARE_URL, "[link removed]");
 }
 

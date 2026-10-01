@@ -82,6 +82,8 @@ class _RuleBase(BaseModel):
     verified_on: date
     applies_to_products: ProductScope = "personal"
     applies_to_charge_cards: bool = True
+    # Cards this rule skips because a stricter rule of their own covers them.
+    not_for_products: list[str] = []
 
 
 class VelocityRule(_RuleBase):

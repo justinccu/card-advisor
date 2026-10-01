@@ -26,3 +26,10 @@ def test_amex_ladder_names_the_cards_it_looks_at():
     text = " ".join(facts["how_it_counts"])
     assert facts["decides"] == "welcome offer"
     assert "The Platinum Card" in text
+
+
+def test_bonus_windows_say_when_they_start():
+    # The Advisor once said every Citi window counts from the opening date; the 48 months
+    # count from the bonus.
+    facts = " ".join(explain(by_id()["citi_48_month_bonus"])["how_it_counts"])
+    assert "count from when that bonus was earned, not from when a card was opened" in facts

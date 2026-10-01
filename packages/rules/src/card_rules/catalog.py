@@ -95,6 +95,17 @@ class Issuer(BaseModel):
     aliases: list[str] = []
 
 
+class Referral(BaseModel):
+    """What applying through a referral from someone the applicant knows adds (ADR 0004: we
+    state it; we never give or earn from referral links)."""
+
+    text: str
+    bonus_usd: int | None = None  # extra cash it adds, when it is a fixed amount
+    confidence: Literal["issuer", "community", "owner"]
+    source: str
+    verified_on: date
+
+
 class CatalogCard(CardProduct):
     url: str
     availability: Literal["open", "closed_to_new_applicants"] = "open"
@@ -102,6 +113,8 @@ class CatalogCard(CardProduct):
     tags: list[str] = []
     # Other names people search this card by ("CSP", "VX"), reviewed in the seed.
     aliases: list[str] = []
+    # Not counted in rankings: a referral depends on knowing a cardholder.
+    referral: Referral | None = None
     # Reward currency for points/miles cards (a key of CatalogSnapshot.valuations); None = cash.
     currency: str | None = None
     # Facts below are None for closed cards kept only so users can list them as Held Cards.

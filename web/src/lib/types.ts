@@ -45,6 +45,14 @@ export interface CatalogCard {
   id: string;
   /** other names people search this card by ("CSP") */
   aliases?: string[];
+  /** what a friend's referral adds (ADR 0004: stated, never linked); not counted in rankings */
+  referral?: {
+    text: string;
+    bonus_usd: number | null;
+    confidence: "issuer" | "community" | "owner";
+    source: string;
+    verified_on: string;
+  } | null;
   issuer_id: string;
   name: string;
   family: string | null;
@@ -203,4 +211,14 @@ export interface TurnFeedback {
   rating: "up" | "down";
   reason?: FeedbackReason;
   comment?: string;
+}
+
+/** An Eligibility Rule in plain words (GET /rules), shown as the source of a cited rule. */
+export interface RuleFacts {
+  rule_id: string;
+  summary: string;
+  how_it_counts: string[];
+  source: string;
+  source_url: string;
+  verified_on: string;
 }

@@ -78,11 +78,23 @@ def how_it_counts(rule: EligibilityRule, names: dict[str, str] | None = None) ->
                 else f"earned in the last {rule.lookback_months} months"
             )
             facts = [f"No welcome offer if you have {when} the welcome offer on {what}."]
+            if rule.lookback_months is not None:
+                facts.append(
+                    f"The {rule.lookback_months} months count from when that bonus was earned, "
+                    "not from when a card was opened or closed."
+                )
         if rule.for_product:
             facts.append(f"Applies to {names.get(rule.for_product, rule.for_product)} only.")
         facts.append("Authorized-user cards do not count.")
         return facts
     raise TypeError(f"no explanation for {type(rule).__name__}")
+
+
+def _exceptions(rule: EligibilityRule, names: dict[str, str]) -> list[str]:
+    if not rule.not_for_products:
+        return []
+    cards = ", ".join(names.get(p, p) for p in rule.not_for_products)
+    return [f"Doesn't apply to {cards}, which has a stricter rule of its own."]
 
 
 def explain(rule: EligibilityRule, names: dict[str, str] | None = None) -> dict:
@@ -94,7 +106,7 @@ def explain(rule: EligibilityRule, names: dict[str, str] | None = None) -> dict:
         "decides": decides,
         "applies_to": _PRODUCTS[rule.applies_to_products].format(rule.issuer_id)
         + ("" if rule.applies_to_charge_cards else ", not charge cards"),
-        "how_it_counts": how_it_counts(rule, names),
+        "how_it_counts": how_it_counts(rule, names) + _exceptions(rule, names or {}),
         "enforcement": "strict: cards are marked Ineligible"
         if rule.strength == "strict"
         else "soft: only a warning, because the bank enforces it inconsistently",

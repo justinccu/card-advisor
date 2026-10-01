@@ -22,3 +22,6 @@ web/public/card-art/
 
 # Lambda bundle built by scripts/bundle_lambda.sh
 infra/build/
+
+# make eval output (answers to the golden set)
+agent/evals/reports/

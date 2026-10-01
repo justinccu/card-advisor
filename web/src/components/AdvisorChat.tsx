@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowUp, Maximize2, RotateCcw, Sparkles, Square, ThumbsDown, ThumbsUp } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowUp, BookOpen, Maximize2, RotateCcw, Sparkles, Square, ThumbsDown, ThumbsUp } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -17,7 +18,8 @@ import {
 } from "@/lib/advisor";
 import { fee, offerHeadline } from "@/lib/format";
 import { press, spring } from "@/lib/motion";
-import type { FeedbackReason, TurnFeedback } from "@/lib/types";
+import { api } from "@/lib/api";
+import type { FeedbackReason, RuleFacts, TurnFeedback } from "@/lib/types";
 
 import { useAdvisor } from "./AdvisorProvider";
 import { CardArt } from "./CardArt";
@@ -38,7 +40,12 @@ export function AdvisorChat({ panel = false }: { panel?: boolean }) {
   const log = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const stick = useRef(true); // follow the answer unless the reader scrolled up
-  const md = useMemo(() => markdownComponents(cards), [cards]);
+  // Cited rules (rule:<id>) show their source; the rules change only with a deploy.
+  const { data: rules } = useQuery({ queryKey: ["rules"], queryFn: api.rules, enabled: !!uid, staleTime: Infinity });
+  const md = useMemo(
+    () => markdownComponents(cards, new Map((rules ?? []).map((r) => [r.rule_id, r]))),
+    [cards, rules],
+  );
 
   useEffect(() => {
     const el = log.current;
@@ -240,7 +247,7 @@ function Reply({
         <Markdown
           remarkPlugins={[remarkGfm]}
           components={components}
-          urlTransform={(url) => (url.startsWith("card:") ? url : "")}
+          urlTransform={(url) => (url.startsWith("card:") || url.startsWith("rule:") ? url : "")}
           disallowedElements={["img"]}
           unwrapDisallowed
           skipHtml
@@ -417,12 +424,13 @@ function CardRow({ card }: { card: AdvisorCard }) {
 }
 
 /** Markdown elements styled for chat; links resolve only through the catalog (lib/advisor). */
-function markdownComponents(cards: Map<string, AdvisorCard>): Components {
+function markdownComponents(cards: Map<string, AdvisorCard>, rules: Map<string, RuleFacts>): Components {
   const heading = ({ children }: { children?: React.ReactNode }) => (
     <p className="mb-1 mt-3 font-semibold first:mt-0">{children}</p>
   );
   return {
     a: ({ href, children }) => {
+      if (href?.startsWith("rule:")) return <RuleSource rule={rules.get(href.slice(5))}>{children}</RuleSource>;
       const card = href?.startsWith("card:") ? cards.get(href.slice(5)) : undefined;
       if (!card) return <span>{children}</span>;
       if (card.availability !== "open") {
@@ -456,6 +464,25 @@ function markdownComponents(cards: Map<string, AdvisorCard>): Components {
     th: ({ children }) => <th className="border-b border-hairline px-2 py-1 text-left font-semibold">{children}</th>,
     td: ({ children }) => <td className="border-b border-hairline px-2 py-1 align-top">{children}</td>,
   };
+}
+
+/** A cited issuer rule: opens its source (issuer terms or applicants' reports); the summary
+ *  and the date it was checked show on hover. Unknown ids stay plain text. */
+function RuleSource({ rule, children }: { rule?: RuleFacts; children: React.ReactNode }) {
+  if (!rule) return <span>{children}</span>;
+  return (
+    <a
+      href={rule.source_url}
+      data-rule={rule.rule_id}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={`${rule.summary}. Source: ${rule.source}, checked ${rule.verified_on}.`}
+      className="inline-flex items-center gap-1 rounded-md bg-tile px-1.5 py-px align-baseline text-[13px] text-ink-2 hover:text-ink"
+    >
+      <BookOpen size={12} aria-hidden />
+      {children}
+    </a>
+  );
 }
 
 function Notice({ children }: { children: React.ReactNode }) {
