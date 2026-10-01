@@ -38,7 +38,7 @@ def check(name, cond):
 
 
 with sync_playwright() as p:
-    b = p.chromium.launch()
+    b = p.chromium.launch(channel=os.environ.get("BROWSER_CHANNEL"))
     ctx = b.new_context(viewport={"width": 1280, "height": 900})
     page = ctx.new_page()
     errors = []

@@ -12,6 +12,7 @@ user out, then deletes the account from the profile page. The throwaway user
     AWS_PROFILE=... uv run scripts/e2e_aws.py
 """
 
+import os
 import secrets
 import sys
 import urllib.error
@@ -83,7 +84,7 @@ table.put_item(Item={"PK": "INVITE", "SK": f"CODE#{CODE}", "remaining": 1})
 sub = None
 try:
     with sync_playwright() as p:
-        browser = p.chromium.launch()
+        browser = p.chromium.launch(channel=os.environ.get("BROWSER_CHANNEL"))
         page = browser.new_page(viewport={"width": 1280, "height": 900})
         errors: list[str] = []
         page.on("pageerror", lambda e: errors.append(str(e)))

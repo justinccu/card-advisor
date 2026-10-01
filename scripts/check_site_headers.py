@@ -67,7 +67,7 @@ def main() -> int:
     violations, errors, results = [], [], []
 
     with sync_playwright() as p:
-        page = p.chromium.launch().new_page()
+        page = p.chromium.launch(channel=os.environ.get("BROWSER_CHANNEL")).new_page()
         page.on(
             "console",
             lambda m: ("Content Security Policy" in m.text or "Refused to" in m.text)
