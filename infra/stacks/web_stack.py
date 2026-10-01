@@ -1,4 +1,5 @@
 from aws_cdk import CfnOutput, Duration, RemovalPolicy, Stack
+from aws_cdk import aws_certificatemanager as acm
 from aws_cdk import aws_cloudfront as cloudfront
 from aws_cdk import aws_cloudfront_origins as origins
 from aws_cdk import aws_s3 as s3
@@ -60,12 +61,26 @@ class WebStack(Stack):
 
     `site_dir` is the built site; CI passes it (`-c site_dir=../web/out`) after building against
     the live API. Without it the stack keeps the bucket and distribution and leaves the files
-    as they are, so a deploy from a laptop never publishes an unbuilt or local-mode site."""
+    as they are, so a deploy from a laptop never publishes an unbuilt or local-mode site.
+
+    `domain` (with `certificate_arn`, an issued ACM certificate in us-east-1, where CloudFront
+    looks for them) serves the site on our own name; the DNS stays with the registrar, which
+    points the name at the distribution (`make site-domain`)."""
 
     def __init__(
-        self, scope: Construct, construct_id: str, *, project: str, site_dir: str | None, **kwargs
+        self,
+        scope: Construct,
+        construct_id: str,
+        *,
+        project: str,
+        site_dir: str | None,
+        domain: str | None = None,
+        certificate_arn: str | None = None,
+        **kwargs,
     ):
         super().__init__(scope, construct_id, **kwargs)
+        if bool(domain) != bool(certificate_arn):
+            raise ValueError("Set both site_domain and site_certificate_arn, or neither")
 
         bucket = s3.Bucket(
             self,
@@ -137,6 +152,12 @@ class WebStack(Stack):
             ],
             price_class=cloudfront.PriceClass.PRICE_CLASS_100,  # North America + Europe edges
             http_version=cloudfront.HttpVersion.HTTP2_AND_3,
+            domain_names=[domain] if domain else None,
+            certificate=(
+                acm.Certificate.from_certificate_arn(self, "SiteCertificate", certificate_arn)
+                if certificate_arn
+                else None
+            ),
         )
 
         if site_dir:
@@ -171,9 +192,12 @@ class WebStack(Stack):
             )
             pages.node.add_dependency(assets)
 
-        self.site_url = f"https://{self.distribution.distribution_domain_name}"
+        cloudfront_url = f"https://{self.distribution.distribution_domain_name}"
+        self.site_url = f"https://{domain}" if domain else cloudfront_url
         ssm.StringParameter(
             self, "SiteUrlParam", parameter_name=f"/{project}/site-url", string_value=self.site_url
         )
         CfnOutput(self, "SiteUrl", value=self.site_url)
+        # Where the registrar's DNS record for the domain points.
+        CfnOutput(self, "CloudFrontUrl", value=cloudfront_url)
         CfnOutput(self, "DistributionId", value=self.distribution.distribution_id)

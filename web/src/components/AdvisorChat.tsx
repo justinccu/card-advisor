@@ -41,7 +41,7 @@ export function AdvisorChat({ panel = false }: { panel?: boolean }) {
   const input = useRef<HTMLTextAreaElement>(null);
   const stick = useRef(true); // follow the answer unless the reader scrolled up
   // Cited rules (rule:<id>) show their source; the rules change only with a deploy.
-  const { data: rules } = useQuery({ queryKey: ["rules"], queryFn: api.rules, enabled: !!uid, staleTime: Infinity });
+  const { data: rules } = useQuery({ queryKey: ["rules"], queryFn: api.rules, staleTime: Infinity });
   const md = useMemo(
     () => markdownComponents(cards, new Map((rules ?? []).map((r) => [r.rule_id, r]))),
     [cards, rules],
@@ -66,19 +66,6 @@ export function AdvisorChat({ panel = false }: { panel?: boolean }) {
   if (!available)
     return <Notice>The Advisor isn’t available on this site yet.</Notice>;
   if (!ready) return <div className={height} />;
-  if (!uid)
-    return (
-      <Notice>
-        <Sparkles className="mx-auto mb-3 text-action" size={28} aria-hidden />
-        <p className="text-[17px] font-semibold">Chat with the Advisor</p>
-        <p className="mx-auto mt-1 max-w-[360px] text-[15px] text-ink-2">
-          It ranks cards for your spending and checks issuer rules against your wallet. Sign in to start.
-        </p>
-        <Link href="/signin/" className="mt-5 inline-block rounded-full bg-action px-5 py-2 text-[15px] text-white hover:bg-action-hover">
-          Sign in
-        </Link>
-      </Notice>
-    );
 
   return (
     <div className={`flex flex-col ${height}`}>
@@ -87,7 +74,7 @@ export function AdvisorChat({ panel = false }: { panel?: boolean }) {
         {quota && (
           <span className="whitespace-nowrap rounded-full bg-tile px-2 py-0.5 text-[12px] text-ink-2" aria-live="polite">
             {quota.remaining}
-            <span className="max-sm:hidden"> of {quota.limit}</span> left today
+            <span className="max-sm:hidden"> of {quota.limit}</span> {quota.guest ? "free left" : "left today"}
           </span>
         )}
         <div className="ml-auto flex items-center gap-1">
@@ -131,6 +118,15 @@ export function AdvisorChat({ panel = false }: { panel?: boolean }) {
             <p className="text-[15px] text-ink-2">
               Ask about cards for your spending, issuer rules like Chase 5/24, or building US credit.
             </p>
+            {!uid && (
+              <p className="mx-auto mt-2 max-w-[380px] text-[13px] text-ink-3">
+                Try it free: 10 messages without an account.{" "}
+                <Link href="/signin/" className="text-link underline">
+                  Sign in
+                </Link>{" "}
+                to check issuer rules against your own cards.
+              </p>
+            )}
             <ul className="mt-5 flex flex-col items-center gap-2">
               {SUGGESTIONS.map((s) => (
                 <li key={s}>
@@ -182,7 +178,9 @@ export function AdvisorChat({ panel = false }: { panel?: boolean }) {
           disabled={outOfMessages}
           placeholder={
             outOfMessages
-              ? `You’ve used today’s messages. More at ${resetTime(quota!.resets_at)}.`
+              ? quota!.resets_at
+                ? `You’ve used today’s messages. More at ${resetTime(quota!.resets_at)}.`
+                : "You’ve used the free messages. Sign in to keep going."
               : "Ask about cards, offers or eligibility"
           }
           onChange={(e) => {
@@ -223,9 +221,18 @@ export function AdvisorChat({ panel = false }: { panel?: boolean }) {
         )}
       </form>
       <p className="mt-2 text-center text-[12px] text-ink-3">
-        {draft.length > MAX_PROMPT_CHARS - 200
-          ? `${draft.length} / ${MAX_PROMPT_CHARS}`
-          : "Figures come from our catalog and your profile. Not financial advice."}
+        {draft.length > MAX_PROMPT_CHARS - 200 ? (
+          `${draft.length} / ${MAX_PROMPT_CHARS}`
+        ) : !uid && outOfMessages ? (
+          <>
+            <Link href="/signin/" className="text-link underline">
+              Sign in
+            </Link>{" "}
+            for 30 messages a day.
+          </>
+        ) : (
+          "Figures come from our catalog and your profile. Not financial advice."
+        )}
       </p>
     </div>
   );
@@ -264,7 +271,7 @@ function Reply({
       {m.error && (
         <p role="alert" className="mt-1 rounded-2xl bg-bad/10 px-3 py-2 text-[14px] text-bad">
           {m.error.message}
-          {m.error.code === "auth" && (
+          {(m.error.code === "auth" || m.error.code === "signin") && (
             <>
               {" "}
               <Link href="/signin/" className="underline">

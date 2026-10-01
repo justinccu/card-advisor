@@ -7,8 +7,12 @@ DynamoDB single-table layout (every access is by key, no scans):
     USER#<uid>      ATTEST                      Wallet Attestation
     USER#<uid>      CARD#<opened_on>#<id>       Held Card (sorted by open date -> 5/24 range query)
     USER#<uid>      QUOTA#<yyyy-mm-dd>          daily chat counter, expires via TTL
+    USER#<uid>      QUOTA#TRIAL                 a guest's trial messages, expires via TTL
     INVITE          CODE#<code>                 remaining uses (conditional decrement)
     INVITE          CODE#<code>#USE#<user>      who took a use, and when they confirmed
+    GUEST           IP#<hash>                   guests started from one network today (TTL)
+    GUEST           DAY#<yyyy-mm-dd>            all guests' messages that day (TTL)
+    ADVISOR         SPEND                       running Advisor cost in USD (atomic add)
 
 All invites share one partition so an admin lists them with a query, not a scan; at invite-beta
 volume (hundreds of items) one partition is nowhere near its throughput limit.
@@ -17,7 +21,7 @@ volume (hundreds of items) one partition is nowhere near its throughput limit.
 import threading
 import time
 import uuid
-from datetime import date
+from decimal import Decimal
 from typing import Protocol
 
 from card_api.models import (
@@ -36,6 +40,8 @@ QUOTA_TTL_SECONDS = 3 * 24 * 3600
 TURN_TTL_SECONDS = 7 * 24 * 3600
 RATED_TURN_TTL_SECONDS = 90 * 24 * 3600
 INVITE_PK = "INVITE"
+GUEST_PK = "GUEST"
+SPEND_KEY = {"PK": "ADVISOR", "SK": "SPEND"}
 
 
 class Repository(Protocol):
@@ -51,8 +57,15 @@ class Repository(Protocol):
     def redeem_invite(self, code: str, user: str) -> bool: ...
     def confirm_invite_use(self, user: str) -> bool: ...
     def list_invites(self) -> list[Invite]: ...
-    def take_quota(self, uid: str, day: date, limit: int) -> int | None: ...
-    def quota_used(self, uid: str, day: date) -> int: ...
+    def take_quota(
+        self, uid: str, period: str, limit: int, ttl_seconds: int = QUOTA_TTL_SECONDS
+    ) -> int | None: ...
+    def quota_used(self, uid: str, period: str) -> int: ...
+    def take_guest_start(self, network: str, limit: int, ttl_seconds: int) -> bool: ...
+    def take_guest_message(self, day: str, limit: int, ttl_seconds: int) -> bool: ...
+    def guest_messages(self, day: str) -> int: ...
+    def add_spend(self, usd: float) -> float: ...
+    def spend(self) -> float: ...
     def put_turn(self, uid: str, turn: ChatTurn) -> None: ...
     def rate_turn(self, uid: str, turn_id: str, feedback: TurnFeedback, rated_at: str) -> bool: ...
     def rated_turns(self) -> list[tuple[str, ChatTurn]]: ...
@@ -74,7 +87,10 @@ class InMemoryRepository:
         self._attest: dict[str, WalletAttestation] = {}
         self._invites: dict[str, int] = {}
         self._uses: dict[str, dict[str, InviteUse]] = {}
-        self._quota: dict[tuple[str, date], int] = {}
+        self._quota: dict[tuple[str, str], int] = {}
+        self._guest_starts: dict[str, int] = {}
+        self._guest_messages: dict[str, int] = {}
+        self._spend = 0.0
         self._turns: dict[str, dict[str, ChatTurn]] = {}
 
     def get_profile(self, uid):
@@ -140,17 +156,45 @@ class InMemoryRepository:
                 for code, left in sorted(self._invites.items())
             ]
 
-    def take_quota(self, uid, day, limit):
-        """Atomically take one unit of today's quota; the new count, or None at the limit."""
+    def take_quota(self, uid, period, limit, ttl_seconds=QUOTA_TTL_SECONDS):
+        """Atomically take one unit of a period's quota (a day, or a guest's trial); the new
+        count, or None at the limit."""
         with self._lock:
-            used = self._quota.get((uid, day), 0)
+            used = self._quota.get((uid, period), 0)
             if used >= limit:
                 return None
-            self._quota[(uid, day)] = used + 1
+            self._quota[(uid, period)] = used + 1
             return used + 1
 
-    def quota_used(self, uid, day):
-        return self._quota.get((uid, day), 0)
+    def quota_used(self, uid, period):
+        return self._quota.get((uid, period), 0)
+
+    def take_guest_start(self, network, limit, ttl_seconds):
+        with self._lock:
+            started = self._guest_starts.get(network, 0)
+            if started >= limit:
+                return False
+            self._guest_starts[network] = started + 1
+            return True
+
+    def take_guest_message(self, day, limit, ttl_seconds):
+        with self._lock:
+            sent = self._guest_messages.get(day, 0)
+            if sent >= limit:
+                return False
+            self._guest_messages[day] = sent + 1
+            return True
+
+    def guest_messages(self, day):
+        return self._guest_messages.get(day, 0)
+
+    def add_spend(self, usd):
+        with self._lock:
+            self._spend += usd
+            return self._spend
+
+    def spend(self):
+        return self._spend
 
     def put_turn(self, uid, turn):
         with self._lock:
@@ -388,18 +432,20 @@ class DynamoRepository:
                 invites[code].uses.append(use)
         return sorted(invites.values(), key=lambda i: i.code)
 
-    def take_quota(self, uid, day, limit):
+    def _take(self, key: dict, limit: int, ttl_seconds: int) -> int | None:
+        """One unit of a counter, atomically: the new count, or None at the limit. The first
+        unit sets the expiry."""
         from botocore.exceptions import ClientError
 
         try:
             resp = self._table.update_item(
-                Key={"PK": self._user(uid), "SK": f"QUOTA#{day.isoformat()}"},
+                Key=key,
                 UpdateExpression="ADD used :one SET expires_at = if_not_exists(expires_at, :exp)",
                 ConditionExpression="attribute_not_exists(used) OR used < :limit",
                 ExpressionAttributeValues={
                     ":one": 1,
                     ":limit": limit,
-                    ":exp": int(time.time()) + QUOTA_TTL_SECONDS,
+                    ":exp": int(time.time()) + ttl_seconds,
                 },
                 ReturnValues="UPDATED_NEW",
             )
@@ -409,11 +455,37 @@ class DynamoRepository:
                 return None
             raise
 
-    def quota_used(self, uid, day):
-        item = self._table.get_item(
-            Key={"PK": self._user(uid), "SK": f"QUOTA#{day.isoformat()}"}
-        ).get("Item")
+    def take_quota(self, uid, period, limit, ttl_seconds=QUOTA_TTL_SECONDS):
+        return self._take({"PK": self._user(uid), "SK": f"QUOTA#{period}"}, limit, ttl_seconds)
+
+    def quota_used(self, uid, period):
+        item = self._table.get_item(Key={"PK": self._user(uid), "SK": f"QUOTA#{period}"}).get(
+            "Item"
+        )
         return int(item["used"]) if item else 0
+
+    def take_guest_start(self, network, limit, ttl_seconds):
+        return self._take({"PK": GUEST_PK, "SK": f"IP#{network}"}, limit, ttl_seconds) is not None
+
+    def take_guest_message(self, day, limit, ttl_seconds):
+        return self._take({"PK": GUEST_PK, "SK": f"DAY#{day}"}, limit, ttl_seconds) is not None
+
+    def guest_messages(self, day):
+        item = self._table.get_item(Key={"PK": GUEST_PK, "SK": f"DAY#{day}"}).get("Item")
+        return int(item["used"]) if item else 0
+
+    def add_spend(self, usd):
+        resp = self._table.update_item(
+            Key=SPEND_KEY,
+            UpdateExpression="ADD total_usd :usd",
+            ExpressionAttributeValues={":usd": Decimal(str(round(usd, 6)))},
+            ReturnValues="UPDATED_NEW",
+        )
+        return float(resp["Attributes"]["total_usd"])
+
+    def spend(self):
+        item = self._table.get_item(Key=SPEND_KEY).get("Item")
+        return float(item["total_usd"]) if item else 0.0
 
     def put_turn(self, uid, turn):
         self._table.put_item(

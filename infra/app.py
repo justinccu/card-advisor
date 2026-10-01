@@ -52,6 +52,12 @@ def code() -> lambda_.Code:
 
 data = DataStack(app, f"{project}-data", env=env, alerts=ops.alerts)
 auth = AuthStack(app, f"{project}-auth", env=env, table=data.table, code=code())
+# Our own name for the site (optional): the domain and its us-east-1 ACM certificate.
+site_domain = app.node.try_get_context("site_domain") or None
+cors_origins = app.node.get_context("cors_origins")
+if site_domain:
+    cors_origins = [*cors_origins, f"https://{site_domain}"]
+
 ApiStack(
     app,
     f"{project}-api",
@@ -61,7 +67,7 @@ ApiStack(
     catalog_bucket=data.catalog_bucket,
     auth=auth,
     code=code(),
-    cors_origins=app.node.get_context("cors_origins"),
+    cors_origins=cors_origins,
     alerts=ops.alerts,
     # Set after `agentcore deploy` creates the Advisor's Memory (ADR 0009); empty until then.
     advisor_memory_id=app.node.try_get_context("advisor_memory_id") or None,
@@ -75,6 +81,8 @@ WebStack(
     env=env,
     project=project,
     site_dir=app.node.try_get_context("site_dir"),
+    domain=site_domain,
+    certificate_arn=app.node.try_get_context("site_certificate_arn") or None,
 )
 
 cdk.Tags.of(app).add("project", project)

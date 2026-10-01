@@ -21,6 +21,7 @@ WALLET_CARDS = re.compile(r".*/me/wallet/cards(\?.*)?$")
 BASE = os.environ.get("E2E_BASE", "http://localhost:3000")
 API = os.environ.get("E2E_API", "http://localhost:8000")
 ADVISOR = "http://localhost:8080/invocations"  # `make agent`; scripted here, never called
+DEV_USER_HEADER = "X-Amzn-Bedrock-AgentCore-Runtime-Custom-Dev-User"
 results = []
 
 try:
@@ -463,6 +464,67 @@ with sync_playwright() as p:
     )
     page.keyboard.press("Escape")
     page.unroute(ADVISOR)
+
+    # The guest trial (ADR 0009, temporary): a visitor who isn't signed in can chat; the first
+    # message starts a guest (POST /guest), and the trial ends with a way to sign in.
+    guest_ctx = b.new_context(viewport={"width": 1280, "height": 900})
+    guest_page = guest_ctx.new_page()
+    guest_page.on("pageerror", lambda e: errors.append(str(e)))
+    callers = []
+
+    def fake_guest_agent(route):
+        cors = {"Access-Control-Allow-Origin": BASE, "Access-Control-Allow-Headers": "*"}
+        if route.request.method == "OPTIONS":
+            return route.fulfill(status=204, headers=cors)
+        callers.append(route.request.headers.get(DEV_USER_HEADER.lower(), ""))
+        events = replies.pop(0)
+        body = "".join(f"data: {json.dumps(e)}\n\n" for e in events)
+        route.fulfill(status=200, headers=cors, content_type="text/event-stream", body=body)
+
+    guest_page.route(ADVISOR, fake_guest_agent)
+    guest_page.goto(BASE + "/advisor/", wait_until="networkidle")
+    guest_page.wait_for_timeout(600)
+    check(
+        "signed out, the Advisor offers a free trial",
+        guest_page.get_by_text("Try it free: 10 messages").is_visible(),
+    )
+    replies.append(
+        [
+            {"type": "quota", "limit": 10, "remaining": 9, "resets_at": None, "guest": True},
+            {"type": "tool", "name": "rank_cards"},
+            {"type": "text", "text": "**Chase Sapphire Preferred** fits best."},
+            {"type": "done"},
+        ]
+    )
+    guest_page.get_by_label("Message the Advisor").fill("Which card for dining?")
+    guest_page.get_by_label("Message the Advisor").press("Enter")
+    guest_page.wait_for_timeout(800)
+    check(
+        f"the first message starts a guest and sends as it ({callers})",
+        len(callers) == 1 and callers[0].startswith("guest-"),
+    )
+    check(
+        "a guest sees free messages left", guest_page.get_by_text("9 of 10 free left").is_visible()
+    )
+    replies.append(
+        [
+            {
+                "type": "error",
+                "code": "quota",
+                "message": "You've used the 10 free messages. Sign in to keep using the Advisor.",
+                "guest": True,
+            }
+        ]
+    )
+    guest_page.get_by_label("Message the Advisor").fill("One more?")
+    guest_page.get_by_label("Message the Advisor").press("Enter")
+    guest_page.wait_for_timeout(600)
+    alert = guest_page.get_by_role("alert").filter(has_text="10 free messages")
+    check(
+        "a used-up trial offers sign-in",
+        alert.is_visible() and alert.get_by_role("link", name="Sign in").is_visible(),
+    )
+    guest_ctx.close()
 
     check("no uncaught page errors", not errors)
     b.close()

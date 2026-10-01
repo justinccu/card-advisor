@@ -5,7 +5,9 @@
 // with that same token, so the Advisor can only see what the signed-in user can.
 //  - dev (`make demo` + `make agent`): `agentcore dev` on :8080, as the demo's dev user.
 //  - cognito: NEXT_PUBLIC_ADVISOR_URL, the runtime's invocations URL; unset hides the Advisor.
+// A visitor who isn't signed in chats as a guest on the free trial (lib/guest).
 import { AUTH_MODE, authHeaders } from "./auth";
+import { GuestUnavailable, forgetGuest, guestHeaders } from "./guest";
 import { ADVISOR_STORE_PREFIX } from "./session";
 import type { CatalogCard } from "./types";
 
@@ -23,15 +25,16 @@ export type AdvisorCard = Pick<
   "id" | "issuer_id" | "name" | "url" | "annual_fee_usd" | "first_year_annual_fee_usd" | "offer" | "availability"
 >;
 
-export type ErrorCode = "quota" | "auth" | "input" | "internal" | "network";
+/** signin: the guest trial can't continue (used up, paused, or not available here) */
+export type ErrorCode = "quota" | "auth" | "signin" | "input" | "internal" | "network";
 
 export type AdvisorEvent =
-  | { type: "quota"; limit: number; remaining: number; resets_at: string }
+  | { type: "quota"; limit: number; remaining: number; resets_at: string | null; guest?: boolean }
   | { type: "tool"; name: string }
   | { type: "text"; text: string }
   /** the answer so far is discarded (the agent retries after a malformed reply) */
   | { type: "reset" }
-  | { type: "error"; code: ErrorCode; message: string; resets_at?: string }
+  | { type: "error"; code: ErrorCode; message: string; resets_at?: string | null; guest?: boolean }
   /** turn_id: the saved answer the user can rate (absent when it couldn't be saved) */
   | { type: "done"; turn_id?: string };
 
@@ -80,7 +83,17 @@ export async function* ask(prompt: string, sessionId: string, signal?: AbortSign
     return;
   }
   const headers: Record<string, string> = { "Content-Type": "application/json", [SESSION_HEADER]: sessionId };
-  for (const [k, v] of Object.entries(await authHeaders())) {
+  let identity = await authHeaders();
+  const guest = !Object.keys(identity).length;
+  if (guest) {
+    try {
+      identity = await guestHeaders(true);
+    } catch (e) {
+      yield error("signin", e instanceof GuestUnavailable ? e.message : "Sign in to use the Advisor.");
+      return;
+    }
+  }
+  for (const [k, v] of Object.entries(identity)) {
     headers[k === "X-Dev-User" ? DEV_USER_HEADER : k] = v;
   }
   let res: Response;
@@ -95,6 +108,11 @@ export async function* ask(prompt: string, sessionId: string, signal?: AbortSign
     return;
   }
   if (res.status === 401 || res.status === 403) {
+    if (guest) {
+      forgetGuest(); // e.g. the trial account is gone: the next message starts a new one
+      yield error("signin", "Your free trial session ended. Send your message again, or sign in.");
+      return;
+    }
     yield error("auth", "Your session has ended. Sign in again to keep chatting.");
     return;
   }

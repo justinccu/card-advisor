@@ -77,6 +77,10 @@ class AdvisorApi:
             )
         return _rules["by_id"]
 
+    def record_usage(self, cost_usd: float) -> None:
+        """What this message cost; the API keeps the running total (ADR 0009)."""
+        self._call("POST", "/me/chat/usage", json={"cost_usd": cost_usd})
+
     def save_turn(self, record: dict) -> dict:
         return self._call("POST", "/me/chat/turns", json=record)
 

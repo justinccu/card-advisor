@@ -508,3 +508,134 @@ def test_answer_records_are_bounded(client):
     assert client.post("/me/chat/turns", json=too_big, headers=as_user("ann")).status_code == 422
     bad_id = TURN | {"turn_id": "../../etc"}
     assert client.post("/me/chat/turns", json=bad_id, headers=as_user("ann")).status_code == 422
+
+
+# --- guest trial (ADR 0009, temporary) --------------------------------------------------
+
+
+def test_a_guest_gets_ten_messages_in_all_and_no_reset(client):
+    guest = client.post("/guest").json()["dev_user"]
+    assert guest.startswith("guest-")
+    limit = app_module.GUEST_MESSAGE_LIMIT
+    for i in range(limit):
+        quota = client.post("/me/chat/turn", headers=as_user(guest)).json()
+        assert quota["remaining"] == limit - 1 - i and quota["guest"] and quota["resets_at"] is None
+    blocked = client.post("/me/chat/turn", headers=as_user(guest))
+    assert blocked.status_code == 429 and "Sign in" in blocked.json()["detail"]["message"]
+    assert client.get("/me/chat/quota", headers=as_user(guest)).json()["remaining"] == 0
+
+
+def test_guests_can_chat_but_not_save_anything(client):
+    guest = client.post("/guest").json()["dev_user"]
+    assert client.get("/me/wallet", headers=as_user(guest)).status_code == 200  # the agent reads
+    assert add(client, guest, "citi_double_cash", 3).status_code == 403
+    profile = client.put("/me/profile", json={"tax_id": "SSN"}, headers=as_user(guest))
+    assert profile.status_code == 403
+    attest = {"complete_since": "2024-01-01", "includes_all_open_cards": True}
+    assert (
+        client.put("/me/wallet/attestation", json=attest, headers=as_user(guest)).status_code == 403
+    )
+
+
+def test_guest_starts_are_limited_per_network_per_day(client):
+    for _ in range(app_module.GUEST_STARTS_PER_NETWORK):
+        assert client.post("/guest").status_code == 201
+    blocked = client.post("/guest")
+    assert blocked.status_code == 429 and blocked.json()["detail"]["code"] == "guest_limit"
+
+
+def test_the_guest_trial_closes_when_the_advisor_spend_reaches_the_budget(client, repo):
+    budget = app_module.settings.guest_budget_usd
+    guest = client.post("/guest").json()["dev_user"]
+    repo.add_spend(budget - 0.5)
+    assert client.post("/me/chat/turn", headers=as_user(guest)).status_code == 200
+    assert (
+        client.post("/me/chat/usage", json={"cost_usd": 0.5}, headers=as_user("ann")).status_code
+        == 204
+    )
+    closed = client.post("/me/chat/turn", headers=as_user(guest))
+    assert closed.status_code == 503 and closed.json()["detail"]["code"] == "guests_closed"
+    assert client.post("/guest").status_code == 503
+    # members keep their daily quota
+    assert client.post("/me/chat/turn", headers=as_user("ann")).status_code == 200
+    spend = client.get("/admin/advisor/spend", headers=as_user("admin-1")).json()
+    assert spend["guests_open"] is False and spend["total_usd"] == budget
+
+
+def test_all_guests_together_get_a_daily_limit(client, repo, monkeypatch):
+    from datetime import datetime
+
+    et = app_module.CHAT_TIMEZONE
+    monkeypatch.setattr(app_module, "settings", Settings(env="local", guest_daily_limit=3))
+    monkeypatch.setattr(app_module, "_now", lambda: datetime(2026, 10, 1, 23, 30, tzinfo=et))
+    first, second = (client.post("/guest").json()["dev_user"] for _ in range(2))
+    for guest in (first, first, second):
+        assert client.post("/me/chat/turn", headers=as_user(guest)).status_code == 200
+    full = client.post("/me/chat/turn", headers=as_user(second))
+    assert full.status_code == 429 and full.json()["detail"]["code"] == "guests_full"
+    assert full.json()["detail"]["guest"] is True  # the site offers sign-in
+    # the refused message didn't count against the guest's own 10
+    assert client.get("/me/chat/quota", headers=as_user(second)).json()["used"] == 1
+    assert client.post("/guest").json()["detail"]["code"] == "guests_full"  # no new guests
+    assert client.post("/me/chat/turn", headers=as_user("ann")).status_code == 200  # members
+    # a new US Eastern day opens it again
+    monkeypatch.setattr(app_module, "_now", lambda: datetime(2026, 10, 2, 0, 5, tzinfo=et))
+    assert client.post("/me/chat/turn", headers=as_user(second)).status_code == 200
+    spend = client.get("/admin/advisor/spend", headers=as_user("admin-1")).json()
+    assert spend["guest_messages_today"] == 1 and spend["guest_daily_limit"] == 3
+
+
+def test_usage_reports_cannot_lower_the_spend(client):
+    for bad in (-1, 5):
+        res = client.post("/me/chat/usage", json={"cost_usd": bad}, headers=as_user("ann"))
+        assert res.status_code == 422
+    assert client.post("/me/chat/usage", json={"cost_usd": 0.01}).status_code == 401
+    assert client.get("/admin/advisor/spend", headers=as_user("ann")).status_code == 403
+
+
+def test_guest_group_in_the_verified_token_marks_a_guest(monkeypatch):
+    monkeypatch.setattr(auth, "settings", Settings(env="aws"))
+
+    class Req:
+        scope = {
+            "aws.event": {
+                "requestContext": {
+                    "authorizer": {"jwt": {"claims": {"sub": "g-1", "cognito:groups": "[guest]"}}}
+                }
+            }
+        }
+
+    caller = auth.current_caller(Req(), x_dev_user=None)
+    assert caller.is_guest and not caller.is_admin
+
+
+def test_guest_accounts_are_made_in_the_guest_group_without_mail():
+    from card_api import guests
+
+    calls = []
+
+    class Idp:
+        def __getattr__(self, name):
+            def call(**kw):
+                calls.append((name, kw))
+                if name == "admin_initiate_auth":
+                    return {
+                        "AuthenticationResult": {
+                            "AccessToken": "a",
+                            "RefreshToken": "r",
+                            "ExpiresIn": 1800,
+                        }
+                    }
+                return {}
+
+            return call
+
+    out = guests.create(Idp(), "pool", "client")
+    assert out == {"access_token": "a", "refresh_token": "r", "expires_in": 1800}
+    made = dict(calls)
+    assert made["admin_create_user"]["MessageAction"] == "SUPPRESS"
+    assert made["admin_create_user"]["Username"].endswith("@guest.invalid")
+    assert made["admin_add_user_to_group"]["GroupName"] == "guest"
+    assert made["admin_initiate_auth"]["AuthFlow"] == "ADMIN_USER_PASSWORD_AUTH"
+    # the password is used once and never returned
+    assert "Password" not in str(out) and made["admin_set_user_password"]["Permanent"]

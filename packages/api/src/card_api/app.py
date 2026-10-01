@@ -1,3 +1,4 @@
+import hashlib
 import logging
 from datetime import date, datetime, time, timedelta
 from functools import lru_cache
@@ -9,19 +10,21 @@ from card_rules.catalog import VERSION_PATTERN, CatalogSnapshot
 from card_rules.dates import add_months
 from card_rules.explain import explain
 from card_rules.ranking import RankOptions, rank
-from fastapi import Depends, FastAPI, HTTPException, Query, Response
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 
-from card_api import invites, memory, service
-from card_api.auth import Caller, current_caller, require_admin
+from card_api import guests, invites, memory, service
+from card_api.auth import Caller, current_caller, require_admin, require_member
 from card_api.catalog import UnknownCatalogVersion, catalog_index, load_catalog
 from card_api.models import (
     ApplicantProfile,
     ChatQuota,
     ChatTurn,
     ChatTurnIn,
+    ChatUsage,
+    GuestStart,
     HeldCard,
     HeldCardIn,
     HeldCardPatch,
@@ -39,6 +42,14 @@ from card_api.settings import settings
 MAX_WALLET_CARDS = 100
 CHAT_DAILY_LIMIT = 30  # ADR 0009
 CHAT_TIMEZONE = ZoneInfo("America/New_York")  # the quota resets at midnight US Eastern
+# Temporary guest trial (ADR 0009): visitors who aren't signed in get 10 messages in all, a few
+# guest starts per network a day, and none once the Advisor has cost settings.guest_budget_usd.
+GUEST_MESSAGE_LIMIT = 10
+GUEST_TRIAL = "TRIAL"
+GUEST_TTL_SECONDS = 30 * 24 * 3600  # the guest's refresh token lasts 30 days
+GUEST_STARTS_PER_NETWORK = 3
+GUESTS_CLOSED = "The free trial is paused. Sign in to keep using the Advisor."
+GUESTS_FULL = "Today's free trial messages are all taken. Sign in, or try again tomorrow."
 DEMO_INVITE = "DEMO-2026"  # local demo only: seeded into the in-memory store, never into DynamoDB
 DEMO_USER = "demo-user"
 
@@ -132,6 +143,7 @@ def get_profile(caller: CallerDep, repo: RepoDep) -> ApplicantProfile:
 
 @app.put("/me/profile")
 def put_profile(body: ApplicantProfile, caller: CallerDep, repo: RepoDep) -> ApplicantProfile:
+    require_member(caller)
     repo.put_profile(caller.uid, body)
     return body
 
@@ -169,6 +181,7 @@ def get_wallet(caller: CallerDep, repo: RepoDep) -> Wallet:
 
 @app.post("/me/wallet/cards", status_code=201)
 def add_card(body: HeldCardIn, caller: CallerDep, repo: RepoDep, snapshot: CatalogDep) -> HeldCard:
+    require_member(caller)
     if body.card_product_id and body.card_product_id not in catalog_index(snapshot):
         raise HTTPException(422, f"unknown card_product_id {body.card_product_id!r}")
     if len(repo.list_cards(caller.uid)) >= MAX_WALLET_CARDS:
@@ -178,6 +191,7 @@ def add_card(body: HeldCardIn, caller: CallerDep, repo: RepoDep, snapshot: Catal
 
 @app.patch("/me/wallet/cards/{card_id}")
 def update_card(card_id: str, body: HeldCardPatch, caller: CallerDep, repo: RepoDep) -> HeldCard:
+    require_member(caller)
     current = next((c for c in repo.list_cards(caller.uid) if c.id == card_id), None)
     if current is None:
         raise HTTPException(404, "no such card in your Wallet")
@@ -195,12 +209,14 @@ def update_card(card_id: str, body: HeldCardPatch, caller: CallerDep, repo: Repo
 
 @app.delete("/me/wallet/cards/{card_id}", status_code=204)
 def delete_card(card_id: str, caller: CallerDep, repo: RepoDep) -> None:
+    require_member(caller)
     if not repo.delete_card(caller.uid, card_id):
         raise HTTPException(404, "no such card in your Wallet")
 
 
 @app.put("/me/wallet/attestation")
 def put_attestation(body: WalletAttestation, caller: CallerDep, repo: RepoDep) -> WalletAttestation:
+    require_member(caller)
     repo.put_attestation(caller.uid, body)
     return body
 
@@ -307,26 +323,49 @@ def _chat_day() -> tuple[date, str]:
     return now.date(), resets.isoformat()
 
 
-def _quota(used: int, resets_at: str) -> ChatQuota:
+def _quota(used: int, resets_at: str | None, *, guest: bool = False) -> ChatQuota:
+    limit = GUEST_MESSAGE_LIMIT if guest else CHAT_DAILY_LIMIT
     return ChatQuota(
-        limit=CHAT_DAILY_LIMIT,
-        used=used,
-        remaining=max(0, CHAT_DAILY_LIMIT - used),
-        resets_at=resets_at,
+        limit=limit, used=used, remaining=max(0, limit - used), resets_at=resets_at, guest=guest
     )
+
+
+def _guests_open(repo: Repository) -> bool:
+    return repo.spend() < settings.guest_budget_usd
 
 
 @app.get("/me/chat/quota")
 def chat_quota(caller: CallerDep, repo: RepoDep) -> ChatQuota:
+    if caller.is_guest:
+        return _quota(repo.quota_used(caller.uid, GUEST_TRIAL), None, guest=True)
     day, resets_at = _chat_day()
-    return _quota(repo.quota_used(caller.uid, day), resets_at)
+    return _quota(repo.quota_used(caller.uid, day.isoformat()), resets_at)
 
 
 @app.post("/me/chat/turn")
 def chat_turn(caller: CallerDep, repo: RepoDep) -> ChatQuota:
-    """Takes one Advisor message from today's quota (atomic), before any model is called."""
+    """Takes one Advisor message from the quota (atomic), before any model is called: today's
+    for members, the trial's for guests while the trial is open."""
+    if caller.is_guest:
+        if not _guests_open(repo):
+            raise HTTPException(503, {"message": GUESTS_CLOSED, "code": "guests_closed"})
+        used_up = {
+            "message": f"You've used the {GUEST_MESSAGE_LIMIT} free messages. "
+            "Sign in to keep using the Advisor.",
+            **_quota(GUEST_MESSAGE_LIMIT, None, guest=True).model_dump(),
+        }
+        # A guest with messages left takes one of today's shared guest messages, then their own.
+        if repo.quota_used(caller.uid, GUEST_TRIAL) >= GUEST_MESSAGE_LIMIT:
+            raise HTTPException(429, used_up)
+        day, _ = _chat_day()
+        if not repo.take_guest_message(day.isoformat(), settings.guest_daily_limit, 3 * 86400):
+            raise HTTPException(429, {"message": GUESTS_FULL, "code": "guests_full", "guest": True})
+        used = repo.take_quota(caller.uid, GUEST_TRIAL, GUEST_MESSAGE_LIMIT, GUEST_TTL_SECONDS)
+        if used is None:
+            raise HTTPException(429, used_up)
+        return _quota(used, None, guest=True)
     day, resets_at = _chat_day()
-    used = repo.take_quota(caller.uid, day, CHAT_DAILY_LIMIT)
+    used = repo.take_quota(caller.uid, day.isoformat(), CHAT_DAILY_LIMIT)
     if used is None:
         raise HTTPException(
             429,
@@ -336,6 +375,59 @@ def chat_turn(caller: CallerDep, repo: RepoDep) -> ChatQuota:
             },
         )
     return _quota(used, resets_at)
+
+
+@app.post("/me/chat/usage", status_code=204)
+def chat_usage(body: ChatUsage, caller: CallerDep, repo: RepoDep) -> None:
+    """The agent reports what each message cost (any caller's); the total closes the guest
+    trial at settings.guest_budget_usd. Amounts are capped per message and never negative, so
+    a caller can't lower the total."""
+    total = repo.add_spend(body.cost_usd)
+    if total >= settings.guest_budget_usd > total - body.cost_usd:
+        log.warning("advisor spend reached $%.2f: guest trial closed", total)
+
+
+def _client_network(request: Request) -> str:
+    """The caller's IP (API Gateway's view; the client's own on a laptop), hashed with today's
+    date: enough to count guest starts per network per day, kept a day, never stored raw."""
+    event = request.scope.get("aws.event") or {}
+    ip = event.get("requestContext", {}).get("http", {}).get("sourceIp") or (
+        request.client.host if request.client else "unknown"
+    )
+    day = _now().date().isoformat()
+    return hashlib.sha256(f"{day}|{ip}".encode()).hexdigest()[:32]
+
+
+@lru_cache
+def cognito_client():
+    import boto3
+
+    return boto3.client("cognito-idp")
+
+
+@app.post("/guest", status_code=201)
+def start_guest(request: Request, repo: RepoDep) -> GuestStart:
+    """A guest identity for the Advisor trial (public: no sign-in). Temporary (ADR 0009)."""
+    if not _guests_open(repo):
+        raise HTTPException(503, {"message": GUESTS_CLOSED, "code": "guests_closed"})
+    if repo.guest_messages(_chat_day()[0].isoformat()) >= settings.guest_daily_limit:
+        raise HTTPException(429, {"message": GUESTS_FULL, "code": "guests_full"})
+    if not repo.take_guest_start(_client_network(request), GUEST_STARTS_PER_NETWORK, 2 * 86400):
+        raise HTTPException(
+            429,
+            {
+                "message": "Too many free trials from your network today. "
+                "Sign in to keep using the Advisor.",
+                "code": "guest_limit",
+            },
+        )
+    if settings.dev_auth:
+        return GuestStart(dev_user=f"guest-{new_id()}")
+    if not (settings.user_pool_id and settings.web_client_id):
+        raise HTTPException(503, {"message": GUESTS_CLOSED, "code": "guests_closed"})
+    return GuestStart(
+        **guests.create(cognito_client(), settings.user_pool_id, settings.web_client_id)
+    )
 
 
 @app.get("/rules")
@@ -378,6 +470,20 @@ def create_invites(body: InviteBatchIn, caller: CallerDep, repo: RepoDep) -> dic
     for code in codes:
         repo.create_invite(code, body.uses)
     return {"codes": [invites.display(c) for c in codes], "uses_each": body.uses}
+
+
+@app.get("/admin/advisor/spend")
+def advisor_spend(caller: CallerDep, repo: RepoDep) -> dict:
+    """The Advisor's running cost and whether the guest trial is still open."""
+    require_admin(caller)
+    total = repo.spend()
+    return {
+        "total_usd": round(total, 4),
+        "guest_budget_usd": settings.guest_budget_usd,
+        "guests_open": total < settings.guest_budget_usd,
+        "guest_messages_today": repo.guest_messages(_chat_day()[0].isoformat()),
+        "guest_daily_limit": settings.guest_daily_limit,
+    }
 
 
 @app.get("/admin/invites")

@@ -6,6 +6,7 @@ from aws_cdk import aws_logs as logs
 from constructs import Construct
 
 ADMIN_GROUP = "admin"
+GUEST_GROUP = "guest"  # card_api.guests: the Advisor's temporary guest trial (ADR 0009)
 
 
 class AuthStack(Stack):
@@ -84,10 +85,12 @@ class AuthStack(Stack):
         # password never leaves the page. Short access tokens bound how long a disabled user's
         # token stays valid (the API's JWT authorizer checks signature and expiry, not
         # revocation); disabling a user also revokes their refresh tokens (global sign-out).
+        # The admin password flow is for the API's guest accounts: it needs IAM credentials
+        # (cognito-idp:AdminInitiateAuth), so the browser can't use it.
         self.web_client = self.user_pool.add_client(
             "WebClient",
             generate_secret=False,
-            auth_flows=cognito.AuthFlow(user_srp=True),
+            auth_flows=cognito.AuthFlow(user_srp=True, admin_user_password=True),
             access_token_validity=Duration.minutes(30),
             id_token_validity=Duration.minutes(30),
             refresh_token_validity=Duration.days(30),
@@ -101,6 +104,13 @@ class AuthStack(Stack):
             user_pool_id=self.user_pool.user_pool_id,
             group_name=ADMIN_GROUP,
             description="Can create and list invite codes (the API checks cognito:groups)",
+        )
+        cognito.CfnUserPoolGroup(
+            self,
+            "GuestGroup",
+            user_pool_id=self.user_pool.user_pool_id,
+            group_name=GUEST_GROUP,
+            description="Advisor trial accounts made by the API: chat only (temporary)",
         )
 
     @property

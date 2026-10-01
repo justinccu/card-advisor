@@ -32,6 +32,14 @@ class Settings:
     preview_path: Path = REPO_ROOT / "catalog" / ".cache" / "preview_snapshot.json"
     # The Advisor's AgentCore Memory (card_api.memory); unset until the agent is deployed.
     advisor_memory_id: str | None = os.environ.get("ADVISOR_MEMORY_ID") or None
+    # Guests on the Advisor trial get Cognito accounts made by the API (card_api.guests).
+    user_pool_id: str | None = os.environ.get("USER_POOL_ID") or None
+    web_client_id: str | None = os.environ.get("WEB_CLIENT_ID") or None
+    # The guest trial closes once the Advisor's running cost reaches this (ADR 0009).
+    guest_budget_usd: float = float(os.environ.get("ADVISOR_GUEST_BUDGET_USD", "50"))
+    # ...and takes at most this many guest messages a day, all guests together (~$4.50 at
+    # ~$0.015 a message), so getting around the per-guest limits can't spend the budget in a day.
+    guest_daily_limit: int = int(os.environ.get("ADVISOR_GUEST_DAILY_LIMIT", "300"))
     cors_origins: list[str] = field(
         default_factory=lambda: os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
     )

@@ -57,6 +57,9 @@ class ApiStack(Stack):
                 "TABLE_NAME": table.table_name,
                 "CATALOG_BUCKET": catalog_bucket.bucket_name,
                 "CATALOG_PREFIX": CATALOG_PREFIX,
+                # The Advisor's guest trial makes guest accounts in this pool (card_api.guests).
+                "USER_POOL_ID": auth.user_pool.user_pool_id,
+                "WEB_CLIENT_ID": auth.web_client.user_pool_client_id,
             },
             log_group=logs.LogGroup(
                 self,
@@ -68,6 +71,14 @@ class ApiStack(Stack):
         # Least privilege: this table's items, and read-only on published snapshots.
         table.grant_read_write_data(fn)
         catalog_bucket.grant_read(fn, f"{CATALOG_PREFIX}*")
+        # Guest accounts only: make one, set its password, put it in the guest group, sign it in.
+        auth.user_pool.grant(
+            fn,
+            "cognito-idp:AdminCreateUser",
+            "cognito-idp:AdminSetUserPassword",
+            "cognito-idp:AdminAddUserToGroup",
+            "cognito-idp:AdminInitiateAuth",
+        )
         if advisor_memory_id:
             # Account deletion also deletes the user's Advisor memory (card_api.memory): list and
             # delete only, on this one Memory. Reading or writing conversations stays the agent's.
@@ -140,11 +151,15 @@ class ApiStack(Stack):
             # Cognito access tokens carry client_id rather than aud; API Gateway checks either.
             jwt_audience=[auth.web_client.user_pool_client_id],
         )
-        # Public: health and the catalog (the site is public too).
-        for path in ("/health", "/catalog"):
+        # Public: health, the catalog and the rules explained (the site is public too), and
+        # starting a guest trial (the app limits starts per network and closes it at its budget).
+        for path in ("/health", "/catalog", "/rules"):
             self.http_api.add_routes(
                 path=path, methods=[apigw.HttpMethod.GET], integration=integration
             )
+        self.http_api.add_routes(
+            path="/guest", methods=[apigw.HttpMethod.POST], integration=integration
+        )
         # Everything else needs a valid token. Explicit methods (no ANY) so preflight OPTIONS
         # never reaches the authorizer.
         self.http_api.add_routes(

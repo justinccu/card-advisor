@@ -3,11 +3,11 @@
 Each request: identify the caller from the verified token, take one message from today's quota
 (before any model call), then stream the agent's answer as small JSON events the site renders:
 
-    {"type": "quota", "limit": 30, "remaining": 29, "resets_at": "..."}
+    {"type": "quota", "limit": 30, "remaining": 29, "resets_at": "...", "guest": false}
     {"type": "tool", "name": "rank_cards"}        # a tool started (for a progress hint)
     {"type": "text", "text": "..."}               # answer text, streamed
     {"type": "reset"}                             # discard the answer text so far (a retry follows)
-    {"type": "error", "code": "quota" | "auth" | "input" | "internal", "message": "..."}
+    {"type": "error", "code": "quota" | "auth" | "signin" | "input" | "internal", "message": "..."}
     {"type": "done", "turn_id": "..."}            # turn_id: rate this answer (absent if not saved)
 """
 
@@ -30,7 +30,7 @@ from advisor.prompt import (
 from advisor.tools import build_tools
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
 from memory.session import get_memory_session_manager
-from model.load import MODEL_ID, load_model
+from model.load import MODEL_ID, load_model, message_cost
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from strands import Agent
@@ -158,9 +158,16 @@ async def invoke(payload, context):
     except QuotaExceeded as e:
         detail = e.detail if isinstance(e.detail, dict) else {}
         message = detail.pop("message", "Today's messages are used up.")
+        detail.pop(
+            "code", None
+        )  # why the API refused (e.g. guests_full); the event's code is quota
         yield _error("quota", message, **detail)
         return
     except ApiError as e:
+        detail = e.detail if isinstance(e.detail, dict) else {}
+        if detail.get("code") == "guests_closed":  # the guest trial's budget is spent
+            yield _error("signin", detail.get("message", "Sign in to use the Advisor."))
+            return
         log.warning("quota check failed: %s", e)
         yield _error("internal", "The Advisor can't reach your account right now.")
         return
@@ -169,11 +176,13 @@ async def invoke(payload, context):
         "limit": quota.get("limit"),
         "remaining": quota["remaining"],
         "resets_at": quota["resets_at"],
+        "guest": quota.get("guest", False),
     }
 
     session_id = getattr(context, "session_id", None) or uuid.uuid4().hex
     session = get_session(session_id, caller.user_id)
     session.api = api
+    tokens_before = _tokens(session.agent)
     session.agent.system_prompt = system_prompt_for(prompt)  # this message's reply language
     answer = ""  # what the page shows: text since the last reset
     nudge = ""  # a retry's instruction, at the end of the message where DeepSeek heeds it
@@ -236,6 +245,7 @@ async def invoke(payload, context):
         yield _error("internal", "Something went wrong while answering. Please try again.")
         return
     finally:
+        _report_cost(api, session.agent, tokens_before)
         session.api = None  # don't keep the caller's token after the reply
     yield {"type": "done", **({"turn_id": turn_id} if turn_id else {})}
 
@@ -349,6 +359,22 @@ def turn_record(messages: list[dict], question: str, answer: str) -> dict:
         "catalog_version": catalog_version(),
         "rules_version": rules_version(),
     }
+
+
+def _tokens(agent) -> tuple[int, int]:
+    """Input and output tokens this agent has used so far (Strands keeps a running total)."""
+    usage = getattr(getattr(agent, "event_loop_metrics", None), "accumulated_usage", None) or {}
+    return usage.get("inputTokens", 0), usage.get("outputTokens", 0)
+
+
+def _report_cost(api: AdvisorApi, agent, before: tuple[int, int]) -> None:
+    """What this message cost, retries included, toward the guest trial's budget (ADR 0009).
+    Reporting never fails the answer."""
+    used_in, used_out = (now - then for now, then in zip(_tokens(agent), before, strict=True))
+    try:
+        api.record_usage(message_cost(used_in, used_out))
+    except Exception:
+        log.warning("couldn't report the message's cost", exc_info=True)
 
 
 def _save_turn(api: AdvisorApi, record: dict) -> str | None:

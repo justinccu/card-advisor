@@ -1,6 +1,7 @@
 import json
 
 import aws_cdk as cdk
+import pytest
 from aws_cdk.assertions import Match, Template
 from stacks.ci_stack import CiStack
 from stacks.ops_stack import OpsStack
@@ -127,7 +128,14 @@ def test_sign_up_is_invite_gated_and_tokens_are_short_lived():
         "minutes"
     )
     assert client["EnableTokenRevocation"] is True
-    assert _one(auth, "AWS::Cognito::UserPoolGroup")["Properties"]["GroupName"] == "admin"
+    # SRP for people; the admin flow (IAM only) for the API's guest accounts. No plain password.
+    assert set(client["ExplicitAuthFlows"]) == {
+        "ALLOW_USER_SRP_AUTH",
+        "ALLOW_ADMIN_USER_PASSWORD_AUTH",
+        "ALLOW_REFRESH_TOKEN_AUTH",
+    }
+    groups = auth.find_resources("AWS::Cognito::UserPoolGroup").values()
+    assert {g["Properties"]["GroupName"] for g in groups} == {"admin", "guest"}
 
     handlers = {
         f["Properties"]["Handler"]: f["Properties"]["Timeout"]
@@ -139,13 +147,14 @@ def test_sign_up_is_invite_gated_and_tokens_are_short_lived():
     }
 
 
-def test_every_route_but_health_and_catalog_needs_a_jwt():
+def test_every_route_but_public_data_and_guest_start_needs_a_jwt():
     _, _, api = _s4()
     routes = {
         r["Properties"]["RouteKey"]: r["Properties"].get("AuthorizationType", "NONE")
         for r in api.find_resources("AWS::ApiGatewayV2::Route").values()
     }
     assert routes["GET /health"] == "NONE" and routes["GET /catalog"] == "NONE"
+    assert routes["GET /rules"] == "NONE" and routes["POST /guest"] == "NONE"
     private = {k: v for k, v in routes.items() if k.endswith("/{proxy+}")}
     assert set(private) == {f"{m} /{{proxy+}}" for m in ("GET", "POST", "PUT", "PATCH", "DELETE")}
     assert set(private.values()) == {"JWT"}
@@ -204,12 +213,12 @@ def _list(x):
     return x if isinstance(x, list) else [x]
 
 
-def _web(site_dir=None):
+def _web(site_dir=None, **domain):
     from stacks.web_stack import WebStack
 
     app = cdk.App()
     return Template.from_stack(
-        WebStack(app, "web", env=ENV, project="card-advisor", site_dir=site_dir)
+        WebStack(app, "web", env=ENV, project="card-advisor", site_dir=site_dir, **domain)
     )
 
 
@@ -253,3 +262,31 @@ def test_site_files_are_published_only_from_a_ci_build():
     assert len(deployments) == 2  # hashed assets, then pages + cache invalidation
     pages = [d for d in deployments.values() if "DistributionId" in d["Properties"]]
     assert len(pages) == 1 and pages[0]["Properties"]["DistributionPaths"] == ["/*"]
+
+
+def test_site_can_have_its_own_domain():
+    cert = "arn:aws:acm:us-east-1:123456789012:certificate/abc"
+    web = _web(domain="cards.example.com", certificate_arn=cert)
+    dist = _one(web, "AWS::CloudFront::Distribution")["Properties"]["DistributionConfig"]
+    assert dist["Aliases"] == ["cards.example.com"]
+    assert dist["ViewerCertificate"]["AcmCertificateArn"] == cert
+    assert dist["ViewerCertificate"]["SslSupportMethod"] == "sni-only"
+    web.has_output("SiteUrl", {"Value": "https://cards.example.com"})
+    default = _one(_web(), "AWS::CloudFront::Distribution")["Properties"]
+    assert "Aliases" not in default["DistributionConfig"]
+    with pytest.raises(ValueError):
+        _web(domain="cards.example.com")
+
+
+def test_the_api_can_only_make_and_sign_in_guest_accounts():
+    _, _, api = _s4()
+    actions = set()
+    for policy in api.find_resources("AWS::IAM::Policy").values():
+        for st in policy["Properties"]["PolicyDocument"]["Statement"]:
+            actions |= {a for a in _list(st["Action"]) if a.startswith("cognito-idp:")}
+    assert actions == {
+        "cognito-idp:AdminCreateUser",
+        "cognito-idp:AdminSetUserPassword",
+        "cognito-idp:AdminAddUserToGroup",
+        "cognito-idp:AdminInitiateAuth",
+    }

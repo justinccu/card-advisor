@@ -130,18 +130,31 @@ def test_uses_are_confirmed_once_and_listed_per_code(repo):
     assert status == {"ann": True, "bob": False}  # bob abandoned sign-up: a burned use
 
 
-def test_quota_stops_at_the_limit_per_day(repo):
-    day = date(2026, 9, 25)
+def test_quota_stops_at_the_limit_per_period(repo):
+    day = "2026-09-25"
     assert [repo.take_quota("u", day, 2) for _ in range(3)] == [1, 2, None]
     assert repo.quota_used("u", day) == 2
-    assert repo.take_quota("u", date(2026, 9, 26), 2) == 1  # new day, new counter
-    assert repo.quota_used("u", date(2026, 9, 27)) == 0
+    assert repo.take_quota("u", "2026-09-26", 2) == 1  # new day, new counter
+    assert repo.quota_used("u", "2026-09-27") == 0
+    assert repo.take_quota("u", "TRIAL", 1, ttl_seconds=60) == 1  # a guest's trial
+    assert repo.take_quota("u", "TRIAL", 1, ttl_seconds=60) is None
+
+
+def test_guest_starts_per_network_and_the_running_spend(repo):
+    assert [repo.take_guest_start("net", 2, 60) for _ in range(3)] == [True, True, False]
+    assert repo.take_guest_start("other", 2, 60)
+    assert [repo.take_guest_message("2026-10-01", 2, 60) for _ in range(3)] == [True, True, False]
+    assert repo.guest_messages("2026-10-01") == 2 and repo.guest_messages("2026-10-02") == 0
+    assert repo.spend() == 0
+    repo.add_spend(0.0123)
+    assert abs(repo.add_spend(0.01) - 0.0223) < 1e-9
+    assert abs(repo.spend() - 0.0223) < 1e-9
 
 
 def test_delete_user_purges_everything(repo):
     repo.add_card("u", card("a", date(2024, 1, 1)))
     repo.put_profile("u", ApplicantProfile(tax_id="SSN"))
-    repo.take_quota("u", date(2026, 9, 25), 5)
+    repo.take_quota("u", "2026-09-25", 5)
     repo.add_card("v", card("a", date(2024, 1, 1)))
     repo.create_invite("CODE", 2)
     repo.redeem_invite("CODE", "u")
@@ -167,6 +180,9 @@ def test_presignup_trigger_requires_a_live_invite(monkeypatch):
         presignup_handler({"userName": "sub-3", "request": {}}, None)
     with pytest.raises(Exception, match="invite code"):
         presignup_handler({"request": {"clientMetadata": {"invite_code": "CAGOOD"}}}, None)
+    # the API's guest accounts (AdminCreateUser, IAM-only) need no invite
+    guest = {"triggerSource": "PreSignUp_AdminCreateUser", "userName": "g", "request": {}}
+    assert presignup_handler(guest, None) is guest
 
     confirm = {"triggerSource": "PostConfirmation_ConfirmSignUp", "userName": "sub-1"}
     assert postconfirm_handler(confirm, None) is confirm

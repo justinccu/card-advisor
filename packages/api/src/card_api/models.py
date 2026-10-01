@@ -102,12 +102,31 @@ class Invite(BaseModel):
 
 
 class ChatQuota(BaseModel):
-    """Advisor messages left today (ADR 0009: 30 per user per day, reset at midnight US Eastern)."""
+    """Advisor messages left (ADR 0009): 30 per user per day, reset at midnight US Eastern; a
+    guest's trial is 10 in all and never resets."""
 
     limit: int
     used: int
     remaining: int
-    resets_at: str  # ISO timestamp of the next US Eastern midnight
+    resets_at: str | None  # ISO timestamp of the next US Eastern midnight; None for a guest
+    guest: bool = False
+
+
+class ChatUsage(BaseModel):
+    """What one Advisor message cost (model tokens at list price, plus Runtime and Memory),
+    reported by the agent; it adds up to the spend that closes the guest trial."""
+
+    cost_usd: float = Field(ge=0, le=1)
+
+
+class GuestStart(BaseModel):
+    """A guest's identity for the Advisor trial: Cognito tokens on AWS (refreshed by the site
+    with the refresh token), or a dev user id locally."""
+
+    access_token: str | None = None
+    refresh_token: str | None = None
+    expires_in: int | None = None
+    dev_user: str | None = None
 
 
 # --- Advisor answer feedback (ADR 0009) ---------------------------------------------------

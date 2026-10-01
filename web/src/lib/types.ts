@@ -201,7 +201,9 @@ export interface ChatQuota {
   limit: number;
   used: number;
   remaining: number;
-  resets_at: string;
+  /** null for a guest: the free trial doesn't reset */
+  resets_at: string | null;
+  guest?: boolean;
 }
 
 export type FeedbackReason = "wrong_info" | "not_what_i_asked" | "missing_info" | "other";

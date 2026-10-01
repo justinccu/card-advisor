@@ -250,6 +250,36 @@ Each user gets **30 messages per day** (raised from 10 on 2026-09-30), reset at 
 is left. Estimated cost with DeepSeek V3.2 is about $0.015 a message including Runtime and Memory, so at most about $14 per user a month. Deploying the Runtime needs the
 owner's approval with a cost estimate.
 
+### Guest trial (temporary, added 2026-10-01)
+
+Until the Advisor is for signed-in users only, a visitor who isn't signed in can send **10
+messages in all** (no daily reset). The owner chose this to let people try it before asking for
+an invite; it will be removed.
+
+- **Identity**: the first message calls `POST /guest` (public). The API makes a throwaway Cognito
+  account (`guest-<random>@guest.invalid`, no mail sent, random password never stored), puts it
+  in the `guest` group and signs it in with the admin flow (IAM only). The browser keeps the
+  tokens and renews them with the refresh token (30 days). The Runtime needed no second way in,
+  and every per-user limit and retention rule applies unchanged.
+- **What a guest can do**: chat and rate answers. Saving a profile or cards is refused
+  (`require_member`), so the Advisor sees an empty wallet.
+- **Abuse limits**: 3 guest starts per network per day (the IP hashed with the date, kept two
+  days); API Gateway's overall throttle; each start is a Cognito user (the Lite plan's first
+  10,000 monthly active users are free).
+- **Daily cap for all guests together**: at most **300 guest messages a day** (US Eastern,
+  `ADVISOR_GUEST_DAILY_LIMIT`, about $4.50). Private windows and changing networks get around
+  the per-guest and per-network limits; this cap doesn't care who sends, so getting around them
+  can at worst use up one day's guest messages, never the whole budget at once. When it's
+  reached, guests are told to sign in or come back tomorrow; members are not affected, and a
+  refused message doesn't count against the guest's own 10.
+- **Budget stop**: the agent reports what every message costs (all users, retries included:
+  tokens at list price plus about $0.006 for Runtime and Memory), and the API adds it to one
+  running total. Once it reaches **$50** (`ADVISOR_GUEST_BUDGET_USD`), guest messages and new
+  guests are refused with "sign in to keep using the Advisor"; members are not affected. Reports
+  are capped at $1 and can't be negative, so no caller can lower the total. `make
+  advisor-spend` shows it. It is an estimate counted from the deploy onward (earlier spend and
+  eval runs aren't in it); AWS Billing remains the record.
+
 ## Considered options
 
 - **Let the model pick the cards**: rejected (ADR 0001): not reproducible, not testable, and prone

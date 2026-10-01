@@ -14,12 +14,14 @@ import {
   type Conversation,
 } from "@/lib/advisor";
 import { api } from "@/lib/api";
+import { GUEST_CONVERSATION, hasGuest } from "@/lib/guest";
 import type { ChatQuota, TurnFeedback } from "@/lib/types";
 
 import { useSession } from "./Providers";
 
 // One conversation per device (ADR 0009), held above the pages so the floating panel and the
-// /advisor page show the same chat, and closing the panel doesn't cut an answer off.
+// /advisor page show the same chat, and closing the panel doesn't cut an answer off. A visitor
+// who isn't signed in chats as a guest on the free trial (lib/guest), in a conversation of its own.
 
 type Advisor = {
   /** false when this build has no Advisor to talk to */
@@ -47,22 +49,24 @@ export function AdvisorProvider({ cards, children }: { cards: AdvisorCard[]; chi
   const abort = useRef<AbortController | null>(null);
   const byId = useMemo(() => new Map(cards.map((c) => [c.id, c])), [cards]);
 
-  // Load this user's conversation (none when signed out); a different user never sees it.
+  // Load this user's conversation, or the guest's; a different user never sees it.
+  const owner = uid ?? GUEST_CONVERSATION;
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
-  if ((uid ?? null) !== loadedFor) {
-    setLoadedFor(uid ?? null);
-    setConvo(uid && typeof window !== "undefined" ? loadConversation(uid) : null);
+  if (owner !== loadedFor) {
+    setLoadedFor(owner);
+    setConvo(typeof window !== "undefined" ? loadConversation(owner) : null);
   }
-  useEffect(() => () => abort.current?.abort(), [uid]);
+  useEffect(() => () => abort.current?.abort(), [owner]);
   useEffect(() => {
-    if (uid && convo) saveConversation(uid, convo);
-  }, [uid, convo]);
+    if (convo) saveConversation(owner, convo);
+  }, [owner, convo]);
 
-  const quotaKey = useMemo(() => ["chat-quota", uid], [uid]);
+  const quotaKey = useMemo(() => ["chat-quota", owner], [owner]);
   const { data: quota } = useQuery({
     queryKey: quotaKey,
     queryFn: api.chatQuota,
-    enabled: !!uid && !!ADVISOR_URL,
+    // A guest's quota is known once they have a guest session (their first message).
+    enabled: !!ADVISOR_URL && (!!uid || hasGuest()),
   });
 
   const update = useCallback((msgId: string, change: (m: ChatMessage) => ChatMessage) => {
@@ -94,9 +98,12 @@ export function AdvisorProvider({ cards, children }: { cards: AdvisorCard[]; chi
                 used: event.limit - event.remaining,
                 remaining: event.remaining,
                 resets_at: event.resets_at,
+                guest: event.guest,
               });
             else if (event.type === "error") {
-              update(reply.id, (m) => ({ ...m, error: { code: event.code, message: event.message } }));
+              // A guest's used-up trial is answered with a way to sign in.
+              const code = event.code === "quota" && event.guest ? "signin" : event.code;
+              update(reply.id, (m) => ({ ...m, error: { code, message: event.message } }));
               if (event.code === "quota") qc.invalidateQueries({ queryKey: quotaKey });
             }
           }

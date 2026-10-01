@@ -22,7 +22,12 @@ def presignup_handler(event, context):
     """Pre sign-up: runs before the account exists, so a bad code leaves nothing behind. The code
     rides along as clientMetadata from the sign-up form; one use is taken atomically and recorded
     against this user (`userName`, which equals the token `sub` in an email-sign-in pool).
-    Raising rejects the sign-up."""
+    Raising rejects the sign-up.
+
+    Accounts the API makes for guests (AdminCreateUser, card_api.guests) need no code: only an
+    IAM principal allowed to administer the pool can make that call, never a visitor."""
+    if event.get("triggerSource") == "PreSignUp_AdminCreateUser":
+        return event
     request = event.get("request", {})
     code = (request.get("clientMetadata") or {}).get("invite_code", "")
     user = event.get("userName", "")

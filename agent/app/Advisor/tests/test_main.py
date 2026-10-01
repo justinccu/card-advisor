@@ -52,6 +52,27 @@ def test_exhausted_quota_answers_without_calling_the_model(monkeypatch):
     }
 
 
+def test_a_full_guest_day_is_a_quota_error_the_site_answers_with_sign_in(monkeypatch):
+    from advisor.api import QuotaExceeded
+
+    monkeypatch.setenv("ADVISOR_LOCAL", "1")
+    monkeypatch.setenv("ADVISOR_DEV_USER", "guest-abc")
+
+    class Api:
+        def __init__(self, headers):
+            pass
+
+        def take_turn(self):
+            raise QuotaExceeded(429, {"message": "all taken", "code": "guests_full", "guest": True})
+
+    monkeypatch.setattr(main, "AdvisorApi", Api)
+    monkeypatch.setattr(
+        main, "get_session", lambda *a: (_ for _ in ()).throw(AssertionError("model used"))
+    )
+    [event] = run({"prompt": "hi"}, Ctx())
+    assert event == {"type": "error", "code": "quota", "message": "all taken", "guest": True}
+
+
 def test_bad_input_is_rejected_before_quota(monkeypatch):
     monkeypatch.setenv("ADVISOR_LOCAL", "1")
     monkeypatch.setenv("ADVISOR_DEV_USER", "demo-user")
@@ -102,10 +123,12 @@ class FakeAgent:
 
 
 saved: list[dict] = []
+costs: list[float] = []
 
 
 def chat_with(monkeypatch, agent):
     saved.clear()
+    costs.clear()
     monkeypatch.setenv("ADVISOR_LOCAL", "1")
     monkeypatch.setenv("ADVISOR_DEV_USER", "demo-user")
 
@@ -119,6 +142,9 @@ def chat_with(monkeypatch, agent):
         def save_turn(self, record):
             saved.append(record)
             return {"turn_id": record["turn_id"]}
+
+        def record_usage(self, cost):
+            costs.append(cost)
 
     class FakeSession:
         api = None
@@ -148,6 +174,53 @@ def test_a_tool_call_written_as_text_is_cleared_and_retried(monkeypatch):
 def test_a_second_leak_ends_the_answer_with_an_error(monkeypatch):
     events = chat_with(monkeypatch, FakeAgent(LEAK, ["<tool_call>{}</tool_call>"]))
     assert [e["type"] for e in events] == ["quota", "error"]
+    assert len(costs) == 1  # a failed answer still costs, and is counted
+
+
+def test_each_message_reports_its_cost_with_retries_included(monkeypatch):
+    from model.load import MESSAGE_OVERHEAD_USD, message_cost
+
+    class Metrics:
+        accumulated_usage = {"inputTokens": 1000, "outputTokens": 100}
+
+    agent = FakeAgent(LEAK, ["The Green Card is closed to new applicants."])
+    agent.event_loop_metrics = Metrics()
+    original = agent.stream_async
+
+    async def stream(prompt):  # each model call adds 10k in / 500 out
+        Metrics.accumulated_usage = {
+            "inputTokens": Metrics.accumulated_usage["inputTokens"] + 10_000,
+            "outputTokens": Metrics.accumulated_usage["outputTokens"] + 500,
+        }
+        async for event in original(prompt):
+            yield event
+
+    agent.stream_async = stream
+    chat_with(monkeypatch, agent)
+    assert costs == [message_cost(20_000, 1_000)]
+    assert costs[0] == round(20_000 * 0.62e-6 + 1_000 * 1.85e-6 + MESSAGE_OVERHEAD_USD, 6)
+    assert message_cost(10**9, 10**9, "some.new-model") == 1.0  # capped; unlisted priced high
+
+
+def test_a_closed_guest_trial_asks_the_guest_to_sign_in(monkeypatch):
+    from advisor.api import ApiError
+
+    monkeypatch.setenv("ADVISOR_LOCAL", "1")
+    monkeypatch.setenv("ADVISOR_DEV_USER", "guest-abc")
+
+    class Api:
+        def __init__(self, headers):
+            pass
+
+        def take_turn(self):
+            raise ApiError(503, {"message": "The free trial is paused.", "code": "guests_closed"})
+
+    monkeypatch.setattr(main, "AdvisorApi", Api)
+    monkeypatch.setattr(
+        main, "get_session", lambda *a: (_ for _ in ()).throw(AssertionError("model used"))
+    )
+    [event] = run({"prompt": "hi"}, Ctx())
+    assert event == {"type": "error", "code": "signin", "message": "The free trial is paused."}
 
 
 def test_narration_before_a_tool_call_is_cleared_and_model_markup_never_shown(monkeypatch):

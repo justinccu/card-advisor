@@ -1,7 +1,7 @@
 -include .env
 export
 
-.PHONY: install test lint lambda-bundle synth deploy-infra aws-smoke web-aws e2e-aws invite invites preview api web demo e2e web-build agent agent-deploy site-check feedback eval
+.PHONY: install test lint lambda-bundle synth deploy-infra aws-smoke web-aws e2e-aws invite invites preview api web demo e2e web-build agent agent-deploy site-check site-domain feedback advisor-spend eval
 
 install:
 	uv sync --all-packages
@@ -87,6 +87,10 @@ DOWN ?=
 feedback:
 	uv run python scripts/feedback.py $(if $(DOWN),--down)
 
+# The Advisor's running cost and whether the guest trial is still open (ADR 0009); free
+advisor-spend:
+	uv run python scripts/advisor_spend.py
+
 # The site on :3000 against the deployed API and Cognito (real sign-up with an invite code)
 web-aws:
 	@test -d web/node_modules || (cd web && npm install)
@@ -103,6 +107,12 @@ site-check:
 	@test -d web/node_modules || (cd web && npm install)
 	@env_lines="$$(./scripts/web_aws_env.sh)" && eval "$$env_lines" && \
 	(cd web && npm run build) && uv run python scripts/check_site_headers.py
+
+# Our own domain for the site: requests a free us-east-1 certificate (once) and prints the DNS
+# records to add at the registrar, then the cdk.json lines. Run again to check. Free.
+site-domain:
+	@test -n "$(DOMAIN)" || (echo "usage: make site-domain DOMAIN=example.com" && exit 1)
+	./scripts/site_domain.sh $(DOMAIN)
 
 # Browser e2e in Cognito mode against the deployed stack (needs `make web-aws` running; ~$0)
 e2e-aws:

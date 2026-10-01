@@ -1,6 +1,7 @@
 "use client";
 
 import { AUTH_MODE, authHeaders, signOut } from "./auth";
+import { advisorHeaders } from "./guest";
 import type {
   ApplicantProfile,
   ChatQuota,
@@ -88,11 +89,13 @@ export const api = {
   putProfile: (p: ApplicantProfile) =>
     call<ApplicantProfile>("/me/profile", { method: "PUT", body: JSON.stringify(p) }),
   deleteMe: () => call<void>("/me", { method: "DELETE" }),
-  chatQuota: () => call<ChatQuota>("/me/chat/quota"),
+  // The Advisor's calls work for a guest on the free trial too (lib/guest).
+  chatQuota: async () => call<ChatQuota>("/me/chat/quota", { headers: await advisorHeaders() }),
   rules: () => call<{ rules: RuleFacts[] }>("/rules").then((r) => r.rules),
-  rateTurn: (turnId: string, feedback: TurnFeedback) =>
+  rateTurn: async (turnId: string, feedback: TurnFeedback) =>
     call<void>(`/me/chat/turns/${encodeURIComponent(turnId)}/feedback`, {
       method: "PUT",
       body: JSON.stringify(feedback),
+      headers: await advisorHeaders(),
     }),
 };
