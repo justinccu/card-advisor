@@ -121,7 +121,9 @@ with sync_playwright() as p:
         rows.count() == 5 and gauge.inner_text().startswith("4"),
     )
 
-    # sheet drag-to-dismiss (pointer drag on the grabber)
+    # sheet drag-to-dismiss (pointer drag on the grabber): a phone gesture; on wider screens the
+    # sheet is a centered panel closed with its button, Escape or the backdrop (ADR 0010)
+    page.set_viewport_size({"width": 390, "height": 844})
     page.goto(BASE + "/cards/", wait_until="networkidle")
     page.wait_for_timeout(400)
     page.get_by_label("Open Chase Sapphire Preferred").click()
@@ -156,6 +158,7 @@ with sync_playwright() as p:
     check("a short slow drag springs back instead", page.get_by_role("dialog").count() == 1)
     page.keyboard.press("Escape")
     page.wait_for_timeout(600)
+    page.set_viewport_size({"width": 1280, "height": 900})
     check("Escape closes the sheet", page.get_by_role("dialog").count() == 0)
 
     # search: a bank by either name, a card by its alias, a typo, and a card we don't list
@@ -360,7 +363,8 @@ with sync_playwright() as p:
                 "type": "text",
                 "text": "Also see [this](https://evil.example/x) or https://evil.example/y. "
                 "[Amex Green](card:amex_green) is closed to new applicants. "
-                "Per [Chase 5/24](rule:chase_5_24) you can apply.",
+                "Per [Chase 5/24](rule:chase_5_24) you can apply, and "
+                "[Sapphire once per card](rule:chase_sapphire_once_per_card) allows the bonus.",
             },
             {"type": "done", "turn_id": turn_id},
         ]
@@ -373,7 +377,8 @@ with sync_playwright() as p:
     )
     page.get_by_label("Message the Advisor").fill("Which card for dining?")
     page.get_by_label("Message the Advisor").press("Enter")
-    page.wait_for_timeout(800)
+    # The answer is revealed word by word (up to 1.5s); rating appears once it's all shown.
+    page.get_by_role("button", name="Helpful", exact=True).wait_for(timeout=5000)
     log = page.get_by_role("log")
     hrefs = [a.get_attribute("href") or "" for a in log.locator("a:not([data-rule])").all()]
     official = [h for h in hrefs if h.startswith("https://")]
@@ -384,12 +389,28 @@ with sync_playwright() as p:
         and not any("evil" in h for h in hrefs),
     )
     check("bare URLs are removed from the reply", "evil.example" not in log.inner_text())
-    source = log.locator("a[data-rule='chase_5_24']")
+    # Rules link only to their own bank's site (owner, 2026-10-10): 5/24, from applicants'
+    # reports, is cited and explained on hover but not linked.
+    five_24 = log.locator("[data-rule='chase_5_24']")
+    five_24.hover()
+    card = page.get_by_role("tooltip")
+    card.wait_for(timeout=2000)
     check(
-        "a cited rule (rule:ID) shows as its source, with the rule on hover",
-        source.count() == 1
-        and source.get_attribute("href").startswith("https://")
-        and "5/24" in (source.get_attribute("title") or ""),
+        "a rule the bank doesn't publish (5/24) is cited, explained on hover, and not linked",
+        five_24.count() == 1
+        and five_24.evaluate("e => e.tagName") != "A"
+        and "5/24" in card.inner_text()
+        and "applicants" in card.inner_text(),
+    )
+    page.mouse.move(0, 0)
+    rule_links = [a.get_attribute("href") or "" for a in log.locator("a[data-rule]").all()]
+    check(
+        f"the rule on the bank's own site is the one rule link ({rule_links})",
+        len(rule_links) == 1,
+    )
+    check(
+        "every rule link is the bank's own page",
+        all(h.startswith("https://creditcards.chase.com/") for h in rule_links),
     )
     check(
         "a reset clears the discarded text (a leaked tool call never stays on screen)",

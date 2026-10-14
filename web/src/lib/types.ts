@@ -222,5 +222,7 @@ export interface RuleFacts {
   how_it_counts: string[];
   source: string;
   source_url: string;
+  /** the rule on its own bank's website; null when it isn't there (e.g. Chase 5/24) */
+  issuer_link: string | null;
   verified_on: string;
 }

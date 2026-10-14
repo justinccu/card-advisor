@@ -8,7 +8,7 @@ import { useMemo, useState } from "react";
 
 import { api, ApiError } from "@/lib/api";
 import { publicAmount } from "@/lib/format";
-import { press, spring } from "@/lib/motion";
+import { INSTANT, press, spring } from "@/lib/motion";
 import { searchCards } from "@/lib/search";
 import type { CatalogCard, Issuer } from "@/lib/types";
 
@@ -52,6 +52,15 @@ export function CatalogBrowser({ cards, issuers }: { cards: CatalogCard[]; issue
   const [sort, setSort] = useState<Sort>("offer");
   const [noFee, setNoFee] = useState(false);
   const [q, setQ] = useState("");
+  // The grid reshuffles with motion after a filter or sort click, but follows typing instantly:
+  // animating every keystroke made the results lag behind the search box.
+  const [typed, setTyped] = useState(false);
+  const clicked =
+    <T,>(set: (v: T) => void) =>
+    (v: T) => {
+      setTyped(false);
+      set(v);
+    };
   const [openId, setOpenId] = useState<string | null>(null);
 
   const { shown, exact } = useMemo(() => {
@@ -74,11 +83,11 @@ export function CatalogBrowser({ cards, issuers }: { cards: CatalogCard[]; issue
     <>
       <div className="sticky top-12 z-30 -mx-4 mb-8 space-y-3 bg-canvas/85 px-4 pb-4 pt-3 backdrop-blur-xl">
         <div className="flex flex-wrap items-center gap-3">
-          <Segmented options={KINDS} value={kind} onChange={setKind} label="Card type" />
+          <Segmented options={KINDS} value={kind} onChange={clicked(setKind)} label="Card type" />
           <motion.button
             whileTap={press}
             transition={spring.micro}
-            onClick={() => setNoFee((v) => !v)}
+            onClick={() => clicked(setNoFee)(!noFee)}
             aria-pressed={noFee}
             className={`rounded-full px-3.5 py-1.5 text-[13px] font-medium ring-1 transition-colors ${noFee ? "bg-ink text-canvas ring-ink" : "text-ink ring-hairline"}`}
           >
@@ -90,7 +99,10 @@ export function CatalogBrowser({ cards, issuers }: { cards: CatalogCard[]; issue
             <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" aria-hidden />
             <input
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={(e) => {
+                setTyped(true);
+                setQ(e.target.value);
+              }}
               placeholder="Search cards or banks"
               aria-label="Search cards"
               className="w-full rounded-xl bg-black/[0.05] py-2 pl-9 pr-3 text-[15px] outline-none placeholder:text-ink-3 focus:bg-surface focus:ring-2 focus:ring-action dark:bg-white/10"
@@ -102,7 +114,7 @@ export function CatalogBrowser({ cards, issuers }: { cards: CatalogCard[]; issue
               { value: "fee", label: "Lowest fee" },
             ]}
             value={sort}
-            onChange={setSort}
+            onChange={clicked(setSort)}
             label="Sort"
           />
         </div>
@@ -113,10 +125,11 @@ export function CatalogBrowser({ cards, issuers }: { cards: CatalogCard[]; issue
         </p>
       </div>
 
-      <motion.div layout className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <AnimatePresence mode="popLayout">
+      <motion.div layout transition={typed ? INSTANT : spring.nav} className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {/* initial={false}: the static HTML shows the tiles; only later changes animate. */}
+        <AnimatePresence mode="popLayout" initial={false}>
           {shown.map((c) => (
-            <CardTile key={c.id} card={c} onOpen={() => setOpenId(c.id)} />
+            <CardTile key={c.id} card={c} instant={typed} onOpen={() => setOpenId(c.id)} />
           ))}
         </AnimatePresence>
       </motion.div>

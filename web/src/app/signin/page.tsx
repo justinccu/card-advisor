@@ -64,7 +64,7 @@ function DevSignIn() {
           className="w-full rounded-2xl border border-hairline bg-surface px-4 py-3.5 text-center text-[19px] tracking-[0.15em] outline-none focus:border-action focus:ring-4 focus:ring-action/20"
         />
         {error && (
-          <p role="alert" className="text-center text-[13px] text-bad">
+          <p role="alert" className="enter-rise text-center text-[13px] text-bad">
             {error}
           </p>
         )}

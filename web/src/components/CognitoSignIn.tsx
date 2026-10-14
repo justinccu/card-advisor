@@ -130,7 +130,7 @@ export function CognitoSignIn() {
         </AnimatePresence>
 
         {error && (
-          <p role="alert" className="text-center text-[13px] text-bad">
+          <p role="alert" className="enter-rise text-center text-[13px] text-bad">
             {error}
           </p>
         )}

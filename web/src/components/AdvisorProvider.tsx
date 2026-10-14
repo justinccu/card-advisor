@@ -85,13 +85,25 @@ export function AdvisorProvider({ cards, children }: { cards: AdvisorCard[]; chi
       (async () => {
         try {
           for await (const event of ask(text, convo.sessionId, controller.signal)) {
-            if (event.type === "text") update(reply.id, (m) => ({ ...m, text: m.text + event.text, tool: null }));
-            else if (event.type === "reset") update(reply.id, (m) => ({ ...m, text: "", tool: null }));
-            else if (event.type === "done" && event.turn_id) {
+            if (event.type === "text")
+              update(reply.id, (m) => ({ ...m, text: m.text + event.text, tool: null, rechecking: false, writing: false }));
+            else if (event.type === "writing") update(reply.id, (m) => ({ ...m, tool: null, writing: true }));
+            else if (event.type === "reset")
+              update(reply.id, (m) => ({
+                ...m,
+                text: "",
+                tool: null,
+                writing: false,
+                attempt: (m.attempt ?? 0) + 1,
+                rechecking: true,
+              }));
+            else if (event.type === "done") {
+              // The answer is complete now; the agent still reports its cost before the stream
+              // closes, so the send button waits for that (busy), the answer doesn't.
               const turnId = event.turn_id;
-              update(reply.id, (m) => ({ ...m, turnId }));
+              update(reply.id, (m) => ({ ...m, done: true, tool: null, writing: false, rechecking: false, ...(turnId ? { turnId } : {}) }));
             }
-            else if (event.type === "tool") update(reply.id, (m) => ({ ...m, tool: event.name }));
+            else if (event.type === "tool") update(reply.id, (m) => ({ ...m, tool: event.name, writing: false }));
             else if (event.type === "quota")
               qc.setQueryData<ChatQuota>(quotaKey, {
                 limit: event.limit,
@@ -110,7 +122,7 @@ export function AdvisorProvider({ cards, children }: { cards: AdvisorCard[]; chi
         } catch {
           /* stopped by the user: keep what arrived */
         } finally {
-          update(reply.id, (m) => ({ ...m, done: true, tool: null }));
+          update(reply.id, (m) => ({ ...m, done: true, tool: null, rechecking: false, writing: false }));
           setBusy(false);
           abort.current = null;
         }

@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 
-import { press, spring } from "@/lib/motion";
+import { press, spring, useCalm } from "@/lib/motion";
 import type { CatalogCard } from "@/lib/types";
 
 import { CardArt } from "./CardArt";
@@ -13,27 +13,30 @@ import { useCompare } from "./Providers";
 /** Floating dock that springs up once something is selected. One glass layer, over content. */
 export function CompareTray({ cards }: { cards: CatalogCard[] }) {
   const { ids, toggle, clear } = useCompare();
+  const calm = useCalm();
   const chosen = ids.map((id) => cards.find((c) => c.id === id)).filter(Boolean) as CatalogCard[];
 
   return (
     <AnimatePresence>
       {chosen.length > 0 && (
         <motion.div
-          initial={{ y: 120, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 120, opacity: 0 }}
-          transition={spring.sheet}
+          initial={{ transform: "translateY(120px)", opacity: 0 }}
+          animate={{ transform: "translateY(0px)", opacity: 1 }}
+          exit={{ transform: "translateY(120px)", opacity: 0 }}
+          transition={calm(spring.sheet)}
           className="glass fixed inset-x-0 bottom-4 z-40 mx-auto flex w-[min(640px,calc(100%-24px))] items-center gap-3 rounded-[22px] p-2.5 shadow-[var(--shadow-lift)] ring-1 ring-hairline"
         >
-          <ul className="flex flex-1 items-center gap-2 overflow-hidden">
+          {/* overflow-hidden keeps a narrow tray tidy; the padding (cancelled by the negative margin)
+              leaves room inside the clip for each chip's × that sits 6px outside it. */}
+          <ul className="-my-1.5 -mr-1.5 flex flex-1 items-center gap-2 overflow-hidden py-1.5 pr-1.5">
             <AnimatePresence initial={false}>
               {chosen.map((c) => (
                 <motion.li
                   key={c.id}
                   layout
-                  initial={{ scale: 0.6, opacity: 0 }}
+                  initial={{ scale: 0.9, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.6, opacity: 0 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
                   transition={spring.micro}
                   className="relative w-16 shrink-0"
                 >

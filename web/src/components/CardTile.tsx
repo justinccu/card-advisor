@@ -4,13 +4,13 @@ import { Check, Plus } from "lucide-react";
 import { motion } from "motion/react";
 
 import { fee, offerHeadline, offerTerms, rateLabel, topRate } from "@/lib/format";
-import { press, spring } from "@/lib/motion";
+import { INSTANT, press, spring } from "@/lib/motion";
 import type { CatalogCard } from "@/lib/types";
 
 import { CardArt } from "./CardArt";
 import { useCompare } from "./Providers";
 
-export function CardTile({ card, onOpen }: { card: CatalogCard; onOpen: () => void }) {
+export function CardTile({ card, instant = false, onOpen }: { card: CatalogCard; instant?: boolean; onOpen: () => void }) {
   const { ids, toggle } = useCompare();
   const comparing = ids.includes(card.id);
   const full = ids.length >= 3 && !comparing;
@@ -22,7 +22,7 @@ export function CardTile({ card, onOpen }: { card: CatalogCard; onOpen: () => vo
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.96 }}
-      transition={spring.nav}
+      transition={instant ? INSTANT : spring.nav}
       className="group relative flex flex-col rounded-[24px] bg-surface p-5 shadow-[var(--shadow)] ring-1 ring-hairline"
     >
       <motion.button

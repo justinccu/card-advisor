@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUp, BookOpen, Maximize2, RotateCcw, Sparkles, Square, ThumbsDown, ThumbsUp } from "lucide-react";
-import { motion } from "motion/react";
+import { ArrowUp, Maximize2, RotateCcw, Sparkles, Square, ThumbsDown, ThumbsUp } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Markdown, { type Components } from "react-markdown";
@@ -17,13 +17,16 @@ import {
   type ChatMessage,
 } from "@/lib/advisor";
 import { fee, offerHeadline } from "@/lib/format";
-import { press, spring } from "@/lib/motion";
+import { STAGGER, press, spring, tween, useCalm } from "@/lib/motion";
+import { useReveal } from "@/lib/reveal";
 import { api } from "@/lib/api";
 import type { FeedbackReason, RuleFacts, TurnFeedback } from "@/lib/types";
 
 import { useAdvisor } from "./AdvisorProvider";
 import { CardArt } from "./CardArt";
 import { useSession } from "./Providers";
+import { RuleCitation } from "./RuleCitation";
+import { SwapText } from "./SwapText";
 
 const SUGGESTIONS = [
   "Which card fits my spending best?",
@@ -52,6 +55,17 @@ export function AdvisorChat({ panel = false }: { panel?: boolean }) {
     if (el && stick.current) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
+  // An answer is revealed word by word after it arrives: keep following it as it grows.
+  useEffect(() => {
+    const el = log.current;
+    if (!el) return;
+    const follow = new MutationObserver(() => {
+      if (stick.current) el.scrollTop = el.scrollHeight;
+    });
+    follow.observe(el, { childList: true, subtree: true, characterData: true });
+    return () => follow.disconnect();
+  }, [ready, available]);
+
   const outOfMessages = !!quota && quota.remaining <= 0;
   const submit = (text: string) => {
     if (!text.trim() || busy || outOfMessages) return;
@@ -72,8 +86,12 @@ export function AdvisorChat({ panel = false }: { panel?: boolean }) {
       <header className={`flex items-center gap-2 pb-3 ${panel ? "pr-10" : ""}`}>
         <h2 className="text-[17px] font-semibold">Advisor</h2>
         {quota && (
-          <span className="whitespace-nowrap rounded-full bg-tile px-2 py-0.5 text-[12px] text-ink-2" aria-live="polite">
-            {quota.remaining}
+          <span
+            className="whitespace-nowrap rounded-full bg-tile px-2 py-0.5 text-[12px] text-ink-2"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <SwapText text={String(quota.remaining)} />
             <span className="max-sm:hidden"> of {quota.limit}</span> {quota.guest ? "free left" : "left today"}
           </span>
         )}
@@ -196,29 +214,22 @@ export function AdvisorChat({ panel = false }: { panel?: boolean }) {
           }}
           className="max-h-[140px] flex-1 resize-none bg-transparent py-1.5 text-[15px] outline-none placeholder:text-ink-3 focus-visible:outline-none disabled:cursor-not-allowed"
         />
-        {busy ? (
-          <motion.button
-            type="button"
-            whileTap={press}
-            transition={spring.micro}
-            onClick={stop}
-            aria-label="Stop answering"
-            className="grid size-8 shrink-0 place-items-center rounded-full bg-ink text-canvas"
-          >
-            <Square size={12} fill="currentColor" aria-hidden />
-          </motion.button>
-        ) : (
-          <motion.button
-            type="submit"
-            whileTap={press}
-            transition={spring.micro}
-            disabled={!draft.trim() || outOfMessages}
-            aria-label="Send"
-            className="grid size-8 shrink-0 place-items-center rounded-full bg-action text-white disabled:opacity-40"
-          >
-            <ArrowUp size={16} strokeWidth={2.5} aria-hidden />
-          </motion.button>
-        )}
+        {/* One button that turns into Stop while answering; the icon swaps in place. */}
+        <motion.button
+          type={busy ? "button" : "submit"}
+          whileTap={press}
+          transition={spring.micro}
+          onClick={busy ? stop : undefined}
+          disabled={!busy && (!draft.trim() || outOfMessages)}
+          aria-label={busy ? "Stop answering" : "Send"}
+          className={`grid size-8 shrink-0 place-items-center rounded-full transition-colors duration-(--dur-fast) disabled:opacity-40 ${busy ? "bg-ink text-canvas" : "bg-action text-white"}`}
+        >
+          <AnimatePresence initial={false}>
+            <IconSwap key={busy ? "stop" : "send"}>
+              {busy ? <Square size={12} fill="currentColor" aria-hidden /> : <ArrowUp size={16} strokeWidth={2.5} aria-hidden />}
+            </IconSwap>
+          </AnimatePresence>
+        </motion.button>
       </form>
       <p className="mt-2 text-center text-[12px] text-ink-3">
         {draft.length > MAX_PROMPT_CHARS - 200 ? (
@@ -247,29 +258,42 @@ function Reply({
   cards: Map<string, AdvisorCard>;
   components: Components;
 }) {
-  const linked = m.done && !m.error ? linkedCardIds(m.text).filter((id) => cards.has(id)) : [];
+  const calm = useCalm();
+  // The checked answer arrives whole and is revealed word by word; what follows it (card rows,
+  // rating) waits until the reveal ends.
+  const { shown, revealing } = useReveal(m.text);
+  const settled = m.done && !revealing;
+  const linked = settled && !m.error ? linkedCardIds(m.text).filter((id) => cards.has(id)) : [];
+  const status =
+    (m.tool && TOOL_HINTS[m.tool]) ||
+    (m.writing || m.text ? "Writing…" : m.rechecking ? "Double-checking the answer…" : "Thinking…");
   return (
     <div className="max-w-[92%] text-[15px] leading-relaxed">
-      {m.text && (
-        <Markdown
-          remarkPlugins={[remarkGfm]}
-          components={components}
-          urlTransform={(url) => (url.startsWith("card:") || url.startsWith("rule:") ? url : "")}
-          disallowedElements={["img"]}
-          unwrapDisallowed
-          skipHtml
-        >
-          {sanitizeReply(m.text)}
-        </Markdown>
-      )}
+      {/* An older agent that streamed could discard text for a retry: it fades out first. */}
+      <AnimatePresence initial={false} mode="wait">
+        {m.text && (
+          <motion.div key={m.attempt ?? 0} exit={{ opacity: 0, filter: "blur(2px)", transition: tween.out }}>
+            <Markdown
+              remarkPlugins={[remarkGfm]}
+              components={components}
+              urlTransform={(url) => (url.startsWith("card:") || url.startsWith("rule:") ? url : "")}
+              disallowedElements={["img"]}
+              unwrapDisallowed
+              skipHtml
+            >
+              {sanitizeReply(shown)}
+            </Markdown>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {!m.done && !m.error && (
-        <p className="mt-1 flex items-center gap-2 text-[13px] text-ink-2">
-          <span className="size-1.5 animate-pulse rounded-full bg-action" aria-hidden />
-          {(m.tool && TOOL_HINTS[m.tool]) || (m.text ? "Writing…" : "Thinking…")}
+        <p className="mt-1 text-[13px]">
+          <SwapText text={status} className="shimmer" />
         </p>
       )}
+      {m.done && !m.error && !m.text && <p className="enter-rise text-[13px] text-ink-3">Stopped before answering.</p>}
       {m.error && (
-        <p role="alert" className="mt-1 rounded-2xl bg-bad/10 px-3 py-2 text-[14px] text-bad">
+        <p role="alert" className="enter-rise mt-1 rounded-2xl bg-bad/10 px-3 py-2 text-[14px] text-bad">
           {m.error.message}
           {(m.error.code === "auth" || m.error.code === "signin") && (
             <>
@@ -283,12 +307,22 @@ function Reply({
       )}
       {linked.length > 0 && (
         <ul className="mt-3 space-y-2" aria-label="Cards mentioned">
-          {linked.slice(0, MAX_CARD_TILES).map((id) => (
-            <CardRow key={id} card={cards.get(id)!} />
-          ))}
+          {/* initial={false}: answers loaded from history don't replay this on every open. */}
+          <AnimatePresence initial={false}>
+            {linked.slice(0, MAX_CARD_TILES).map((id, i) => (
+              <motion.li
+                key={id}
+                initial={{ opacity: 0, transform: "translateY(4px)" }}
+                animate={{ opacity: 1, transform: "translateY(0px)" }}
+                transition={calm({ ...tween.in, delay: i * STAGGER })}
+              >
+                <CardRow card={cards.get(id)!} />
+              </motion.li>
+            ))}
+          </AnimatePresence>
         </ul>
       )}
-      {m.done && !m.error && m.turnId && <Feedback message={m} />}
+      {settled && !m.error && m.turnId && <Feedback message={m} />}
     </div>
   );
 }
@@ -315,7 +349,7 @@ function Feedback({ message: m }: { message: ChatMessage }) {
 
   if (status === "sent")
     return (
-      <p className="mt-2 text-[12px] text-ink-3" role="status">
+      <p className="enter-rise mt-2 text-[12px] text-ink-3" role="status">
         {m.feedback!.rating === "up" ? "Thanks for the feedback." : "Thanks. We’ll look into it."}
       </p>
     );
@@ -330,45 +364,54 @@ function Feedback({ message: m }: { message: ChatMessage }) {
         </Thumb>
         <span className="ml-1 text-[11px] text-ink-3">Rating shares this exchange with us for 90 days to improve answers.</span>
       </div>
-      {status === "error" && <p className="mt-1 text-[12px] text-bad">Couldn’t send that. Try again.</p>}
-      {asking && (
-        <div className="mt-2 rounded-2xl bg-tile p-3">
-          <p className="text-[13px] font-medium">What went wrong?</p>
-          <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="Reason">
-            {REASONS.map((r) => (
-              <button
-                key={r.value}
-                type="button"
-                aria-pressed={reason === r.value}
-                onClick={() => setReason(r.value)}
-                className={`rounded-full px-3 py-1 text-[13px] ${reason === r.value ? "bg-action text-white" : "bg-surface ring-1 ring-hairline hover:bg-black/[0.04] dark:hover:bg-white/10"}`}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
-          <label className="sr-only" htmlFor={`${m.id}-comment`}>
-            Anything else
-          </label>
-          <textarea
-            id={`${m.id}-comment`}
-            rows={2}
-            maxLength={500}
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Anything else? (optional)"
-            className="mt-2 w-full resize-none rounded-xl bg-surface px-3 py-2 text-[14px] outline-none ring-1 ring-hairline focus:ring-2 focus:ring-action"
-          />
-          <button
-            type="button"
-            disabled={!reason}
-            onClick={() => send({ rating: "down", reason: reason!, comment: comment.trim() || undefined })}
-            className="mt-2 rounded-full bg-action px-4 py-1.5 text-[13px] text-white disabled:opacity-40"
+      {status === "error" && <p className="enter-rise mt-1 text-[12px] text-bad">Couldn’t send that. Try again.</p>}
+      <AnimatePresence initial={false}>
+        {asking && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1, transition: tween.reveal }}
+            exit={{ height: 0, opacity: 0, transition: tween.out }}
+            className="overflow-hidden"
           >
-            Send feedback
-          </button>
-        </div>
-      )}
+            <div className="mt-2 rounded-2xl bg-tile p-3">
+              <p className="text-[13px] font-medium">What went wrong?</p>
+              <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="Reason">
+                {REASONS.map((r) => (
+                  <button
+                    key={r.value}
+                    type="button"
+                    aria-pressed={reason === r.value}
+                    onClick={() => setReason(r.value)}
+                    className={`rounded-full px-3 py-1 text-[13px] ${reason === r.value ? "bg-action text-white" : "bg-surface ring-1 ring-hairline hover:bg-black/[0.04] dark:hover:bg-white/10"}`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
+              <label className="sr-only" htmlFor={`${m.id}-comment`}>
+                Anything else
+              </label>
+              <textarea
+                id={`${m.id}-comment`}
+                rows={2}
+                maxLength={500}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Anything else? (optional)"
+                className="mt-2 w-full resize-none rounded-xl bg-surface px-3 py-2 text-[14px] outline-none ring-1 ring-hairline focus:ring-2 focus:ring-action"
+              />
+              <button
+                type="button"
+                disabled={!reason}
+                onClick={() => send({ rating: "down", reason: reason!, comment: comment.trim() || undefined })}
+                className="mt-2 rounded-full bg-action px-4 py-1.5 text-[13px] text-white disabled:opacity-40"
+              >
+                Send feedback
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -402,11 +445,27 @@ function Thumb({
   );
 }
 
+/** An icon replacing another in the same slot: scale and blur, both at once. */
+function IconSwap({ children }: { children: React.ReactNode }) {
+  const calm = useCalm();
+  return (
+    <motion.span
+      initial={{ opacity: 0, transform: "scale(0.9)", filter: "blur(2px)" }}
+      animate={{ opacity: 1, transform: "scale(1)", filter: "blur(0px)" }}
+      exit={{ opacity: 0, transform: "scale(0.9)", filter: "blur(2px)" }}
+      transition={calm({ duration: 0.2, ease: "easeInOut" })}
+      className="grid place-items-center [grid-area:1/1]"
+    >
+      {children}
+    </motion.span>
+  );
+}
+
 function CardRow({ card }: { card: AdvisorCard }) {
   const open = card.availability === "open"; // a closed card gets no Apply button
   return (
     // overflow-hidden: the card art's drop shadow would otherwise be clipped by the scrolling log.
-    <li className="flex items-center gap-3 overflow-hidden rounded-2xl bg-surface p-2.5 ring-1 ring-hairline">
+    <div className="flex items-center gap-3 overflow-hidden rounded-2xl bg-surface p-2.5 ring-1 ring-hairline">
       <CardArt cardId={card.id} issuerId={card.issuer_id} name={card.name} bare className="w-14 shrink-0" />
       <div className="min-w-0 flex-1">
         <Link href={`/cards/${card.id}/`} className="line-clamp-2 text-[14px] font-medium leading-snug hover:underline">
@@ -426,7 +485,7 @@ function CardRow({ card }: { card: AdvisorCard }) {
           Apply
         </a>
       )}
-    </li>
+    </div>
   );
 }
 
@@ -437,7 +496,11 @@ function markdownComponents(cards: Map<string, AdvisorCard>, rules: Map<string, 
   );
   return {
     a: ({ href, children }) => {
-      if (href?.startsWith("rule:")) return <RuleSource rule={rules.get(href.slice(5))}>{children}</RuleSource>;
+      if (href?.startsWith("rule:")) {
+        const rule = rules.get(href.slice(5));
+        // An id no tool returned stays plain text: never a citation of a rule that doesn't exist.
+        return rule ? <RuleCitation rule={rule}>{children}</RuleCitation> : <span>{children}</span>;
+      }
       const card = href?.startsWith("card:") ? cards.get(href.slice(5)) : undefined;
       if (!card) return <span>{children}</span>;
       if (card.availability !== "open") {
@@ -471,25 +534,6 @@ function markdownComponents(cards: Map<string, AdvisorCard>, rules: Map<string, 
     th: ({ children }) => <th className="border-b border-hairline px-2 py-1 text-left font-semibold">{children}</th>,
     td: ({ children }) => <td className="border-b border-hairline px-2 py-1 align-top">{children}</td>,
   };
-}
-
-/** A cited issuer rule: opens its source (issuer terms or applicants' reports); the summary
- *  and the date it was checked show on hover. Unknown ids stay plain text. */
-function RuleSource({ rule, children }: { rule?: RuleFacts; children: React.ReactNode }) {
-  if (!rule) return <span>{children}</span>;
-  return (
-    <a
-      href={rule.source_url}
-      data-rule={rule.rule_id}
-      target="_blank"
-      rel="noopener noreferrer"
-      title={`${rule.summary}. Source: ${rule.source}, checked ${rule.verified_on}.`}
-      className="inline-flex items-center gap-1 rounded-md bg-tile px-1.5 py-px align-baseline text-[13px] text-ink-2 hover:text-ink"
-    >
-      <BookOpen size={12} aria-hidden />
-      {children}
-    </a>
-  );
 }
 
 function Notice({ children }: { children: React.ReactNode }) {

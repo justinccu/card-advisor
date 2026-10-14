@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { capLabel, fee, money, offerHeadline, offerTerms, rateLabel, sentenceCase } from "@/lib/format";
-import { spring } from "@/lib/motion";
+import { spring, useCalm } from "@/lib/motion";
 import type { CatalogCard } from "@/lib/types";
 
 import { CardArt } from "./CardArt";
@@ -14,6 +14,7 @@ import { useCompare } from "./Providers";
 export function CompareView({ cards }: { cards: CatalogCard[] }) {
   const params = useSearchParams();
   const { ids: selected } = useCompare();
+  const calm = useCalm();
   const fromUrl = (params.get("ids") ?? "").split(",").filter(Boolean);
   const ids = (fromUrl.length ? fromUrl : selected).slice(0, 3);
   const chosen = ids.map((id) => cards.find((c) => c.id === id)).filter(Boolean) as CatalogCard[];
@@ -98,9 +99,9 @@ export function CompareView({ cards }: { cards: CatalogCard[] }) {
         {chosen.map((c, i) => (
           <motion.div
             key={c.id}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ ...spring.nav, delay: i * 0.05 }}
+            initial={{ opacity: 0, transform: "translateY(16px)" }}
+            animate={{ opacity: 1, transform: "translateY(0px)" }}
+            transition={calm({ ...spring.nav, delay: i * 0.05 })}
             className="text-center"
           >
             <CardArt cardId={c.id} issuerId={c.issuer_id} name={c.name} interactive className="mx-auto w-full max-w-[240px]" />

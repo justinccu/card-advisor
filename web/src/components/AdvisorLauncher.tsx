@@ -33,8 +33,9 @@ export function AdvisorLauncher() {
           setOpen(true);
         }}
         aria-label="Ask the Advisor"
-        // Sits above the compare tray while that is showing.
-        className={`glass fixed right-4 z-40 flex items-center gap-2 rounded-full px-4 py-3 text-[15px] font-medium shadow-[var(--shadow-lift)] ring-1 ring-hairline transition-[bottom] ${ids.length ? "bottom-24" : "bottom-5"}`}
+        // Rises above the compare tray while that is showing; `translate` (not `bottom`) so the
+        // move needs no layout, and it composes with the press scale Motion sets on `transform`.
+        className={`glass fixed bottom-5 right-4 z-40 flex items-center gap-2 rounded-full px-4 py-3 text-[15px] font-medium shadow-[var(--shadow-lift)] ring-1 ring-hairline transition-[translate] duration-(--dur-base) ease-move ${ids.length ? "-translate-y-19" : ""}`}
       >
         <Sparkles size={18} className={`text-action ${busy ? "animate-pulse" : ""}`} aria-hidden />
         <span className="hidden sm:inline">Ask the Advisor</span>

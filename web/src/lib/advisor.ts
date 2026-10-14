@@ -31,8 +31,10 @@ export type ErrorCode = "quota" | "auth" | "signin" | "input" | "internal" | "ne
 export type AdvisorEvent =
   | { type: "quota"; limit: number; remaining: number; resets_at: string | null; guest?: boolean }
   | { type: "tool"; name: string }
+  /** the model started writing; its text arrives once checked (or never, if it was narration) */
+  | { type: "writing" }
   | { type: "text"; text: string }
-  /** the answer so far is discarded (the agent retries after a malformed reply) */
+  /** the answer is being redone after it failed a check (older agents also cleared shown text) */
   | { type: "reset" }
   | { type: "error"; code: ErrorCode; message: string; resets_at?: string | null; guest?: boolean }
   /** turn_id: the saved answer the user can rate (absent when it couldn't be saved) */
@@ -175,6 +177,12 @@ export type ChatMessage = {
   text: string;
   /** assistant only: the tool running right now, for a progress hint */
   tool?: string | null;
+  /** assistant only: how many times the answer so far was discarded for a retry */
+  attempt?: number;
+  /** assistant only: a retry is under way and no new text has arrived yet */
+  rechecking?: boolean;
+  /** assistant only: the model is writing (its text is held back until checked) */
+  writing?: boolean;
   error?: { code: ErrorCode; message: string } | null;
   done?: boolean;
   /** assistant only: the saved answer's id, for 👍 / 👎 */

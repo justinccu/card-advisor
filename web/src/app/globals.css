@@ -41,6 +41,32 @@
   }
 }
 
+/* Motion tokens (ADR 0010). UI motion stays under 300ms; things enter a little slower than they
+   leave; what the keyboard triggers or repeats often doesn't animate. Gestures keep Motion's
+   springs (lib/motion.ts); these are for fixed enter/exit and state changes. */
+:root {
+  --dur-instant: 100ms; /* press feedback */
+  --dur-quick: 150ms; /* closing, text swaps */
+  --dur-fast: 200ms; /* opening small things, icon swaps */
+  --dur-base: 250ms; /* panels, reveals */
+  --dur-emph: 400ms; /* rare emphasis */
+  --dur-stagger: 40ms; /* between items entering together */
+  --dist-s: 4px;
+  --dist-m: 8px;
+  --dist-l: 12px;
+  --scale-pop: 0.96;
+  --scale-press: 0.97;
+  --blur-s: 2px;
+}
+
+/* Easing curves (Tailwind `ease-enter` etc.): entering/leaving use a strong ease-out, moving on
+   screen a strong ease-in-out; never ease-in, which delays the moment people watch. */
+@theme {
+  --ease-enter: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-move: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 @theme inline {
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
@@ -90,6 +116,49 @@ body {
   outline: 2px solid var(--action);
   outline-offset: 2px;
   border-radius: 8px;
+}
+
+/* A line that says work is in progress: a highlight sweeps across the text itself (one copy of
+   the text, so screen readers read it once). */
+.shimmer {
+  background: linear-gradient(90deg, var(--ink-3) 40%, var(--ink) 50%, var(--ink-3) 60%) 100% 0 / 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 2s linear infinite;
+}
+@keyframes shimmer {
+  to {
+    background-position: 0 0;
+  }
+}
+
+/* Small things that appear once (a confirmation, an error): fade in from a few px below. */
+.enter-rise {
+  animation: enter-rise var(--dur-fast) var(--ease-enter) both;
+}
+@keyframes enter-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--dist-s));
+  }
+}
+
+/* Reduced motion keeps fades that help comprehension and drops movement and loops. */
+@media (prefers-reduced-motion: reduce) {
+  .shimmer {
+    animation: none;
+    background: none;
+    -webkit-text-fill-color: var(--ink-2);
+  }
+  .enter-rise {
+    animation-name: enter-fade;
+  }
+}
+@keyframes enter-fade {
+  from {
+    opacity: 0;
+  }
 }
 
 .no-scrollbar::-webkit-scrollbar {

@@ -9,7 +9,7 @@ import { useMemo, useRef, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { fullDate } from "@/lib/format";
 import { issuerName } from "@/lib/issuers";
-import { press, project, spring } from "@/lib/motion";
+import { press, project, spring, useCalm } from "@/lib/motion";
 import { searchCards } from "@/lib/search";
 import type { CatalogCard, Evaluation, HeldCard, HeldCardIn, HeldCardPatch, Issuer, Wallet, WalletAttestation } from "@/lib/types";
 
@@ -392,6 +392,7 @@ function AddCardSheet({
   const [picked, setPicked] = useState<CatalogCard | null>(null);
   const [opened, setOpened] = useState(todayIso);
   const [au, setAu] = useState(false);
+  const calm = useCalm();
   const results = useMemo(() => searchCards(q, catalog, issuers).cards.slice(0, 30), [catalog, issuers, q]);
 
   const reset = () => {
@@ -413,7 +414,13 @@ function AddCardSheet({
       <h2 className="headline text-[28px] font-semibold">Add a card.</h2>
       <AnimatePresence mode="wait" initial={false}>
         {!picked ? (
-          <motion.div key="search" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={spring.nav}>
+          <motion.div
+            key="search"
+            initial={{ opacity: 0, transform: "translateX(-20px)" }}
+            animate={{ opacity: 1, transform: "translateX(0px)" }}
+            exit={{ opacity: 0, transform: "translateX(-20px)" }}
+            transition={calm(spring.nav)}
+          >
             <label className="relative mt-4 block">
               <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" aria-hidden />
               <input
@@ -450,10 +457,10 @@ function AddCardSheet({
         ) : (
           <motion.form
             key="details"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={spring.nav}
+            initial={{ opacity: 0, transform: "translateX(20px)" }}
+            animate={{ opacity: 1, transform: "translateX(0px)" }}
+            exit={{ opacity: 0, transform: "translateX(20px)" }}
+            transition={calm(spring.nav)}
             className="mt-4 space-y-4"
             onSubmit={(e) => {
               e.preventDefault();

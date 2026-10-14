@@ -5,17 +5,32 @@ import { X } from "lucide-react";
 import { useEffect, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
-import { press, project, spring } from "@/lib/motion";
+import { press, project, spring, tween, useCalm } from "@/lib/motion";
 
 const noop = () => () => {};
 /** false during SSR and hydration, true after: portals must not render before hydration. */
 const useMounted = () => useSyncExternalStore(noop, () => true, () => false);
 
+// Tailwind's `sm`, where the sheet becomes a centered panel.
+const WIDE = "(min-width: 640px)";
+const useWide = () =>
+  useSyncExternalStore(
+    (onChange) => {
+      const query = window.matchMedia(WIDE);
+      query.addEventListener("change", onChange);
+      return () => query.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia(WIDE).matches,
+    () => false,
+  );
+
 const DISMISS_DISTANCE = 140; // px, or…
 const DISMISS_PROJECTION = 260; // …where a flick would come to rest
 
 /**
- * Bottom sheet on phones, centered panel on wider screens. On touch it follows the finger 1:1
+ * Bottom sheet on phones, centered panel on wider screens. The panel scales up from 96% and fades
+ * (a dialog with no anchor grows in place; sliding it up from the screen's bottom edge left it
+ * lingering there). The phone sheet slides up and, on touch, follows the finger 1:1
  * from the grabber, rubber-bands when pulled up past its resting place (Motion's dragElastic is
  * the (x·d)/(d+x) resistance curve), and on release projects the flick's momentum: far enough ->
  * dismiss carrying the finger's velocity, otherwise spring back from wherever it was released.
@@ -34,6 +49,8 @@ export function Sheet({
   const drag = useDragControls();
   const reduce = useReducedMotion();
   const mounted = useMounted();
+  const wide = useWide();
+  const calm = useCalm();
 
   useEffect(() => {
     if (!open) return;
@@ -65,26 +82,29 @@ export function Sheet({
             aria-label="Close"
             className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            animate={{ opacity: 1, transition: tween.reveal }}
+            exit={{ opacity: 0, transition: tween.out }}
             onClick={onClose}
           />
           <motion.section
-            drag={reduce ? false : "y"}
+            drag={reduce || wide ? false : "y"}
             dragListener={false}
             dragControls={drag}
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0.08, bottom: 1 }}
             onDragEnd={onDragEnd}
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={spring.sheet}
+            {...(wide
+              ? {
+                  initial: { opacity: 0, transform: "scale(0.96)" },
+                  animate: { opacity: 1, transform: "scale(1)", transition: calm(tween.reveal) },
+                  exit: { opacity: 0, transform: "scale(0.96)", transition: calm(tween.out) },
+                }
+              : { initial: { y: "100%" }, animate: { y: 0 }, exit: { y: "100%" }, transition: spring.sheet })}
             className="relative max-h-[88dvh] w-full overflow-hidden rounded-t-[28px] bg-surface shadow-[var(--shadow-lift)] will-change-transform sm:max-w-[640px] sm:rounded-[28px]"
           >
             <div
-              className="flex cursor-grab touch-none justify-center pb-1 pt-2.5 active:cursor-grabbing"
+              // The grabber drags the phone sheet only; the wide panel keeps its spacing, not its look.
+              className="flex cursor-grab touch-none justify-center pb-1 pt-2.5 active:cursor-grabbing sm:invisible"
               onPointerDown={(e) => drag.start(e)}
             >
               <span className="h-[5px] w-9 rounded-full bg-black/20 dark:bg-white/25" aria-hidden />
