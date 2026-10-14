@@ -6,7 +6,14 @@ from datetime import date
 
 import boto3
 import pytest
-from card_api.models import ApplicantProfile, ChatTurn, HeldCardIn, TurnFeedback, WalletAttestation
+from card_api.models import (
+    ApplicantProfile,
+    ChatTurn,
+    HeldCardIn,
+    SpendingProfile,
+    TurnFeedback,
+    WalletAttestation,
+)
 from card_api.repository import DynamoRepository, InMemoryRepository
 from card_api.triggers import postconfirm_handler, presignup_handler
 from moto import mock_aws
@@ -84,6 +91,15 @@ def test_profile_and_attestation_default_then_roundtrip(repo):
     repo.put_attestation("u", WalletAttestation(complete_since=date(2024, 9, 1)))
     assert repo.get_profile("u").tax_id == "ITIN"
     assert repo.get_attestation("u").complete_since == date(2024, 9, 1)
+
+
+def test_a_spending_profile_roundtrips(repo):
+    # DynamoDB rejects Python floats; every profile save with spending failed live with a 500
+    # (2026-10-14) while the in-memory store, used locally, took them.
+    spending = SpendingProfile(monthly_usd={"gas_ev": 30, "dining": 12.5}, goals=["travel"])
+    repo.put_profile("u", ApplicantProfile(tax_id="SSN", spending=spending))
+    saved = repo.get_profile("u").spending
+    assert saved.monthly_usd == {"gas_ev": 30, "dining": 12.5} and saved.goals == ["travel"]
 
 
 def test_invite_redemption_is_atomic(repo):

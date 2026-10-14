@@ -18,11 +18,14 @@ All invites share one partition so an admin lists them with a query, not a scan;
 volume (hundreds of items) one partition is nowhere near its throughput limit.
 """
 
+import json
 import threading
 import time
 import uuid
 from decimal import Decimal
 from typing import Protocol
+
+from pydantic import BaseModel
 
 from card_api.models import (
     ApplicantProfile,
@@ -42,6 +45,13 @@ RATED_TURN_TTL_SECONDS = 90 * 24 * 3600
 INVITE_PK = "INVITE"
 GUEST_PK = "GUEST"
 SPEND_KEY = {"PK": "ADVISOR", "SK": "SPEND"}
+
+
+def _stored(model: BaseModel, **dump) -> dict:
+    """A model as DynamoDB stores it: JSON types, numbers as Decimal. boto3 rejects Python floats,
+    so a profile with monthly spending failed to save live (500) while the in-memory store,
+    used locally, took it."""
+    return json.loads(model.model_dump_json(**dump), parse_float=Decimal)
 
 
 class Repository(Protocol):
@@ -243,7 +253,7 @@ class DynamoRepository:
 
     def put_profile(self, uid, profile):
         self._table.put_item(
-            Item={"PK": self._user(uid), "SK": "PROFILE", "data": profile.model_dump(mode="json")}
+            Item={"PK": self._user(uid), "SK": "PROFILE", "data": _stored(profile)}
         )
 
     def list_cards(self, uid):
@@ -269,7 +279,7 @@ class DynamoRepository:
             "PK": self._user(uid),
             "SK": f"CARD#{held.opened_on.isoformat()}#{held.id}",
             "card_id": held.id,
-            "data": held.model_dump(mode="json"),
+            "data": _stored(held),
         }
 
     def add_card(self, uid, card):
@@ -316,7 +326,7 @@ class DynamoRepository:
             Item={
                 "PK": self._user(uid),
                 "SK": "ATTEST",
-                "data": attestation.model_dump(mode="json"),
+                "data": _stored(attestation),
             }
         )
 
@@ -492,7 +502,7 @@ class DynamoRepository:
             Item={
                 "PK": self._user(uid),
                 "SK": f"TURN#{turn.turn_id}",
-                "data": turn.model_dump(mode="json", exclude={"feedback", "rated_at"}),
+                "data": _stored(turn, exclude={"feedback", "rated_at"}),
                 "expires_at": int(time.time()) + TURN_TTL_SECONDS,
             }
         )
@@ -506,7 +516,7 @@ class DynamoRepository:
                 UpdateExpression="SET feedback = :f, rated_at = :t, expires_at = :exp",
                 ConditionExpression="attribute_exists(PK)",
                 ExpressionAttributeValues={
-                    ":f": feedback.model_dump(mode="json"),
+                    ":f": _stored(feedback),
                     ":t": rated_at,
                     ":exp": int(time.time()) + RATED_TURN_TTL_SECONDS,
                 },
