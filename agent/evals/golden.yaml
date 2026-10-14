@@ -175,7 +175,23 @@ cases:
     expect:
       tools: [check_eligibility]
       contains_any: ["可能", "不一定", "未必", "may"]
-      not_contains: ["不能同時持有", "只能持有一張", "持有其他 Sapphire 就不能", "一定拿得到", "不影響", "48 個月後就能", "等 48 個月"]
+      # "不影響您申請" (applying isn't affected) is right; only the bonus claim is wrong.
+      not_contains: ["不能同時持有", "只能持有一張", "持有其他 Sapphire 就不能", "一定拿得到", "不影響開卡禮", "開卡禮不受影響", "不會影響開卡禮", "48 個月後就能", "等 48 個月"]
+
+  # The owner's question on 2026-10-02: the reply wrote Chase's count as "2/5（還有3個名額）",
+  # copied from the wallet tool's own "2 of 5". The count comes from code (get_my_wallet).
+  - id: still-eligible-524-zh
+    category: eligibility
+    critical: true
+    user: fresh
+    profile: demo
+    cards: [[chase_freedom_flex, 2], [discover_it_cash_back, 1]]
+    full_history: [chase, discover]
+    turns: ["幫我檢查我現在還適合辦卡嗎？"]
+    expect:
+      tools: [get_my_wallet]
+      contains_any: ["2/24"]
+      not_contains: ["2/5", "名額"]
 
   - id: amex-gold-offer-ladder
     category: eligibility

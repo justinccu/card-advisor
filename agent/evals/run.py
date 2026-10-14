@@ -165,12 +165,15 @@ async def run_case(main, case: dict, run: int) -> dict:
             elif event["type"] == "error":
                 errors.append(event.get("message", ""))
     tools = [t["name"] for t in records[-1]["tools"]] if records else []
+    session = main._sessions.get((f"{case['id']}-{run}-{user}", user))
+    timing = session.timings.report if session else ""
     return {
         "id": case["id"],
         "category": case["category"],
         "critical": bool(case.get("critical")),
         "run": run,
         "seconds": round(time.monotonic() - started, 1),
+        "timing": timing,  # where the last turn's time went (model calls, tools, ...)
         "question": case["turns"][-1],
         "answer": answer,
         "errors": errors,
@@ -337,6 +340,8 @@ def main_cli() -> int:
     for r in sorted(results, key=lambda r: (r["passed"], r["category"], r["id"])):
         mark = "PASS" if r["passed"] else "FAIL"
         print(f"{mark}  {r['category']:15} {r['id']:42} {r['seconds']:5}s  tools={r['tools']}")
+        if r.get("timing"):
+            print(f"        {r['timing']}")
         if not r["passed"]:
             for why in [v for v in r["checks"].values() if v] + r["expectations"]:
                 print(f"        - {why}")

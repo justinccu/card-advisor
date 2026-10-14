@@ -388,5 +388,5 @@ def test_an_unconfirmed_wallet_says_5_24_cant_be_determined():
     empty = compact_wallet({"cards": []}, {"count_24m": 0, "complete": False})
     assert empty["five_24_status"].startswith("can't be determined")
     assert compact_wallet({"cards": []}, {"count_24m": 4, "complete": True})["five_24_status"] == (
-        "4 of 5"
+        "4/24 (Chase denies at 5 or more)"
     )

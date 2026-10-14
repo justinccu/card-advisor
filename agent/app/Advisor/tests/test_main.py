@@ -152,9 +152,15 @@ def chat_with(monkeypatch, agent):
 
     session = FakeSession()
     session.agent = agent
+    session.timings = main.Timings()
     monkeypatch.setattr(main, "AdvisorApi", Api)
     monkeypatch.setattr(main, "get_session", lambda *a: session)
     return run({"prompt": "amex green?"}, Ctx())
+
+
+def seen(events):
+    """Event kinds the page acts on: all but "writing", which only moves the status line."""
+    return [e["type"] for e in events if e["type"] != "writing"]
 
 
 LEAK = ['I will check. {"name": "rank_cards", "arguments": {"monthly_spending": {"dining": 300}}}']
@@ -163,9 +169,11 @@ LEAK = ['I will check. {"name": "rank_cards", "arguments": {"monthly_spending": 
 def test_a_tool_call_written_as_text_is_cleared_and_retried(monkeypatch):
     agent = FakeAgent(LEAK, ["The Green Card is closed to new applicants."])
     events = chat_with(monkeypatch, agent)
-    kinds = [e["type"] for e in events]
-    assert kinds == ["quota", "text", "done"]  # the leaked text never reached the page
-    assert events[1]["text"] == "The Green Card is closed to new applicants."
+    # the leaked text never reached the page; "reset" tells it the answer is being redone
+    assert seen(events) == ["quota", "reset", "text", "done"]
+    assert [e["text"] for e in events if e["type"] == "text"] == [
+        "The Green Card is closed to new applicants."
+    ]
     assert "tool call as text" in agent.prompts[1]  # the retry is told what went wrong
     # the broken answer is gone from the conversation; only the retry's turn remains
     assert [m["role"] for m in agent.messages] == ["user", "assistant"]
@@ -174,7 +182,7 @@ def test_a_tool_call_written_as_text_is_cleared_and_retried(monkeypatch):
 
 def test_a_second_leak_ends_the_answer_with_an_error(monkeypatch):
     events = chat_with(monkeypatch, FakeAgent(LEAK, ["<tool_call>{}</tool_call>"]))
-    assert [e["type"] for e in events] == ["quota", "error"]
+    assert seen(events) == ["quota", "reset", "error"]
     assert len(costs) == 1  # a failed answer still costs, and is counted
 
 
@@ -235,25 +243,31 @@ def test_narration_before_a_tool_call_is_cleared_and_model_markup_never_shown(mo
         ]
     )
     events = chat_with(monkeypatch, agent)
-    # narration before the first call is held back and dropped: it never reaches the page
-    assert [e["type"] for e in events] == ["quota", "tool", "text", "text", "done"]
+    # narration is dropped unseen; the answer arrives whole once checked
+    assert seen(events) == ["quota", "tool", "text", "done"]
+    assert [e["text"] for e in events if e["type"] == "text"] == ["It's closed to new applicants."]
+    assert [e["type"] for e in events][:3] == ["quota", "writing", "tool"]  # status line moves
     assert not any("DSML" in e.get("text", "") or "Let me" in e.get("text", "") for e in events)
     assert [e for e in events if e["type"] == "tool"] == [
         {"type": "tool", "name": "get_card_details"}
     ]
 
 
-def test_the_same_tool_called_twice_clears_narration_each_time(monkeypatch):
+def test_narration_between_calls_is_never_shown(monkeypatch):
+    # DeepSeek once wrote a whole analysis before ranking cards; shown, then cleared when the
+    # next call started, it read as the answer vanishing.
     agent = FakeAgent(
         [
             {"toolUseId": "a", "name": "get_card_details"},
-            "Now the other card.",
+            "Now the other card, which uses check_eligibility.",
             {"toolUseId": "b", "name": "get_card_details"},
             "Both are closed.",
         ]
     )
-    kinds = [e["type"] for e in chat_with(monkeypatch, agent)]
-    assert kinds == ["quota", "tool", "text", "reset", "tool", "text", "done"]
+    events = chat_with(monkeypatch, agent)
+    assert seen(events) == ["quota", "tool", "tool", "text", "done"]
+    assert [e["text"] for e in events if e["type"] == "text"] == ["Both are closed."]
+    assert len(agent.prompts) == 1  # an internal name in narration costs no retry
 
 
 def test_the_model_is_told_the_reply_language_in_the_message_itself(monkeypatch):
@@ -294,7 +308,7 @@ def test_an_amount_stated_without_any_lookup_is_retried(monkeypatch):
         ],
     )
     events = chat_with(monkeypatch, agent)
-    assert [e["type"] for e in events] == ["quota", "tool", "text", "done"]
+    assert seen(events) == ["quota", "reset", "tool", "text", "done"]
     assert not any("$250" in e.get("text", "") for e in events)  # the wrong fee never showed
     assert "without looking them up" in agent.prompts[1]
     retry = [m for m in agent.messages if m["role"] == "user"][0]["content"][0]["text"]
@@ -310,12 +324,12 @@ def test_amounts_from_the_user_or_earlier_lookups_need_no_new_lookup(monkeypatch
         {"role": "user", "content": [{"text": "I spend $600 on dining"}]},
         {"role": "user", "content": [{"toolResult": {"content": [{"text": "75,000 points"}]}}]},
     ]
-    assert [e["type"] for e in chat_with(monkeypatch, agent)] == ["quota", "text", "done"]
+    assert seen(chat_with(monkeypatch, agent)) == ["quota", "text", "done"]
     agent = FakeAgent(["That's the 75,000 points we saw."])
     agent.messages = [
         {"role": "user", "content": [{"toolResult": {"content": [{"text": "75,000 points"}]}}]}
     ]
-    assert [e["type"] for e in chat_with(monkeypatch, agent)] == ["quota", "text", "done"]
+    assert seen(chat_with(monkeypatch, agent)) == ["quota", "text", "done"]
 
 
 def test_an_amount_no_lookup_returned_is_retried_once_after_a_lookup(monkeypatch):
@@ -328,9 +342,8 @@ def test_an_amount_no_lookup_returned_is_retried_once_after_a_lookup(monkeypatch
         {"role": "user", "content": [{"toolResult": {"content": [{"text": "$795 a year"}]}}]}
     ]
     events = chat_with(monkeypatch, agent)
-    kinds = [e["type"] for e in events]
-    assert kinds == ["quota", "tool", "text", "reset", "tool", "text", "done"]
-    assert events[-2]["text"] == "Yes. Its fee is $795."
+    assert seen(events) == ["quota", "tool", "reset", "tool", "text", "done"]
+    assert [e["text"] for e in events if e["type"] == "text"] == ["Yes. Its fee is $795."]
     assert "none of your lookups returned" in agent.prompts[1]
     retry = [m for m in agent.messages if m["role"] == "user"][1]["content"][0]["text"]
     assert retry.endswith("[No lookup gave these amounts: 550.]")  # named, so it can fix them
@@ -341,7 +354,8 @@ def test_after_a_lookup_a_second_unsourced_answer_is_not_shown(monkeypatch):
     answer = [{"toolUseId": "t1", "name": "get_card_details"}, "The Reserve is $550 a year."]
     agent = FakeAgent(answer, [{**answer[0], "toolUseId": "t2"}, answer[1]])
     events = chat_with(monkeypatch, agent)
-    assert [e["type"] for e in events][-2:] == ["reset", "error"]
+    assert seen(events) == ["quota", "tool", "reset", "tool", "error"]
+    assert not any(e["type"] == "text" for e in events)  # $550 never reached the page
     assert "couldn't check" in events[-1]["message"]
 
 
@@ -374,7 +388,7 @@ def test_asked_about_its_insides_it_declines_rather_than_erroring(monkeypatch):
 def test_a_second_unlooked_answer_ends_with_an_error(monkeypatch):
     agent = FakeAgent(["It costs $250."], ["Still $250."])
     events = chat_with(monkeypatch, agent)
-    assert [e["type"] for e in events] == ["quota", "error"]
+    assert seen(events) == ["quota", "reset", "error"]
     assert "couldn't check that" in events[-1]["message"]
 
 
@@ -382,6 +396,7 @@ def test_an_answer_without_tools_arrives_whole_once_checked(monkeypatch):
     agent = FakeAgent(["Pay the balance ", "in full each month."])
     events = chat_with(monkeypatch, agent)
     assert events[1:] == [
+        {"type": "writing"},
         {"type": "text", "text": "Pay the balance in full each month."},
         {"type": "done", "turn_id": saved[0]["turn_id"]},
     ]
@@ -416,8 +431,8 @@ def test_an_internal_name_stops_the_answer_and_is_retried_in_plain_words(monkeyp
     )
     events = chat_with(monkeypatch, agent)
     texts = [e["text"] for e in events if e["type"] == "text"]
-    assert "check_eligibility" not in "".join(texts[-1:])  # the answer that stayed
-    assert [e["type"] for e in events][-3:] == ["tool", "text", "done"]
+    assert texts == ["I checked: you can apply."]  # the leaking answer never showed
+    assert seen(events) == ["quota", "tool", "reset", "tool", "text", "done"]
     assert "plain words" in agent.prompts[1]
     retry = [m for m in agent.messages if m["role"] == "user"][0]["content"][0]["text"]
     assert retry.endswith("no tool, field, id or system names.]")
@@ -433,7 +448,7 @@ def test_narration_naming_internals_before_a_lookup_costs_no_retry(monkeypatch):
         ]
     )
     events = chat_with(monkeypatch, agent)
-    assert [e["type"] for e in events] == ["quota", "tool", "text", "done"]
+    assert seen(events) == ["quota", "tool", "text", "done"]
     assert len(agent.prompts) == 1  # answered on the first try
     assert "amex_ladder_gold" not in "".join(e.get("text", "") for e in events)
 
@@ -441,8 +456,8 @@ def test_narration_naming_internals_before_a_lookup_costs_no_retry(monkeypatch):
 def test_an_answer_with_no_lookup_is_checked_whole_before_it_is_shown(monkeypatch):
     agent = FakeAgent(["Ask me about the ", "chase_5_24 rule."], ["Ask me about Chase 5/24."])
     events = chat_with(monkeypatch, agent)
-    assert [e["type"] for e in events] == ["quota", "text", "done"]
-    assert events[1]["text"] == "Ask me about Chase 5/24."
+    assert seen(events) == ["quota", "reset", "text", "done"]
+    assert [e["text"] for e in events if e["type"] == "text"] == ["Ask me about Chase 5/24."]
     assert len(agent.prompts) == 2
 
 

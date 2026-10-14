@@ -39,6 +39,7 @@ from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from strands import Agent
 from strands.agent.conversation_manager import SlidingWindowConversationManager
+from timing import Timings
 
 
 def _local_cors() -> list[Middleware]:
@@ -115,13 +116,15 @@ class Session:
 
     def __init__(self, session_id: str, user_id: str) -> None:
         self.api: AdvisorApi | None = None
+        self.timings = Timings()
         self.agent = Agent(
             model=load_model(),
             system_prompt=SYSTEM_PROMPT,
             tools=build_tools(self),
-            session_manager=get_memory_session_manager(session_id, user_id),
+            session_manager=get_memory_session_manager(session_id, user_id, self.timings),
             conversation_manager=SlidingWindowConversationManager(window_size=WINDOW_MESSAGES),
             callback_handler=None,
+            hooks=[self.timings],
         )
 
 
@@ -193,6 +196,7 @@ async def invoke(payload, context):
         yield _error("input", f"Messages are limited to {MAX_PROMPT_CHARS} characters.")
         return
 
+    began = time.monotonic()
     api = AdvisorApi(caller.headers)
     try:
         quota = api.take_turn()  # before the model runs: an exhausted quota costs nothing
@@ -221,22 +225,29 @@ async def invoke(payload, context):
     }
 
     session_id = getattr(context, "session_id", None) or uuid.uuid4().hex
+    quota_took = time.monotonic() - began
+    set_up = time.monotonic()
     session = get_session(session_id, caller.user_id)
+    timings = session.timings
+    timings.start()
+    timings.began = began
+    timings.marks["quota"] = quota_took
+    timings.lap("session", set_up)
     session.api = api
     tokens_before = _tokens(session.agent)
     session.agent.system_prompt = system_prompt_for(prompt)  # this message's reply language
-    answer = ""  # what the page shows: text since the last reset
+    answer = ""  # the checked answer the page shows
     nudge = ""  # a retry's instruction, at the end of the message where DeepSeek heeds it
+    retries = 0
     try:
         for attempt in range(2):
             start = len(session.agent.messages)
             leaked = None  # "tool_call" or "internal": why the stream was cut
             leak_names: list[str] = []
-            # Until the model makes a tool call, its text is held back: before a call it is
-            # narration ("Let me check...", never shown), and an answer with no call at all is
-            # shown only once its amounts are known to come from a lookup or the user.
+            # Nothing the model writes reaches the page until the answer is checked: tool and
+            # writing events keep the page's status line moving meanwhile.
             looked_up = False
-            shown = False  # anything sent to the page in this attempt
+            answer = ""
             events = _stream(session, with_language(prompt) + nudge)
             async for event in events:
                 kind = event["type"]
@@ -244,35 +255,32 @@ async def invoke(payload, context):
                     leaked = event["why"]
                     leak_names = event.get("names", [])
                     break
+                if kind == "answer":
+                    answer = event["text"]
+                    continue
                 if kind == "tool":
                     looked_up = True
-                if kind == "text":
-                    answer += event["text"]
-                    if not looked_up:
-                        continue
-                    shown = True
-                elif kind == "reset":
-                    answer = ""
-                    if not shown:
-                        continue  # nothing on the page to clear
-                    shown = False
+                timings.event(kind)
                 yield event
             await events.aclose()  # stops the model call when it leaked
+            checking = time.monotonic()
             unsourced = unsourced_in(answer, session.agent.messages) if answer else set()
+            timings.lap("checks", checking)
             problem = leaked or (
                 ("unlooked" if not looked_up else "unsourced") if unsourced else None
             )
             if problem is None:
-                if not looked_up and answer:
+                if answer:
+                    timings.event("text")
                     yield {"type": "text", "text": answer}  # the held answer, checked
                 break
-            # Drop the answer from the conversation, clear anything shown, ask once more.
+            # Drop the answer from the conversation and ask once more.
             what, hint, retry_nudge, give_up = PROBLEMS[problem]
-            # Names only (tool and field names), never the user's or the model's text.
-            log.warning("%s (attempt %d) %s", what, attempt + 1, sorted(set(leak_names))[:5])
+            # Names and amounts only (tool and field names, the unsourced figures), never the
+            # user's or the model's text.
+            flagged = sorted(unsourced) if unsourced else sorted(set(leak_names))
+            log.warning("%s (attempt %d) %s", what, attempt + 1, flagged[:5])
             del session.agent.messages[start:]
-            if shown:
-                yield {"type": "reset"}
             if attempt == 1:
                 if problem == "internal" and asks_about_internals(prompt):
                     # Asked how the Advisor works and still naming its insides: decline plainly.
@@ -281,21 +289,32 @@ async def invoke(payload, context):
                     break
                 yield _error("internal", _in_reply_language(give_up, prompt))
                 return
+            retries += 1
+            timings.event("reset")
+            yield {"type": "reset"}  # the page says it's double-checking; nothing was shown
             session.agent.system_prompt = system_prompt_for(prompt) + hint
             nudge = retry_nudge
             if unsourced:  # name them: "look things up" alone didn't stop a recalled $550 fee
                 nudge += f"\n[No lookup gave these amounts: {', '.join(sorted(unsourced))}.]"
             answer = ""
+        saving = time.monotonic()
         turn_id = _save_turn(api, turn_record(session.agent.messages[start:], prompt, answer))
+        timings.lap("save", saving)
+        # Before the cost report: the page finishes the reply as soon as it has the turn id.
+        timings.event("done")
+        yield {"type": "done", **({"turn_id": turn_id} if turn_id else {})}
     except Exception:
         log.exception("advisor turn failed")
         message = "Something went wrong while answering. Please try again."
         yield _error("internal", _in_reply_language(message, prompt))
         return
     finally:
+        reporting = time.monotonic()
         _report_cost(api, session.agent, tokens_before)
+        timings.lap("usage", reporting)
         session.api = None  # don't keep the caller's token after the reply
-    yield {"type": "done", **({"turn_id": turn_id} if turn_id else {})}
+        timings.report = timings.summary(retries)
+        log.info("timing %s", timings.report)
 
 
 # Dollar amounts and point counts ("$250", "95 美元", "USD 95", "75,000"): card facts a reply
@@ -450,49 +469,42 @@ def _save_turn(api: AdvisorApi, record: dict) -> str | None:
 
 
 async def _stream(session: Session, prompt: str):
-    """The agent's answer as site events. Text the model writes before a tool call ("Let me
-    check...") is narration, not the answer: when a new tool call starts, the page is told to
-    clear it. A {"type": "leak"} event ends the stream early when the model writes a tool call
-    as text, or names something internal (a tool, a field, an id, an API path).
-
-    Internal names are checked in what the page will show: text after a tool call as it streams;
-    text before any tool call only once the stream ends without one, since until then it's
-    narration the page holds back and drops ("Let me check amex_ladder_gold" never reaches the
-    reader, so it mustn't cost the answer a retry)."""
+    """The agent's work as site events, holding back everything the model writes until it is
+    checked: a "tool" event per call, a "writing" event when the model starts writing after one,
+    and last an "answer" event with the text after the final call. Text before a call is narration
+    ("Let me check...", once a whole analysis before ranking): shown and then cleared, it read as
+    the answer vanishing, so it's dropped unseen. A "leak" event ends the stream when the model
+    writes a tool call as text, or when the answer names something internal (a tool, a field, an
+    id, an API path); narration naming one costs nothing, since nobody sees it."""
     text = ""
-    shown = False  # text sent since the last clear
+    writing = False  # told the page the model is writing, since the last call
     tool_calls: set[str] = set()
     stream = session.agent.stream_async(prompt)
     try:
         async for event in stream:
             if isinstance(event, dict) and isinstance(event.get("data"), str):
+                session.timings.output()
                 text += event["data"]
                 if LEAKED_TOOL_CALL.search(text):
                     yield {"type": "leak", "why": "tool_call"}
                     return
-                if tool_calls:  # shown as it streams: check it now
-                    names = internal_names(MODEL_MARKUP.sub("", text), prompt)  # as shown
-                    if names:
-                        yield {"type": "leak", "why": "internal", "names": names}
-                        return
-                chunk = MODEL_MARKUP.sub("", event["data"])
-                if chunk:
-                    shown = True
-                    yield {"type": "text", "text": chunk}
+                if not writing and MODEL_MARKUP.sub("", text).strip():
+                    writing = True
+                    yield {"type": "writing"}
             elif isinstance(event, dict) and "current_tool_use" in event:
                 use = event["current_tool_use"] or {}
                 call = use.get("toolUseId") or use.get("name")
                 if call and call not in tool_calls:
+                    session.timings.output()
                     tool_calls.add(call)
-                    if shown:
-                        yield {"type": "reset"}
-                        shown = False
-                    text = ""
+                    text, writing = "", False
                     yield {"type": "tool", "name": use.get("name")}
-        if not tool_calls:  # an answer with no lookup, held until now: check it whole
-            names = internal_names(MODEL_MARKUP.sub("", text), prompt)
-            if names:
-                yield {"type": "leak", "why": "internal", "names": names}
+        answer = MODEL_MARKUP.sub("", text).strip()
+        names = internal_names(answer, prompt)
+        if names:
+            yield {"type": "leak", "why": "internal", "names": names}
+            return
+        yield {"type": "answer", "text": answer}
     finally:
         await stream.aclose()
 

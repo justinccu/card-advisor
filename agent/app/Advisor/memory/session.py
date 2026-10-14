@@ -18,7 +18,7 @@ REGION = os.getenv("AWS_REGION", "us-east-2")
 
 
 def get_memory_session_manager(
-    session_id: str | None, actor_id: str
+    session_id: str | None, actor_id: str, timings=None
 ) -> AgentCoreMemorySessionManager | None:
     if not MEMORY_ID:  # local dev without deployed memory: conversation state only
         return None
@@ -27,7 +27,7 @@ def get_memory_session_manager(
         f"/users/{actor_id}/preferences": RetrievalConfig(top_k=3, relevance_score=0.5),
         f"/summaries/{actor_id}": RetrievalConfig(top_k=3, relevance_score=0.5),
     }
-    return AgentCoreMemorySessionManager(
+    manager = AgentCoreMemorySessionManager(
         AgentCoreMemoryConfig(
             memory_id=MEMORY_ID,
             session_id=session_id,
@@ -36,3 +36,6 @@ def get_memory_session_manager(
         ),
         REGION,
     )
+    if timings is not None:
+        timings.watch_aws(manager.memory_client.gmdp_client)
+    return manager

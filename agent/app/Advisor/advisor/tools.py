@@ -87,9 +87,10 @@ def compact_wallet(wallet: dict, velocity: dict) -> dict:
         "cards_opened_last_24_months": velocity.get("count_24m"),
         "count_is_for_rule": "chase_5_24",
         # Stated, not left to the model: it once told a user with an empty, unconfirmed wallet
-        # "you're well under 5/24".
+        # "you're well under 5/24". Written as Chase's N/24: "2 of 5" came back as "2/5, 3 slots
+        # left".
         "five_24_status": (
-            f"{velocity.get('count_24m')} of 5"
+            f"{velocity.get('count_24m')}/24 (Chase denies at 5 or more)"
             if velocity.get("complete")
             else "can't be determined until every card opened in the last 24 months is listed"
         ),
