@@ -234,6 +234,7 @@ def compact_eligibility(body: dict, rules: dict[str, dict] | None = None) -> lis
         return [
             {
                 "rule": r["rule_id"],
+                "cite_as": cite_as(r["rule_id"]),
                 "status": status,
                 "finding": r["message"],
                 "retry_after": r.get("retry_after"),
@@ -248,7 +249,13 @@ def compact_eligibility(body: dict, rules: dict[str, dict] | None = None) -> lis
         # Only rules the model can cite: not internal checks such as the tax id (the model
         # cited a "rule:tax_id" that GET /rules doesn't have).
         return [
-            drop_nulls({"rule": r["rule_id"], "says": rules.get(r["rule_id"], {}).get("summary")})
+            drop_nulls(
+                {
+                    "rule": r["rule_id"],
+                    "cite_as": cite_as(r["rule_id"]),
+                    "says": rules.get(r["rule_id"], {}).get("summary"),
+                }
+            )
             for r in verdict.get("reasons", [])
             if r["status"] == "Eligible" and (not rules or r["rule_id"] in rules)
         ]
@@ -283,6 +290,8 @@ def compact_card(card: dict) -> dict:
     return {
         "card_id": card["id"],
         "name": card["name"],
+        # Asked for "the application URL", the model wrote one from memory: give it the link.
+        "apply_link": f"[Apply](card:{card['id']})",
         "issuer": card["issuer_id"],
         "annual_fee": fee_text(card.get("annual_fee_usd"), card.get("first_year_annual_fee_usd")),
         "foreign_transaction_fee": None if fx is None else "none" if fx == 0 else f"{fx:g}%",
@@ -332,10 +341,36 @@ def earning_text(rate: dict) -> str:
     return text
 
 
+ISSUER_NAMES = {
+    "amex": "Amex",
+    "bofa": "BofA",
+    "capital_one": "Capital One",
+    "chase": "Chase",
+    "citi": "Citi",
+    "discover": "Discover",
+    "us_bank": "U.S. Bank",
+    "wells_fargo": "Wells Fargo",
+}
+
+
+def cite_as(rule_id: str) -> str:
+    """The citation to copy for a rule ("[Citi 48 month bonus](rule:citi_48_month_bonus)"). Given
+    only the id, DeepSeek explained Citi's 48-month rule correctly and cited the two rules next
+    to it, but not that one."""
+    label = rule_id
+    for issuer, name in ISSUER_NAMES.items():
+        if label.startswith(issuer + "_"):
+            label = f"{name} {label[len(issuer) + 1 :]}"
+            break
+    label = re.sub(r"(\d+)_(\d+)", r"\1/\2", label).replace("_", " ")
+    return f"[{label}](rule:{rule_id})"
+
+
 def compact_rules(body: dict) -> list[dict]:
     return [
         {
             "rule_id": r["rule_id"],
+            "cite_as": cite_as(r["rule_id"]),
             "summary": r["summary"],
             "decides": r["decides"],
             "applies_to": r["applies_to"],

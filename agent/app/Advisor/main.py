@@ -95,6 +95,8 @@ CATEGORY_WORDS = {
     "everything_else": "everything else",
 }
 _LINKED = re.compile(r"\((?:card|rule):[^)\s]*\)")
+_HTTP_LINK = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
+_BARE_URL = re.compile(r"(?:https?://|www\.)[^\s<>()\[\]]+")
 _ANY_LINK = re.compile(r"\[([^\]]+)\]\((rule|card):([^)\s]+)\)")
 _ID_AS_LABEL = re.compile(r"\[`?([a-z][a-z0-9]*(?:_[a-z0-9]+)+)`?\]\(((?:card|rule):[^)\s]+)\)")
 _BARE_ID = re.compile(r"`?\b([a-z][a-z0-9]*(?:_[a-z0-9]+)+)\b`?")
@@ -110,7 +112,9 @@ def rule_label(facts: dict) -> str:
 def plain_names(text: str, rules: dict[str, dict], cards: dict[str, dict]) -> str:
     """Ids a reply writes as plain text, put in words before the leak check: a rule id becomes
     its citation (the page shows it as the rule's label), a card id the card's name, a spending
-    category its words. Each was a retry of the whole answer (7-10s): DeepSeek copied
+    category its words, and a URL the card's own link (the page lists only catalog links) or
+    "[link removed]", as the page does: asked for "the full https link", DeepSeek wrote the Amex
+    Gold's from memory. Each id was a retry of the whole answer (7-10s): DeepSeek copied
     "chase_sapphire_once_per_card" and "other_travel" from tool results into its text. A link to
     an id that doesn't exist keeps only its label, as the page shows it: the model once cited a
     "rule:citi_one_bonus_per_card_48_months" it made up. Other internal names (tools, fields, API
@@ -129,6 +133,20 @@ def plain_names(text: str, rules: dict[str, dict], cards: dict[str, dict]) -> st
         label = rule_label(rules[name]) if name in rules else (cards.get(name) or {}).get("name")
         return f"[{label}]({target})" if label else m.group(0)
 
+    by_url = {_bare(c["url"]): c for c in cards.values() if c.get("url")}
+
+    def web_link(m: re.Match) -> str:  # [label](https://...)
+        card = by_url.get(_bare(m.group(2)))
+        return f"[{m.group(1)}](card:{card['id']})" if card else m.group(1)
+
+    def bare_url(m: re.Match) -> str:
+        url = m.group(0).rstrip(".,;:!?'\"")
+        card = by_url.get(_bare(url))
+        shown = f"[{card['name']}](card:{card['id']})" if card else "[link removed]"
+        return shown + m.group(0)[len(url) :]
+
+    text = _BARE_URL.sub(bare_url, _HTTP_LINK.sub(web_link, text))
+
     def known_or_label(m: re.Match) -> str:
         label, kind, name = m.group(1), m.group(2), m.group(3)
         known = rules if kind == "rule" else cards
@@ -146,6 +164,12 @@ def plain_names(text: str, rules: dict[str, dict], cards: dict[str, dict]) -> st
     text = _LINKED.sub(hide, text)
     text = _BARE_ID.sub(lambda m: word(m.group(1)) or m.group(0), text)
     return re.sub("\x00(\\d+)\x00", lambda m: targets[int(m.group(1))], text)
+
+
+def _bare(url: str) -> str:
+    """A URL compared without scheme, www., query, fragment or trailing slash."""
+    url = re.sub(r"^(?:https?://)?(?:www\.)?", "", url.lower())
+    return re.split(r"[?#]", url)[0].rstrip("/")
 
 
 def _known_names(session: "Session") -> tuple[dict, dict]:

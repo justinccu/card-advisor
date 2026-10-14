@@ -236,7 +236,9 @@ def expectations(result: dict, expect: dict) -> list[str]:
     for text in expect.get("not_contains", []):
         if text.lower() in a:
             problems.append(f"says {text!r}")
-    if expect.get("asks") and not re.search(r"[?？]", result["answer"]):
+    # A question, or a plain request for what's missing ("Once you share your spending...").
+    asks = r"[?？]|\b(?:share|tell me|let me know)\b|告訴我|提供"
+    if expect.get("asks") and not re.search(asks, result["answer"], re.IGNORECASE):
         problems.append("doesn't ask the user anything")
     for rule in expect.get("cites", []):
         if f"rule:{rule}" not in a:

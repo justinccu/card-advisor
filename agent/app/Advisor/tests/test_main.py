@@ -705,3 +705,30 @@ def test_ids_written_as_text_are_put_in_words_instead_of_costing_a_retry(monkeyp
     assert seen(events) == ["quota", "tool", "text", "done"]
     assert len(Session.agent.prompts) == 1  # answered the first time, no retry
     assert "[Chase Sapphire](rule:chase_sapphire_once_per_card)" in events[-2]["text"]
+
+
+def test_urls_in_a_reply_become_the_cards_link_or_are_removed():
+    from main import internal_names, plain_names
+
+    gold = {"id": "amex_gold", "name": "American Express Gold Card"}
+    cards = {
+        "amex_gold": {
+            **gold,
+            "url": "https://www.americanexpress.com/us/credit-cards/card/gold-card/",
+        }
+    }
+    # asked for "the full https link", the model wrote one: the catalog's becomes the card link
+    out = plain_names("It's https://americanexpress.com/us/credit-cards/card/gold-card.", {}, cards)
+    assert out == "It's [American Express Gold Card](card:amex_gold)."
+    # any other URL is removed, as the page does; a web link keeps its label
+    out = plain_names("Try https://evil.example/x or [this](https://evil.example/y).", {}, cards)
+    assert out == "Try [link removed] or this."
+    assert internal_names(out) == [] and "http" not in out
+
+
+def test_rules_come_with_the_citation_to_copy():
+    from advisor.tools import cite_as
+
+    assert cite_as("chase_5_24") == "[Chase 5/24](rule:chase_5_24)"
+    assert cite_as("citi_48_month_bonus") == "[Citi 48 month bonus](rule:citi_48_month_bonus)"
+    assert cite_as("capital_one_1_6") == "[Capital One 1/6](rule:capital_one_1_6)"
