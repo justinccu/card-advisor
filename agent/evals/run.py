@@ -35,6 +35,7 @@ REPORTS = Path(__file__).with_name("reports")
 API_PORT = 8011
 API = f"http://localhost:{API_PORT}"
 
+RERUN_AFTER_SECONDS = 20  # a pause before re-running a case the model or a service failed
 THRESHOLDS = {  # share of answers (or cases) that must pass
     "leaks": 1.0,
     "links": 1.0,
@@ -259,25 +260,39 @@ async def run_all(cases: list[dict], runs: int, parallel: int) -> list[dict]:
 
     main._save_turn = capture
     gate = asyncio.Semaphore(parallel)
+    failed = {main.TURN_FAILED, main.ZH_TW[main.TURN_FAILED]}
+
+    def failed_to_run(result: dict) -> bool:
+        """The model or a service failed, not the answer: Bedrock throttling once took 124s of
+        retries and failed two critical cases of an otherwise sound run."""
+        return any(e in failed or e.startswith("crashed:") for e in result["errors"])
 
     async def one(case, run):
         async with gate:
-            try:
-                return await run_case(main, case, run)
-            except Exception as e:  # a crash fails the case, not the whole run
-                return {
-                    "id": case["id"],
-                    "category": case["category"],
-                    "critical": bool(case.get("critical")),
-                    "run": run,
-                    "seconds": 0,
-                    "question": case["turns"][-1],
-                    "answer": "",
-                    "errors": [f"crashed: {e!r}"],
-                    "tools": [],
-                    "tool_results": [],
-                    "user_texts": list(case["turns"]),
-                }
+            result = await attempt(case, run)
+            if failed_to_run(result):  # once more after a pause; failing again still fails
+                await asyncio.sleep(RERUN_AFTER_SECONDS)
+                result = await attempt(case, run)
+                result["rerun"] = True
+            return result
+
+    async def attempt(case, run):
+        try:
+            return await run_case(main, case, run)
+        except Exception as e:  # a crash fails the case, not the whole run
+            return {
+                "id": case["id"],
+                "category": case["category"],
+                "critical": bool(case.get("critical")),
+                "run": run,
+                "seconds": 0,
+                "question": case["turns"][-1],
+                "answer": "",
+                "errors": [f"crashed: {e!r}"],
+                "tools": [],
+                "tool_results": [],
+                "user_texts": list(case["turns"]),
+            }
 
     return await asyncio.gather(*(one(c, r) for c in cases for r in range(runs)))
 
@@ -287,7 +302,8 @@ def main_cli() -> int:
     parser.add_argument("--runs", type=int, default=1)
     parser.add_argument("--only", default="")
     parser.add_argument("--model", default="")
-    parser.add_argument("--parallel", type=int, default=4)
+    # 4 at once ran into Bedrock's request quota for DeepSeek (2026-10-13)
+    parser.add_argument("--parallel", type=int, default=2)
     args = parser.parse_args()
 
     golden = yaml.safe_load(GOLDEN.read_text())
@@ -358,6 +374,9 @@ def main_cli() -> int:
         )
     if failed_critical:
         print(f"LOW  critical cases failing: {', '.join(sorted(set(failed_critical)))}")
+    reruns = [r["id"] for r in results if r.get("rerun")]
+    if reruns:  # not failures by themselves: shown so a flaky service stays visible
+        print(f"note {len(reruns)} re-run after a model or service error: {', '.join(reruns)}")
     turns = sum(len(c["turns"]) for c in cases) * args.runs
     print(
         f"\n{len(results)} answers, {turns} messages, about ${turns * 0.015:.2f} "

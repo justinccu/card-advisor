@@ -19,6 +19,7 @@ import time
 import uuid
 from collections import OrderedDict
 
+from advisor import prefetch
 from advisor.api import AdvisorApi, ApiError, QuotaExceeded, catalog_version, rules_version
 from advisor.identity import NotSignedIn, caller_from
 from advisor.prompt import (
@@ -86,6 +87,76 @@ def internal_names(text: str, said: str = "") -> list[str]:
     return [n for n in _INTERNAL.findall(_LINK_TARGET.sub("]", text)) if n.lower() not in allowed]
 
 
+# Spending categories whose ids have an underscore (card_rules.catalog.SpendCategory), as words.
+CATEGORY_WORDS = {
+    "other_travel": "other travel",
+    "gas_ev": "gas & EV charging",
+    "online_shopping": "online shopping",
+    "everything_else": "everything else",
+}
+_LINKED = re.compile(r"\((?:card|rule):[^)\s]*\)")
+_ANY_LINK = re.compile(r"\[([^\]]+)\]\((rule|card):([^)\s]+)\)")
+_ID_AS_LABEL = re.compile(r"\[`?([a-z][a-z0-9]*(?:_[a-z0-9]+)+)`?\]\(((?:card|rule):[^)\s]+)\)")
+_BARE_ID = re.compile(r"`?\b([a-z][a-z0-9]*(?:_[a-z0-9]+)+)\b`?")
+
+
+def rule_label(facts: dict) -> str:
+    """A rule as the page names it: its summary's subject ("Chase 5/24"). No "rule" after it:
+    the reply around an id already says "the ... rule" or "... 規則"."""
+    summary = facts.get("summary") or ""
+    return summary.split(":")[0].strip() if ":" in summary else summary
+
+
+def plain_names(text: str, rules: dict[str, dict], cards: dict[str, dict]) -> str:
+    """Ids a reply writes as plain text, put in words before the leak check: a rule id becomes
+    its citation (the page shows it as the rule's label), a card id the card's name, a spending
+    category its words. Each was a retry of the whole answer (7-10s): DeepSeek copied
+    "chase_sapphire_once_per_card" and "other_travel" from tool results into its text. A link to
+    an id that doesn't exist keeps only its label, as the page shows it: the model once cited a
+    "rule:citi_one_bonus_per_card_48_months" it made up. Other internal names (tools, fields, API
+    paths) are still left to the leak check."""
+
+    def word(name: str) -> str | None:
+        if name in rules:
+            return f"[{rule_label(rules[name])}](rule:{name})"
+        if name in cards:
+            return cards[name].get("name") or None
+        return CATEGORY_WORDS.get(name)
+
+    # An id used as a link's label: keep the link, name it properly.
+    def relabel(m: re.Match) -> str:
+        name, target = m.group(1), m.group(2)
+        label = rule_label(rules[name]) if name in rules else (cards.get(name) or {}).get("name")
+        return f"[{label}]({target})" if label else m.group(0)
+
+    def known_or_label(m: re.Match) -> str:
+        label, kind, name = m.group(1), m.group(2), m.group(3)
+        known = rules if kind == "rule" else cards
+        return label if known and name not in known else m.group(0)
+
+    text = _ANY_LINK.sub(known_or_label, text)
+    text = _ID_AS_LABEL.sub(relabel, text)
+    # Link targets are ids by design: set them aside while the rest is rewritten.
+    targets: list[str] = []
+
+    def hide(m: re.Match) -> str:
+        targets.append(m.group(0))
+        return f"\x00{len(targets) - 1}\x00"
+
+    text = _LINKED.sub(hide, text)
+    text = _BARE_ID.sub(lambda m: word(m.group(1)) or m.group(0), text)
+    return re.sub("\x00(\\d+)\x00", lambda m: targets[int(m.group(1))], text)
+
+
+def _known_names(session: "Session") -> tuple[dict, dict]:
+    """The rules and cards whose ids `plain_names` can put in words (both cached by the API
+    client); none when they can't be read, which leaves every id to the leak check."""
+    try:
+        return session.api.rule_facts(), session.api.cards()
+    except Exception:  # noqa: BLE001
+        return {}, {}
+
+
 INTERNAL_HINT = (
     "\nYour previous reply named internal things (tool names, field names, ids, API paths). "
     'Describe what you did in plain words, such as "I checked your eligibility".'
@@ -117,10 +188,12 @@ class Session:
     def __init__(self, session_id: str, user_id: str) -> None:
         self.api: AdvisorApi | None = None
         self.timings = Timings()
+        tools = build_tools(self)
+        self.tools = {t.tool_name: t for t in tools}  # for lookups made before the model runs
         self.agent = Agent(
             model=load_model(),
             system_prompt=SYSTEM_PROMPT,
-            tools=build_tools(self),
+            tools=tools,
             session_manager=get_memory_session_manager(session_id, user_id, self.timings),
             conversation_manager=SlidingWindowConversationManager(window_size=WINDOW_MESSAGES),
             callback_handler=None,
@@ -152,12 +225,15 @@ INTERNALS_REFUSAL = (
     "issuer rules like Chase 5/24 against your wallet, or look up a card's fees and offers."
 )
 # The Advisor's own messages, for a reply in Traditional Chinese (the API's messages stay as sent).
+# The model or a service failed (throttling, a timeout), not the answer: the eval re-runs these.
+TURN_FAILED = "Something went wrong while answering. Please try again."
+
 ZH_TW = {
     "The Advisor had trouble answering. Please try again.": "Advisor 這次沒能回答，請再試一次。",
     "I couldn't check that against our card data. Please ask again.": (
         "我沒辦法用我們的卡片資料確認這點，請再問一次。"
     ),
-    "Something went wrong while answering. Please try again.": "回答時出了問題，請再試一次。",
+    TURN_FAILED: "回答時出了問題，請再試一次。",
     INTERNALS_REFUSAL: (
         "我不能說明 Advisor 內部是怎麼運作的。我可以依你的消費比較卡片、用你的錢包檢查 "
         "Chase 5/24 等申請規則，或查詢卡片的年費和開卡禮。"
@@ -238,6 +314,7 @@ async def invoke(payload, context):
     session.agent.system_prompt = system_prompt_for(prompt)  # this message's reply language
     answer = ""  # the checked answer the page shows
     nudge = ""  # a retry's instruction, at the end of the message where DeepSeek heeds it
+    looked_ahead = _look_ahead(session, prompt)  # made once; a retry reuses them
     retries = 0
     try:
         for attempt in range(2):
@@ -246,9 +323,11 @@ async def invoke(payload, context):
             leak_names: list[str] = []
             # Nothing the model writes reaches the page until the answer is checked: tool and
             # writing events keep the page's status line moving meanwhile.
-            looked_up = False
+            looked_up = bool(looked_ahead)
             answer = ""
-            events = _stream(session, with_language(prompt) + nudge)
+            said = with_language(prompt) + nudge
+            request = prefetch.as_messages(said, looked_ahead) if looked_ahead else said
+            events = _stream(session, request, prompt)
             async for event in events:
                 kind = event["type"]
                 if kind == "leak":
@@ -305,8 +384,7 @@ async def invoke(payload, context):
         yield {"type": "done", **({"turn_id": turn_id} if turn_id else {})}
     except Exception:
         log.exception("advisor turn failed")
-        message = "Something went wrong while answering. Please try again."
-        yield _error("internal", _in_reply_language(message, prompt))
+        yield _error("internal", _in_reply_language(TURN_FAILED, prompt))
         return
     finally:
         reporting = time.monotonic()
@@ -468,7 +546,25 @@ def _save_turn(api: AdvisorApi, record: dict) -> str | None:
         return None
 
 
-async def _stream(session: Session, prompt: str):
+def _look_ahead(session: Session, prompt: str) -> list[tuple[str, dict, str]]:
+    """The lookups `prefetch` makes before the model runs; none if the catalog can't be read."""
+    tools = getattr(session, "tools", None)
+    if not tools:
+        return []
+    began = time.monotonic()
+    try:
+        calls = prefetch.plan(prompt, session.api.cards(), session.api.issuers())
+    except Exception:  # noqa: BLE001 - without the catalog, profile and wallet still help
+        calls = list(prefetch.ALWAYS)
+    done = prefetch.run(tools, calls)
+    # Ranking reads the saved profile: only once it shows spending to rank by.
+    if prefetch.wants_ranking(prompt, calls) and prefetch.has_spending(done):
+        done += prefetch.run(tools, [prefetch.RANKING])
+    session.timings.lap("prefetch", began)
+    return done
+
+
+async def _stream(session: Session, request, prompt: str):
     """The agent's work as site events, holding back everything the model writes until it is
     checked: a "tool" event per call, a "writing" event when the model starts writing after one,
     and last an "answer" event with the text after the final call. Text before a call is narration
@@ -479,7 +575,7 @@ async def _stream(session: Session, prompt: str):
     text = ""
     writing = False  # told the page the model is writing, since the last call
     tool_calls: set[str] = set()
-    stream = session.agent.stream_async(prompt)
+    stream = session.agent.stream_async(request)
     try:
         async for event in stream:
             if isinstance(event, dict) and isinstance(event.get("data"), str):
@@ -499,7 +595,7 @@ async def _stream(session: Session, prompt: str):
                     tool_calls.add(call)
                     text, writing = "", False
                     yield {"type": "tool", "name": use.get("name")}
-        answer = MODEL_MARKUP.sub("", text).strip()
+        answer = plain_names(MODEL_MARKUP.sub("", text).strip(), *_known_names(session))
         names = internal_names(answer, prompt)
         if names:
             yield {"type": "leak", "why": "internal", "names": names}

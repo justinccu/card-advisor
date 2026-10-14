@@ -310,7 +310,8 @@ cases:
     turns: ["amex 綠卡"]
     expect:
       tools: [get_card_details]
-      contains_any: ["停止", "不再", "不開放", "closed", "no longer"]
+      # "不對新申請人開放" (not open to new applicants) says it too (2026-10-13 run)
+      contains_any: ["停止", "不再", "不開放", "不對新申請人開放", "不接受新申請", "closed", "no longer"]
 
   - id: card-not-covered-bilt
     category: boundary

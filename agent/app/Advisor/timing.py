@@ -23,7 +23,8 @@ class Timings(HookProvider):
         self.report = ""  # the last message's summary, once it's done
         self.marks: dict[str, float] = {}  # phase -> seconds it took
         self.first_model: float | None = None  # seconds from start to the first model call
-        self.models: list[tuple[float | None, float]] = []  # (first output, whole call)
+        # (first output, whole call, output tokens) per model call
+        self.models: list[tuple[float | None, float, int | None]] = []
         self.tools: list[tuple[str, float]] = []
         self.aws: list[tuple[str, float]] = []  # Memory API calls
         self.sent: list[tuple[str, float]] = []  # event kind -> seconds since the start
@@ -70,7 +71,8 @@ class Timings(HookProvider):
 
     def _after_model(self, event: AfterModelCallEvent) -> None:
         if self._model_began is not None:
-            self.models.append((self._first_output, time.monotonic() - self._model_began))
+            written = _output_tokens(event)
+            self.models.append((self._first_output, time.monotonic() - self._model_began, written))
             self._model_began = None
 
     def _after_tool(self, event: AfterToolCallEvent) -> None:
@@ -84,12 +86,13 @@ class Timings(HookProvider):
         parts += [f"{phase}={s(took)}" for phase, took in self.marks.items()]
         if self.first_model is not None:
             parts.append(f"before_model={s(self.first_model)}")
-        # each model call as first-output/whole: waiting for the model, then its writing
+        # each model call as first-output/whole/tokens written: waiting, then writing
         parts.append(
             "model=["
             + ", ".join(
                 f"{s(first) if first is not None else '?'}/{s(whole)}"
-                for first, whole in self.models
+                + (f"/{tokens}tok" if tokens is not None else "")
+                for first, whole, tokens in self.models
             )
             + "]"
         )
@@ -97,3 +100,11 @@ class Timings(HookProvider):
         parts.append("memory=[" + ", ".join(f"{name} {s(took)}" for name, took in self.aws) + "]")
         parts.append("sent=[" + ", ".join(f"{kind}@{s(at)}" for kind, at in self.sent) + "]")
         return " ".join(parts)
+
+
+def _output_tokens(event: AfterModelCallEvent) -> int | None:
+    """Tokens this model call wrote. Strands attaches the call's usage to its message before
+    this hook runs (its running total is updated only after)."""
+    response = getattr(event, "stop_response", None)
+    message = getattr(response, "message", None) or {}
+    return (message.get("metadata") or {}).get("usage", {}).get("outputTokens")

@@ -103,3 +103,37 @@ def find(query: str, cards: dict[str, dict], issuers: dict) -> tuple[str, list[d
     if full:
         return "several", [r[0] for r in full]
     return "closest", [r[0] for r in ranked]
+
+
+def _runs(seq: list[str], text: list[str]) -> bool:
+    n = len(seq)
+    return any(text[i : i + n] == seq for i in range(len(text) - n + 1))
+
+
+def mentioned(text: str, cards: dict[str, dict], issuers: dict, limit: int = 3) -> list[dict]:
+    """Cards a message names outright, for looking them up before the model runs: a card's own
+    name words in order ("Sapphire Reserve"), a one-word name only next to its bank ("amex
+    gold", not a bare "gold"), or an alias ("CSP"). Exact words only (no typo matching): a
+    wrong guess costs a lookup the model would not have made; a miss costs nothing, since the
+    model can still look the card up."""
+    said = words(text)
+    found: list[tuple[dict, list[str]]] = []
+    for card in cards.values():
+        bank = _issuer_words(card, issuers)
+        own = [w for w in words(card["name"]) if w not in bank]
+        named = bool(own) and (
+            (len(own) >= 2 and _runs(own, said)) or any(_runs([b, *own], said) for b in bank)
+        )
+        alias = any(
+            len(a) >= 3 and _runs(words(a), said) and len(words(a)) == 1
+            for a in card.get("aliases", [])
+        )
+        if named or alias:
+            found.append((card, own))
+    # "Sapphire Preferred Business" also contains "Sapphire Preferred": keep the longer name.
+    kept = [
+        (card, own)
+        for card, own in found
+        if not any(len(other) > len(own) and _runs(own, other) for _, other in found)
+    ]
+    return [card for card, _ in kept][:limit]

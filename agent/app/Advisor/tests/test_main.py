@@ -100,7 +100,10 @@ class FakeAgent:
 
     async def stream_async(self, prompt):
         self.prompts.append(self.system_prompt)
-        self.messages.append({"role": "user", "content": [{"text": prompt}]})
+        if isinstance(prompt, list):  # messages: the user's, then lookups made before the model
+            self.messages.extend(prompt)
+        else:
+            self.messages.append({"role": "user", "content": [{"text": prompt}]})
         chunks = self.answers.pop(0)
         for chunk in chunks:
             if isinstance(chunk, dict):  # a tool call starting
@@ -494,3 +497,211 @@ def test_echoing_the_users_words_is_not_a_leak_whatever_the_case():
 
     said = "What does Check_Eligibility do?"
     assert internal_names("I can't share how check_eligibility is built.", said) == []
+
+
+# --- lookups made before the model runs ------------------------------------------------------
+
+
+def chat_with_tools(
+    monkeypatch, agent, prompt, profile='{"monthly_spending_usd": {"dining": 800}}'
+):
+    """chat_with, plus tools the prefetch can call (recording each call) and a one-card catalog."""
+    calls = []
+
+    def tool(name, result):
+        def call(**args):
+            calls.append((name, args))
+            return result
+
+        return call
+
+    chat_with(monkeypatch, FakeAgent())  # installs the fake API and session
+    session = main.get_session("s", "u")
+    session.agent = agent
+    session.tools = {
+        "get_my_profile": tool("get_my_profile", profile),
+        "get_my_wallet": tool("get_my_wallet", '{"five_24_status": "2/24"}'),
+        "get_card_details": tool("get_card_details", '{"annual_fee": "$95 a year"}'),
+        "check_eligibility": tool("check_eligibility", '[{"offer": "Eligible"}]'),
+        "rank_cards": tool(
+            "rank_cards", '{"ranked": [{"card": "Gold", "first_year_value": "$1,208"}]}'
+        ),
+    }
+    csp = {"id": "chase_sapphire_preferred", "name": "Chase Sapphire Preferred"}
+
+    class WithCatalog(main.AdvisorApi):
+        def cards(self):
+            return {csp["id"]: {**csp, "issuer_id": "chase", "aliases": ["CSP"]}}
+
+        def issuers(self):
+            return {"chase": {"name": "Chase"}}
+
+    monkeypatch.setattr(main, "AdvisorApi", WithCatalog)
+    return run({"prompt": prompt}, Ctx()), calls
+
+
+def test_cards_a_message_names_are_found_conservatively():
+    from advisor.search import mentioned
+
+    cards = {
+        "csp": {
+            "id": "csp",
+            "name": "Chase Sapphire Preferred",
+            "issuer_id": "chase",
+            "aliases": ["CSP"],
+        },
+        "csr": {
+            "id": "csr",
+            "name": "Chase Sapphire Reserve",
+            "issuer_id": "chase",
+            "aliases": ["CSR"],
+        },
+        "gold": {
+            "id": "gold",
+            "name": "American Express Gold Card",
+            "issuer_id": "amex",
+            "aliases": [],
+        },
+        "vx": {
+            "id": "vx",
+            "name": "Capital One Venture X",
+            "issuer_id": "capital_one",
+            "aliases": [],
+        },
+        "v": {"id": "v", "name": "Capital One Venture", "issuer_id": "capital_one", "aliases": []},
+    }
+    issuers = {
+        "chase": {"name": "Chase"},
+        "amex": {"name": "American Express", "aliases": ["Amex"]},
+        "capital_one": {"name": "Capital One"},
+    }
+
+    def ids(text):
+        return [c["id"] for c in mentioned(text, cards, issuers)]
+
+    assert ids("我已經有 Chase Sapphire Preferred，還能申請 Sapphire Reserve 嗎？") == [
+        "csp",
+        "csr",
+    ]
+    assert ids("CSP vs CSR") == ["csp", "csr"]
+    assert ids("is the amex gold worth it?") == ["gold"]
+    assert ids("which gold card?") == []  # one word, no bank: not sure which card
+    assert ids("Venture X or not") == ["vx"]  # not also the plain Venture
+    assert ids("Which card fits my spending best?") == []
+
+
+def test_the_profile_and_wallet_are_looked_up_before_the_model_runs(monkeypatch):
+    # The model answers at once from them: no call of its own, and the amount it quotes ($800,
+    # from the profile) counts as looked up, not as recalled.
+    agent = FakeAgent(["With $800 a month on dining, that's 2/24 for Chase."])
+    events, calls = chat_with_tools(monkeypatch, agent, "How do I build credit?")
+    assert sorted(name for name, _ in calls) == ["get_my_profile", "get_my_wallet"]
+    assert [m["role"] for m in agent.messages[:3]] == ["user", "assistant", "user"]
+    assert "toolUse" in agent.messages[1]["content"][0]
+    assert seen(events) == ["quota", "text", "done"]  # no retry for the $800
+    assert {t["name"] for t in saved[0]["tools"]} == {"get_my_profile", "get_my_wallet"}
+
+
+def test_named_cards_are_looked_up_and_checked_and_a_retry_does_not_fetch_again(monkeypatch):
+    agent = FakeAgent(["It costs $550."], ["It costs $95 a year."])
+    events, calls = chat_with_tools(monkeypatch, agent, "Is the CSP worth it?")
+    names = [name for name, _ in calls]
+    assert sorted(names) == [
+        "check_eligibility",
+        "get_card_details",
+        "get_my_profile",
+        "get_my_wallet",
+    ]
+    assert ("check_eligibility", {"card_ids": ["chase_sapphire_preferred"]}) in calls
+    assert seen(events) == ["quota", "reset", "text", "done"]  # $550 was no lookup's
+    assert len(calls) == 4  # the retry reused the lookups
+
+
+def test_a_failed_lookup_is_left_to_the_model():
+    from advisor import prefetch
+
+    def broken(**args):
+        raise TimeoutError
+
+    done = prefetch.run({"get_my_profile": broken, "get_my_wallet": lambda: "{}"}, prefetch.ALWAYS)
+    assert [name for name, _, _ in done] == ["get_my_wallet"]
+
+
+def test_a_request_for_recommendations_is_ranked_before_the_model_runs(monkeypatch):
+    agent = FakeAgent(["The Gold: $1,208 in the first year."])
+    events, calls = chat_with_tools(monkeypatch, agent, "推薦一張適合我的卡")
+    assert [name for name, _ in calls][-1] == "rank_cards"  # after the profile it reads
+    assert seen(events) == ["quota", "text", "done"]  # $1,208 came from the ranking
+
+
+def test_no_ranking_without_spending_or_when_cards_are_named(monkeypatch):
+    agent = FakeAgent(["What do you spend each month?"])
+    _, calls = chat_with_tools(
+        monkeypatch, agent, "Which card is best for me?", profile='{"monthly_spending_usd": {}}'
+    )
+    assert "rank_cards" not in [name for name, _ in calls]  # the model asks for spending first
+    agent = FakeAgent(["The CSP fits."])
+    _, calls = chat_with_tools(monkeypatch, agent, "Which is better for me, the CSP?")
+    assert "rank_cards" not in [name for name, _ in calls]  # the named card is looked up instead
+
+
+def test_ids_written_as_text_are_put_in_words_instead_of_costing_a_retry(monkeypatch):
+    from main import internal_names, plain_names
+
+    rules = {"chase_sapphire_once_per_card": {"summary": "Chase Sapphire: once per card"}}
+    cards = {"amex_gold": {"name": "American Express Gold Card"}}
+    out = plain_names("根據 chase_sapphire_once_per_card 規則，other_travel 也算。", rules, cards)
+    assert (
+        out == "根據 [Chase Sapphire](rule:chase_sapphire_once_per_card) 規則，other travel 也算。"
+    )
+    assert plain_names("[amex_gold](card:amex_gold), `amex_gold`", rules, cards) == (
+        "[American Express Gold Card](card:amex_gold), American Express Gold Card"
+    )
+    assert plain_names("See [Gold](card:amex_gold).", rules, cards) == "See [Gold](card:amex_gold)."
+    # a link to an id that doesn't exist keeps its label only (the model once made one up)
+    assert plain_names("Per [Citi's rule](rule:citi_made_up).", rules, cards) == "Per Citi's rule."
+    assert plain_names("[A card](card:no_such_card)", rules, cards) == "A card"
+    assert plain_names("[A card](card:no_such_card)", {}, {}) == "[A card](card:no_such_card)"
+    # what isn't a rule, card or category still goes to the leak check
+    assert internal_names(plain_names("I ran check_eligibility.", rules, cards)) == [
+        "check_eligibility"
+    ]
+
+    # in a reply: the id is named, nothing is retried
+    class Api:
+        def __init__(self, headers):
+            pass
+
+        def take_turn(self):
+            return {"limit": 30, "remaining": 29, "resets_at": "tomorrow"}
+
+        def save_turn(self, record):
+            return {"turn_id": "t"}
+
+        def record_usage(self, cost):
+            pass
+
+        def rule_facts(self):
+            return rules
+
+        def cards(self):
+            return cards
+
+    class Session:
+        api = None
+        timings = main.Timings()
+        agent = FakeAgent(
+            [
+                {"toolUseId": "t1", "name": "check_eligibility"},
+                "Per chase_sapphire_once_per_card, no.",
+            ]
+        )
+
+    monkeypatch.setenv("ADVISOR_LOCAL", "1")
+    monkeypatch.setenv("ADVISOR_DEV_USER", "demo-user")
+    monkeypatch.setattr(main, "AdvisorApi", Api)
+    monkeypatch.setattr(main, "get_session", lambda *a: Session)
+    events = run({"prompt": "Can I get the Sapphire bonus again?"}, Ctx())
+    assert seen(events) == ["quota", "tool", "text", "done"]
+    assert len(Session.agent.prompts) == 1  # answered the first time, no retry
+    assert "[Chase Sapphire](rule:chase_sapphire_once_per_card)" in events[-2]["text"]
