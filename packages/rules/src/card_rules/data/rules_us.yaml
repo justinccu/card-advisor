@@ -48,7 +48,7 @@
   id: chase_sapphire_one_open
   issuer_id: chase
   family: sapphire
-  description: "Chase Sapphire: can't be opened while you have this same card open"
+  description: "Chase Sapphire: no second account of the same Sapphire card (holding the other Sapphire is fine)"
   strength: strict
   confidence: official
   source_url: https://creditcards.chase.com/rewards-credit-cards/sapphire/preferred

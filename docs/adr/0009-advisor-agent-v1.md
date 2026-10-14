@@ -232,8 +232,12 @@ reaches the user.
   user asked how the Advisor works and the retry names its insides again, the reply is a
   short refusal ("I can't share how the Advisor works inside...") rather than an error.
 - **Rule citations**: when the Advisor states an issuer rule, it cites it as
-  `[Chase 5/24](rule:chase_5_24)`. The site shows the citation as the rule's source (issuer
-  terms or applicants' reports, with the date checked). The eval fails any citation of a rule
+  `[Chase 5/24](rule:chase_5_24)`. The site shows the citation as a label whose card (on hover,
+  focus or tap) gives the rule's summary, how it counts, its source (issuer terms or applicants'
+  reports) and the date checked. It links only to the rule
+  on its own bank's website (owner, 2026-10-10): a rule the bank doesn't publish, like 5/24, or
+  one whose source is a third-party write-up is cited and explained but not linked
+  (`issuer_link` in GET /rules). The eval fails any citation of a rule
   no tool returned in that conversation. Each saved answer records a `rules_version` (a hash
   of the rule text the tools read).
 - **Facts stated without a lookup**: until the model makes its first tool call, its text is

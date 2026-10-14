@@ -6,6 +6,8 @@ memory: asked about Chase 5/24 without them, it said closed cards and other bank
 count, and both do.
 """
 
+from urllib.parse import urlparse
+
 from card_rules.models import (
     EligibilityRule,
     FamilyOpenRule,
@@ -14,6 +16,30 @@ from card_rules.models import (
     ProductOpenRule,
     VelocityRule,
 )
+
+# Each bank's own website. The site links a rule only to its bank's page (the owner, 2026-10-10):
+# a rule known from applicants' reports, like Chase 5/24, is explained but not linked, and so is
+# an official rule whose source is still a third-party write-up.
+ISSUER_DOMAINS = {
+    "amex": "americanexpress.com",
+    "bofa": "bankofamerica.com",
+    "capital_one": "capitalone.com",
+    "chase": "chase.com",
+    "citi": "citi.com",
+    "discover": "discover.com",
+    "us_bank": "usbank.com",
+    "wells_fargo": "wellsfargo.com",
+}
+
+
+def issuer_link(rule: EligibilityRule) -> str | None:
+    """The rule's source when it's on its own bank's website, else None (no link)."""
+    domain = ISSUER_DOMAINS.get(rule.issuer_id)
+    host = (urlparse(str(rule.source_url)).hostname or "").lower()
+    if domain and (host == domain or host.endswith("." + domain)):
+        return str(rule.source_url)
+    return None
+
 
 _PRODUCTS = {
     "personal": "personal {} cards",
@@ -57,6 +83,7 @@ def how_it_counts(rule: EligibilityRule, names: dict[str, str] | None = None) ->
         return [
             "You can't open this card while you already have it open; "
             "having had it before doesn't stop the application.",
+            f"Holding a different {rule.family or issuer} card doesn't matter.",
             "Authorized-user cards do not count.",
         ]
     if isinstance(rule, FamilyOpenRule):
@@ -130,6 +157,7 @@ def explain(rule: EligibilityRule, names: dict[str, str] | None = None) -> dict:
         "source": "the issuer's own terms"
         if rule.confidence == "official"
         else "applicants' reported results (the bank doesn't publish it)",
-        "source_url": str(rule.source_url),
+        "source_url": str(rule.source_url),  # where we learned it (provenance, not shown)
+        "issuer_link": issuer_link(rule),  # the only link the site shows
         "verified_on": rule.verified_on.isoformat(),
     }

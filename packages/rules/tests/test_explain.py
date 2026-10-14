@@ -50,3 +50,34 @@ def test_sapphire_rules_say_may_where_the_terms_do_and_name_the_exceptions():
         "Doesn't apply to Chase Sapphire Preferred and Chase Sapphire Reserve, "
         "which have stricter rules of their own."
     )
+
+
+def test_rules_link_only_to_their_own_banks_site():
+    from card_rules.explain import ISSUER_DOMAINS, issuer_link
+
+    rules = by_id()
+    # Chase 5/24 is known from applicants' reports: explained, never linked
+    assert explain(rules["chase_5_24"])["issuer_link"] is None
+    assert explain(rules["chase_5_24"])["how_it_counts"]  # the information stays
+    # an official rule whose source is a third-party write-up isn't linked either
+    assert issuer_link(rules["chase_24_month_bonus"]) is None
+    assert issuer_link(rules["chase_sapphire_once_per_card"]).startswith(
+        "https://creditcards.chase.com/"
+    )
+    for rule in rules.values():
+        assert rule.issuer_id in ISSUER_DOMAINS  # every bank with rules has its domain listed
+        link = issuer_link(rule)
+        assert link is None or ISSUER_DOMAINS[rule.issuer_id] in link
+
+
+def test_a_look_alike_domain_is_not_the_bank():
+    from card_rules.explain import issuer_link
+
+    rule = by_id()["chase_sapphire_once_per_card"]
+
+    def at(url):
+        return type(rule).model_validate({**rule.model_dump(), "source_url": url})
+
+    assert issuer_link(at("https://chase.com.example.net/sapphire")) is None
+    assert issuer_link(at("https://notchase.com/x")) is None
+    assert issuer_link(at("https://www.chase.com/x")) == "https://www.chase.com/x"
